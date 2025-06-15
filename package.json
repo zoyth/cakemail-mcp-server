@@ -23,12 +23,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/cakemail-mcp-server.git"
+    "url": "git+https://github.com/zoyth/cakemail-mcp-server.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/cakemail-mcp-server/issues"
+    "url": "https://github.com/zoyth/cakemail-mcp-server/issues"
   },
-  "homepage": "https://github.com/yourusername/cakemail-mcp-server#readme",
+  "homepage": "https://github.com/zoyth/cakemail-mcp-server#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^0.6.0",
     "dotenv": "^16.5.0",
