@@ -2,9 +2,9 @@
 
 A comprehensive Model Context Protocol (MCP) server for integrating with the Cakemail API. This server provides tools for email marketing campaigns, contact management, transactional emails, templates, automation, and analytics through the Cakemail platform.
 
-## 🎯 Version 1.1.0 - Fully API Compliant
+## 🎯 Version 1.2.0 - Fully API Compliant
 
-This version brings the MCP server into **full compliance** with the official Cakemail API documentation, fixing critical inconsistencies and adding extensive new functionality.
+This version brings the MCP server into **full compliance** with the official Cakemail API documentation, with enhanced reliability, comprehensive error handling, and intelligent retry logic for production use.
 
 ## ✨ Features
 
@@ -13,6 +13,7 @@ This version brings the MCP server into **full compliance** with the official Ca
 - ✅ List campaigns with advanced filtering and pagination
 - ✅ Send campaigns to contact lists
 - ✅ Campaign analytics and performance metrics
+- ✅ Get latest campaign with one command
 
 ### 👥 Contact Management
 - ✅ Create, update, and delete contacts with custom fields
@@ -24,7 +25,6 @@ This version brings the MCP server into **full compliance** with the official Ca
 - ✅ Send individual transactional emails
 - ✅ Template support for consistent messaging
 - ✅ HTML and plain text content
-- ✅ SMTP relay capabilities
 - ✅ Delivery analytics and tracking
 
 ### 📋 List Management
@@ -37,18 +37,15 @@ This version brings the MCP server into **full compliance** with the official Ca
 - ✅ Create, update, and delete verified senders
 - ✅ List all senders with verification status
 - ✅ Sender authentication support
-- ✅ Domain management capabilities
 
 ### 🎨 Template Management
 - ✅ Create, update, and delete email templates
 - ✅ Template library management
 - ✅ Use templates in campaigns and transactional emails
-- ✅ Version control and template analytics
 
 ### 🤖 Automation Workflows
 - ✅ Create and manage automation sequences
 - ✅ Trigger-based email automation
-- ✅ Drip campaigns and email series
 - ✅ Start/stop automation controls
 
 ### 📊 Advanced Analytics
@@ -56,12 +53,13 @@ This version brings the MCP server into **full compliance** with the official Ca
 - ✅ Transactional email analytics
 - ✅ List growth and engagement analytics
 - ✅ Account-wide performance insights
-- ✅ Custom date range reporting
 
-### 🏥 Health Monitoring
-- ✅ API connectivity monitoring
-- ✅ Authentication status checking
-- ✅ Real-time health diagnostics
+### 🏥 Production Features
+- ✅ Retry logic with exponential backoff
+- ✅ Rate limiting and circuit breaker protection
+- ✅ Request queuing and concurrency control
+- ✅ Comprehensive error handling
+- ✅ Health monitoring and diagnostics
 
 ## 🚀 Quick Start
 
@@ -125,275 +123,139 @@ Add the server to your Claude Desktop configuration:
 
 ## 🧪 Testing
 
-### Integration Tests
-
-Test the server functionality:
-
+### Quick Test
 ```bash
 npm run test
 ```
 
-### MCP Inspector
-
-Debug with the MCP Inspector:
-
+### Debug with MCP Inspector
 ```bash
 npm run inspector
 ```
 
-This opens `http://localhost:5173` for interactive testing.
-
 ### Health Check
+In Claude Desktop: `"Check my Cakemail API health status"`
 
-Test API connectivity:
+## 🛠 Key Tools
 
-```bash
-# In Claude Desktop
-"Check my Cakemail API health status"
-```
-
-## 🛠 Available Tools
-
-### Health & Diagnostics
-- `cakemail_health_check` - Check API connection and authentication status
-
-### Sender Management
-- `cakemail_get_senders` - List all verified senders
-- `cakemail_create_sender` - Create new sender identity
-- `cakemail_get_sender` - Get specific sender details
-- `cakemail_update_sender` - Update sender information
-- `cakemail_delete_sender` - Delete sender
-
-### List Management
-- `cakemail_get_lists` - List contact lists with filtering
-- `cakemail_create_list` - Create new contact list
-- `cakemail_get_list` - Get specific list details
-- `cakemail_update_list` - Update list information
-- `cakemail_delete_list` - Delete contact list
-
-### Contact Management
-- `cakemail_get_contacts` - List contacts with filtering
-- `cakemail_create_contact` - Add new contacts to lists
-- `cakemail_get_contact` - Get specific contact details
-- `cakemail_update_contact` - Update contact information
-- `cakemail_delete_contact` - Delete contact
-
-### Campaign Management
-- `cakemail_get_campaigns` - List campaigns with advanced filtering
+### Essential Tools
+- `cakemail_health_check` - Check API connection and authentication
+- `cakemail_get_latest_campaign` - Get your most recent campaign
+- `cakemail_get_campaigns` - List campaigns (latest first by default)
 - `cakemail_create_campaign` - Create new email campaigns
-- `cakemail_get_campaign` - Get specific campaign details
-- `cakemail_update_campaign` - Update campaign content
-- `cakemail_send_campaign` - Send campaign to recipients
-- `cakemail_delete_campaign` - Delete draft campaigns
+- `cakemail_send_campaign` - Send campaigns to recipients
 
-### Transactional Email
-- `cakemail_send_transactional_email` - Send individual emails
+### Management Tools
+- Contact Management: `create`, `get`, `update`, `delete`, `list` contacts
+- List Management: `create`, `get`, `update`, `delete`, `list` contact lists
+- Sender Management: `create`, `get`, `update`, `delete`, `list` senders
+- Template Management: `create`, `get`, `update`, `delete`, `list` templates
 
-### Template Management
-- `cakemail_get_templates` - List email templates
-- `cakemail_get_template` - Get specific template details
-- `cakemail_create_template` - Create new email template
-- `cakemail_update_template` - Update template content
-- `cakemail_delete_template` - Delete template
-
-### Analytics & Reporting
-- `cakemail_get_campaign_analytics` - Campaign performance metrics
-- `cakemail_get_transactional_analytics` - Transactional email analytics
-- `cakemail_get_list_analytics` - List performance metrics
-- `cakemail_get_account_analytics` - Account-wide analytics
-
-### Automation Workflows
-- `cakemail_get_automations` - List automation workflows
-- `cakemail_get_automation` - Get specific automation details
-- `cakemail_create_automation` - Create new automation
-- `cakemail_start_automation` - Start automation workflow
-- `cakemail_stop_automation` - Stop automation workflow
+### Analytics & Automation
+- Analytics: Campaign, transactional, list, and account analytics
+- Automation: Create and manage email automation workflows
+- Transactional: Send individual emails with template support
 
 ## 💡 Usage Examples
 
-### Creating a Campaign
+### Quick Campaign Check
+```
+"Show me my latest campaign with analytics"
+```
+
+### Create and Send Campaign
 ```
 "Create a new email campaign called 'Holiday Sale 2024' with the subject 'Save 50% on Everything!' and send it to my newsletter list"
 ```
 
-### Sending Transactional Emails
-```
-"Send a welcome email to john@example.com using my verified sender with the subject 'Welcome to our platform!'"
-```
-
-### Managing Contacts
+### Contact Management
 ```
 "Add a new contact with email sara@example.com and first name Sara to my main contact list"
 ```
 
-### Analytics and Reporting
+### Analytics
 ```
 "Show me the performance metrics for my latest campaign including open rates and click rates"
 ```
 
-### Template Management
-```
-"Create a new email template called 'Welcome Series Part 1' with HTML content for new user onboarding"
-```
+## 🔧 Advanced Configuration
 
-### Automation Workflows
-```
-"Create an automation that sends a welcome series to new subscribers over 3 days"
-```
+### Retry and Rate Limiting
+The server includes production-ready features:
 
-## 🔧 API Integration Details
+- **Automatic Retry**: Exponential backoff with jitter
+- **Rate Limiting**: Respects API limits and server responses
+- **Circuit Breaker**: Automatic failure detection and recovery
+- **Request Queuing**: Concurrency control for batch operations
 
-This MCP server integrates with the **Cakemail Next-gen API**, featuring:
+### Error Handling
+Comprehensive error types with detailed messages:
 
-- **OAuth 2.0 authentication** with refresh token support
-- **OpenAPI specification** compliance for reliable integration
-- **RESTful API design** with CORS support
-- **Canadian data hosting** for privacy compliance
-- **High-performance infrastructure** for email delivery
-- **Comprehensive error handling** with detailed API responses
-
-### Authentication Flow
-
-1. Automatic OAuth 2.0 token generation using credentials
-2. Intelligent token refresh to minimize re-authentication
-3. Secure token storage with proper expiry handling
-4. Fallback to password authentication when needed
-
-### Data Validation
-
-- **Email format validation** before API calls
-- **Date format validation** (YYYY-MM-DD)
-- **Parameter type checking** and sanitization
-- **API limit enforcement** (e.g., max 50 campaigns per page)
-
-## 🔄 Migration from v1.0.0
-
-### What's New in v1.1.0
-
-✅ **Fixed API Compliance Issues:**
-- Campaign data structure now matches official API
-- Consistent parameter handling across all operations
-- Proper error message propagation from API
-
-✅ **Enhanced Security:**
-- OAuth 2.0 refresh token support
-- Better token management and rotation
-- Input validation to prevent common errors
-
-✅ **Expanded Functionality:**
-- 20+ new tools for complete API coverage
-- Template management system
-- Automation workflow control
-- Advanced analytics suite
-
-### Migration Steps
-
-1. **Backup current version** (optional):
-```bash
-cp -r cakemail-mcp-server cakemail-mcp-server-backup
-```
-
-2. **Update source files** with new versions
-
-3. **Rebuild the project**:
-```bash
-npm run rebuild
-```
-
-4. **Test functionality**:
-```bash
-npm run test
-```
-
-5. **No configuration changes needed** - all existing integrations continue to work
-
-### Backward Compatibility
-
-- ✅ All existing tools maintain the same interface
-- ✅ No Claude Desktop configuration changes required
-- ✅ Same authentication requirements
-- ✅ Enhanced but compatible response formats
+- **Authentication Errors**: Clear credential guidance
+- **Validation Errors**: Field-specific error details
+- **Rate Limit Errors**: Automatic retry timing
+- **Network Errors**: Connection and timeout handling
 
 ## 🐛 Troubleshooting
 
 ### Common Issues
 
 **Authentication Errors:**
-- Verify Cakemail username and password
+- Verify `CAKEMAIL_USERNAME` and `CAKEMAIL_PASSWORD`
 - Ensure API access is enabled on your account
-- Check environment variable names
 
 **Build Errors:**
 ```bash
 npm run clean && npm run rebuild
 ```
 
-**Tool Discovery Issues:**
-```bash
-npm run inspector
-# Check that all tools are listed correctly
-```
+**New Tools Not Showing:**
+- Restart Claude Desktop completely
+- Wait for full load, then test new commands
 
 **API Connectivity:**
 ```bash
-# Test health check in Claude Desktop
+# Test in Claude Desktop
 "Check my Cakemail API connection"
 ```
 
 ### Debug Mode
-
-Enable detailed logging:
-
 ```bash
 DEBUG=mcp:* npm start
 ```
 
-### Getting Help
+## 📝 Recent Changes
 
-1. **Check the health status**: Use `cakemail_health_check` tool
-2. **Review error messages**: API errors now include detailed descriptions
-3. **Test with MCP Inspector**: Use `npm run inspector` for debugging
-4. **Check API limits**: Ensure you're within rate limits and pagination bounds
+### Version 1.2.0
+- ✅ Enhanced UX with latest-first default sorting
+- ✅ New `cakemail_get_latest_campaign` tool
+- ✅ Intelligent campaign formatting with analytics
+- ✅ Production-ready retry and rate limiting
+- ✅ Comprehensive error handling
 
-## 📚 Documentation
-
-- **API Reference**: https://cakemail.dev
-- **MCP Protocol**: https://github.com/modelcontextprotocol
-- **Migration Guide**: See CHANGELOG.md for detailed migration instructions
+### Version 1.1.0
+- ✅ Full API compliance with official documentation
+- ✅ 30+ tools for complete Cakemail functionality
+- ✅ Enhanced security with OAuth 2.0 refresh tokens
+- ✅ Advanced analytics and automation workflows
 
 ## 🔐 Security
 
 - **OAuth 2.0** authentication with automatic token refresh
 - **Input validation** to prevent injection attacks
 - **Secure credential storage** using environment variables
-- **Canadian data hosting** with privacy law compliance
+- **Rate limiting** to prevent abuse
 - **HTTPS-only** API communication
 
-## 🤝 Contributing
+## 📚 Support
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Add tests if applicable
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+- **Cakemail API**: https://cakemail.dev
+- **MCP Protocol**: https://github.com/modelcontextprotocol
+- **Issues**: https://github.com/zoyth/cakemail-mcp-server/issues
 
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Support
-
-For Cakemail API questions: https://cakemail.dev  
-For MCP protocol questions: https://github.com/modelcontextprotocol  
-For issues with this server: https://github.com/zoyth/cakemail-mcp-server/issues
-
-## 🎉 Acknowledgments
-
-- **Cakemail Team** for providing comprehensive API documentation
-- **Anthropic** for the Model Context Protocol
-- **Community Contributors** for feedback and improvements
 
 ---
 

@@ -1,7 +1,7 @@
 // Main Cakemail API client that composes all sub-APIs
 
 import { CakemailConfig } from './types/cakemail-types.js';
-import { BaseApiClient } from './api/base-client.js';
+import { BaseApiClient, EnhancedCakemailConfig } from './api/base-client.js';
 import { CampaignApi } from './api/campaign-api.js';
 import { ContactApi } from './api/contact-api.js';
 import { SenderApi } from './api/sender-api.js';
@@ -21,7 +21,7 @@ export class CakemailAPI extends BaseApiClient {
   public automations: AutomationApi;
   public account: AccountApi;
 
-  constructor(config: CakemailConfig) {
+  constructor(config: CakemailConfig | EnhancedCakemailConfig) {
     super(config);
     
     // Initialize all sub-APIs with the same config
@@ -218,7 +218,8 @@ export class CakemailAPI extends BaseApiClient {
 // Export everything for convenience
 export * from './types/cakemail-types.js';
 export * from './types/errors.js';
-export { BaseApiClient } from './api/base-client.js';
+export * from './types/retry.js';
+export { BaseApiClient, EnhancedCakemailConfig } from './api/base-client.js';
 export { CampaignApi } from './api/campaign-api.js';
 export { ContactApi } from './api/contact-api.js';
 export { SenderApi } from './api/sender-api.js';

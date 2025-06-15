@@ -78,3 +78,6 @@ Desktop.ini
 # Temporary folders
 tmp/
 temp/
+
+# Archive directory for old documentation
+archive/

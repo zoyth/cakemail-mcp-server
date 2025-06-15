@@ -663,6 +663,50 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
 
+      // Rate Limiting & Retry Management
+      {
+        name: 'cakemail_get_retry_config',
+        description: 'Get current retry configuration',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+          required: [],
+        },
+      },
+      {
+        name: 'cakemail_update_retry_config',
+        description: 'Update retry configuration',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            maxRetries: { type: 'number', description: 'Maximum number of retries', minimum: 0, maximum: 10 },
+            baseDelay: { type: 'number', description: 'Base delay in milliseconds', minimum: 100 },
+            maxDelay: { type: 'number', description: 'Maximum delay in milliseconds', minimum: 1000 },
+            exponentialBase: { type: 'number', description: 'Exponential backoff base', minimum: 1.1, maximum: 5 },
+            jitter: { type: 'boolean', description: 'Enable jitter to avoid thundering herd' },
+          },
+          required: [],
+        },
+      },
+      {
+        name: 'cakemail_get_circuit_breaker_status',
+        description: 'Get circuit breaker status and statistics',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+          required: [],
+        },
+      },
+      {
+        name: 'cakemail_get_request_queue_stats',
+        description: 'Get request queue statistics',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+          required: [],
+        },
+      },
+
       // Automation
       {
         name: 'cakemail_get_automations',
@@ -1570,6 +1614,116 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: `Account converted to organization: ${JSON.stringify(account, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      // Rate Limiting & Retry Management
+      case 'cakemail_get_retry_config': {
+        const config = api.getRetryConfig();
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🔄 **Current Retry Configuration**\n\n` +
+                    `• Max Retries: ${config.maxRetries}\n` +
+                    `• Base Delay: ${config.baseDelay}ms\n` +
+                    `• Max Delay: ${config.maxDelay}ms\n` +
+                    `• Exponential Base: ${config.exponentialBase}\n` +
+                    `• Jitter Enabled: ${config.jitter ? 'Yes' : 'No'}\n` +
+                    `• Retryable Status Codes: ${config.retryableStatusCodes.join(', ')}\n` +
+                    `• Retryable Errors: ${config.retryableErrors.join(', ')}\n\n` +
+                    `**Raw Config:**\n\`\`\`json\n${JSON.stringify(config, null, 2)}\n\`\`\``,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_update_retry_config': {
+        const { maxRetries, baseDelay, maxDelay, exponentialBase, jitter } = args as {
+          maxRetries?: number;
+          baseDelay?: number;
+          maxDelay?: number;
+          exponentialBase?: number;
+          jitter?: boolean;
+        };
+        
+        const updateData: any = {};
+        if (maxRetries !== undefined) updateData.maxRetries = maxRetries;
+        if (baseDelay !== undefined) updateData.baseDelay = baseDelay;
+        if (maxDelay !== undefined) updateData.maxDelay = maxDelay;
+        if (exponentialBase !== undefined) updateData.exponentialBase = exponentialBase;
+        if (jitter !== undefined) updateData.jitter = jitter;
+        
+        api.updateRetryConfig(updateData);
+        const newConfig = api.getRetryConfig();
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `✅ **Retry Configuration Updated**\n\n` +
+                    `Updated settings:\n${JSON.stringify(updateData, null, 2)}\n\n` +
+                    `New configuration:\n${JSON.stringify(newConfig, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_circuit_breaker_status': {
+        const status = api.getCircuitBreakerState();
+        
+        if (!status) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `⚪ **Circuit Breaker Status**\n\nCircuit breaker is **disabled** for this API instance.`,
+              },
+            ],
+          };
+        }
+        
+        const stateEmoji = {
+          'CLOSED': '🟢',
+          'OPEN': '🔴',
+          'HALF_OPEN': '🟡'
+        }[status.state] || '⚪';
+        
+        const lastFailureText = status.lastFailureTime > 0 
+          ? new Date(status.lastFailureTime).toLocaleString()
+          : 'Never';
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `${stateEmoji} **Circuit Breaker Status**\n\n` +
+                    `• State: **${status.state}**\n` +
+                    `• Failures: ${status.failures}\n` +
+                    `• Last Failure: ${lastFailureText}\n\n` +
+                    `**State Meanings:**\n` +
+                    `🟢 CLOSED: Normal operation\n` +
+                    `🟡 HALF_OPEN: Testing if service recovered\n` +
+                    `🔴 OPEN: Service unavailable, blocking requests`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_request_queue_stats': {
+        const stats = api.getRequestQueueStats();
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📊 **Request Queue Statistics**\n\n` +
+                    `• Active Requests: ${stats.active}\n` +
+                    `• Queued Requests: ${stats.queued}\n` +
+                    `• Total Load: ${stats.active + stats.queued}\n\n` +
+                    `${stats.queued > 0 ? '⚠️  Requests are being queued due to concurrency limits' : '✅ All requests processing normally'}`,
             },
           ],
         };
