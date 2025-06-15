@@ -14,7 +14,7 @@ export interface CakemailToken {
   refresh_token: string;
 }
 
-export interface CakemailError {
+export interface CakemailErrorResponse {
   error: string;
   error_description?: string;
   message?: string;

@@ -217,6 +217,7 @@ export class CakemailAPI extends BaseApiClient {
 
 // Export everything for convenience
 export * from './types/cakemail-types.js';
+export * from './types/errors.js';
 export { BaseApiClient } from './api/base-client.js';
 export { CampaignApi } from './api/campaign-api.js';
 export { ContactApi } from './api/contact-api.js';
