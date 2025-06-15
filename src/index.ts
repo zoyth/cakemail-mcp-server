@@ -9,7 +9,7 @@ import { CakemailAPI } from './cakemail-api.js';
 const server = new Server(
   {
     name: 'cakemail-mcp-server',
-    version: '1.0.0',
+    version: '1.1.0',
   },
   {
     capabilities: {
@@ -36,10 +36,33 @@ function getErrorMessage(error: unknown): string {
   return String(error);
 }
 
-// List tools handler
+// Enhanced validation helpers
+function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+function validateDate(date: string): boolean {
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  return dateRegex.test(date);
+}
+
+// List tools handler with expanded functionality
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
+      // Health Check
+      {
+        name: 'cakemail_health_check',
+        description: 'Check API connection and authentication status',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+          required: [],
+        },
+      },
+      
+      // Sender Management
       {
         name: 'cakemail_get_senders',
         description: 'Get list of verified senders',
@@ -63,6 +86,44 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: 'cakemail_get_sender',
+        description: 'Get details of a specific sender',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            sender_id: { type: 'string', description: 'Sender ID to retrieve' },
+          },
+          required: ['sender_id'],
+        },
+      },
+      {
+        name: 'cakemail_update_sender',
+        description: 'Update an existing sender',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            sender_id: { type: 'string', description: 'Sender ID to update' },
+            name: { type: 'string', description: 'Sender name' },
+            email: { type: 'string', description: 'Sender email address' },
+            language: { type: 'string', description: 'Sender language' },
+          },
+          required: ['sender_id'],
+        },
+      },
+      {
+        name: 'cakemail_delete_sender',
+        description: 'Delete a sender',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            sender_id: { type: 'string', description: 'Sender ID to delete' },
+          },
+          required: ['sender_id'],
+        },
+      },
+
+      // List Management
+      {
         name: 'cakemail_get_lists',
         description: 'Get contact lists',
         inputSchema: {
@@ -70,6 +131,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             page: { type: 'number', description: 'Page number for pagination' },
             per_page: { type: 'number', description: 'Number of lists per page' },
+            sort: { type: 'string', enum: ['name', 'created_on'], description: 'Sort field' },
+            order: { type: 'string', enum: ['asc', 'desc'], description: 'Sort direction' },
           },
           required: [],
         },
@@ -87,6 +150,44 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['name'],
         },
       },
+      {
+        name: 'cakemail_get_list',
+        description: 'Get details of a specific list',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            list_id: { type: 'string', description: 'List ID to retrieve' },
+          },
+          required: ['list_id'],
+        },
+      },
+      {
+        name: 'cakemail_update_list',
+        description: 'Update an existing list',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            list_id: { type: 'string', description: 'List ID to update' },
+            name: { type: 'string', description: 'List name' },
+            description: { type: 'string', description: 'List description' },
+            language: { type: 'string', description: 'List language' },
+          },
+          required: ['list_id'],
+        },
+      },
+      {
+        name: 'cakemail_delete_list',
+        description: 'Delete a contact list',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            list_id: { type: 'string', description: 'List ID to delete' },
+          },
+          required: ['list_id'],
+        },
+      },
+
+      // Contact Management
       {
         name: 'cakemail_get_contacts',
         description: 'Get contacts from lists',
@@ -116,6 +217,45 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: 'cakemail_get_contact',
+        description: 'Get details of a specific contact',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            contact_id: { type: 'string', description: 'Contact ID to retrieve' },
+          },
+          required: ['contact_id'],
+        },
+      },
+      {
+        name: 'cakemail_update_contact',
+        description: 'Update an existing contact',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            contact_id: { type: 'string', description: 'Contact ID to update' },
+            email: { type: 'string', description: 'Contact email address' },
+            first_name: { type: 'string', description: 'Contact first name' },
+            last_name: { type: 'string', description: 'Contact last name' },
+            custom_fields: { type: 'object', description: 'Custom field data' },
+          },
+          required: ['contact_id'],
+        },
+      },
+      {
+        name: 'cakemail_delete_contact',
+        description: 'Delete a contact',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            contact_id: { type: 'string', description: 'Contact ID to delete' },
+          },
+          required: ['contact_id'],
+        },
+      },
+
+      // Transactional Email
+      {
         name: 'cakemail_send_transactional_email',
         description: 'Send a transactional email',
         inputSchema: {
@@ -132,6 +272,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['to_email', 'sender_id', 'subject', 'html_content'],
         },
       },
+
+      // Campaign Management
       {
         name: 'cakemail_get_campaigns',
         description: 'Get list of campaigns with filtering and sorting',
@@ -139,13 +281,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           type: 'object',
           properties: {
             page: { type: 'number', description: 'Page number for pagination' },
-            per_page: { type: 'number', description: 'Number of campaigns per page (max 50)' },
+            per_page: { type: 'number', description: 'Number of campaigns per page (max 50)', maximum: 50 },
             sort: { type: 'string', enum: ['name', 'created_on'], description: 'Sort field' },
             order: { type: 'string', enum: ['asc', 'desc'], description: 'Sort direction' },
             status: { type: 'string', enum: ['incomplete', 'draft', 'scheduled', 'sending', 'sent', 'archived'], description: 'Filter by campaign status' },
             name: { type: 'string', description: 'Filter campaigns by name (partial match)' },
-            created_after: { type: 'string', description: 'Filter campaigns created after date (YYYY-MM-DD)' },
-            created_before: { type: 'string', description: 'Filter campaigns created before date (YYYY-MM-DD)' },
+            created_after: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Filter campaigns created after date (YYYY-MM-DD)' },
+            created_before: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Filter campaigns created before date (YYYY-MM-DD)' },
             with_count: { type: 'boolean', description: 'Include total count in response' }
           },
           required: [],
@@ -167,17 +309,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             reply_to: { type: 'string', description: 'Reply-to email address' },
           },
           required: ['name', 'subject', 'html_content', 'list_id', 'sender_id'],
-        },
-      },
-      {
-        name: 'cakemail_send_campaign',
-        description: 'Send an existing campaign',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            campaign_id: { type: 'string', description: 'Campaign ID to send' },
-          },
-          required: ['campaign_id'],
         },
       },
       {
@@ -209,6 +340,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: 'cakemail_send_campaign',
+        description: 'Send an existing campaign',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            campaign_id: { type: 'string', description: 'Campaign ID to send' },
+          },
+          required: ['campaign_id'],
+        },
+      },
+      {
         name: 'cakemail_delete_campaign',
         description: 'Delete a draft campaign',
         inputSchema: {
@@ -217,6 +359,183 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             campaign_id: { type: 'string', description: 'Campaign ID to delete' },
           },
           required: ['campaign_id'],
+        },
+      },
+
+      // Template Management
+      {
+        name: 'cakemail_get_templates',
+        description: 'Get list of email templates',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            page: { type: 'number', description: 'Page number for pagination' },
+            per_page: { type: 'number', description: 'Number of templates per page' },
+          },
+          required: [],
+        },
+      },
+      {
+        name: 'cakemail_get_template',
+        description: 'Get details of a specific template',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            template_id: { type: 'string', description: 'Template ID to retrieve' },
+          },
+          required: ['template_id'],
+        },
+      },
+      {
+        name: 'cakemail_create_template',
+        description: 'Create a new email template',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Template name' },
+            subject: { type: 'string', description: 'Template subject' },
+            html_content: { type: 'string', description: 'HTML template content' },
+            text_content: { type: 'string', description: 'Plain text template content' },
+            description: { type: 'string', description: 'Template description' },
+          },
+          required: ['name', 'html_content'],
+        },
+      },
+      {
+        name: 'cakemail_update_template',
+        description: 'Update an existing template',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            template_id: { type: 'string', description: 'Template ID to update' },
+            name: { type: 'string', description: 'Template name' },
+            subject: { type: 'string', description: 'Template subject' },
+            html_content: { type: 'string', description: 'HTML template content' },
+            text_content: { type: 'string', description: 'Plain text template content' },
+            description: { type: 'string', description: 'Template description' },
+          },
+          required: ['template_id'],
+        },
+      },
+      {
+        name: 'cakemail_delete_template',
+        description: 'Delete a template',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            template_id: { type: 'string', description: 'Template ID to delete' },
+          },
+          required: ['template_id'],
+        },
+      },
+
+      // Analytics
+      {
+        name: 'cakemail_get_campaign_analytics',
+        description: 'Get analytics for a specific campaign',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            campaign_id: { type: 'string', description: 'Campaign ID to get analytics for' },
+          },
+          required: ['campaign_id'],
+        },
+      },
+      {
+        name: 'cakemail_get_transactional_analytics',
+        description: 'Get transactional email analytics',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            start_date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Start date (YYYY-MM-DD)' },
+            end_date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'End date (YYYY-MM-DD)' },
+          },
+          required: [],
+        },
+      },
+      {
+        name: 'cakemail_get_list_analytics',
+        description: 'Get analytics for a specific list',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            list_id: { type: 'string', description: 'List ID to get analytics for' },
+          },
+          required: ['list_id'],
+        },
+      },
+      {
+        name: 'cakemail_get_account_analytics',
+        description: 'Get account-wide analytics',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            start_date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Start date (YYYY-MM-DD)' },
+            end_date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'End date (YYYY-MM-DD)' },
+          },
+          required: [],
+        },
+      },
+
+      // Automation
+      {
+        name: 'cakemail_get_automations',
+        description: 'Get list of automation workflows',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            page: { type: 'number', description: 'Page number for pagination' },
+            per_page: { type: 'number', description: 'Number of automations per page' },
+            status: { type: 'string', enum: ['active', 'inactive', 'draft'], description: 'Filter by status' },
+          },
+          required: [],
+        },
+      },
+      {
+        name: 'cakemail_get_automation',
+        description: 'Get details of a specific automation',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            automation_id: { type: 'string', description: 'Automation ID to retrieve' },
+          },
+          required: ['automation_id'],
+        },
+      },
+      {
+        name: 'cakemail_create_automation',
+        description: 'Create a new automation workflow',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Automation name' },
+            description: { type: 'string', description: 'Automation description' },
+            trigger: { type: 'object', description: 'Automation trigger configuration' },
+            actions: { type: 'array', description: 'Array of automation actions' },
+          },
+          required: ['name', 'trigger', 'actions'],
+        },
+      },
+      {
+        name: 'cakemail_start_automation',
+        description: 'Start an automation workflow',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            automation_id: { type: 'string', description: 'Automation ID to start' },
+          },
+          required: ['automation_id'],
+        },
+      },
+      {
+        name: 'cakemail_stop_automation',
+        description: 'Stop an automation workflow',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            automation_id: { type: 'string', description: 'Automation ID to stop' },
+          },
+          required: ['automation_id'],
         },
       },
     ],
@@ -229,6 +548,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
+      case 'cakemail_health_check': {
+        const health = await api.healthCheck();
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Health Status: ${JSON.stringify(health, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      // Sender Management
       case 'cakemail_get_senders': {
         const senders = await api.getSenders();
         return {
@@ -247,6 +579,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           email: string;
           language?: string;
         };
+        
+        if (!validateEmail(email)) {
+          throw new Error('Invalid email format');
+        }
+        
         const sender = await api.createSender({
           name: senderName,
           email,
@@ -262,14 +599,67 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      case 'cakemail_get_sender': {
+        const { sender_id } = args as { sender_id: string };
+        const sender = await api.getSender(sender_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Sender details: ${JSON.stringify(sender, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_update_sender': {
+        const { sender_id, name: senderName, email, language } = args as {
+          sender_id: string;
+          name?: string;
+          email?: string;
+          language?: string;
+        };
+        
+        if (email && !validateEmail(email)) {
+          throw new Error('Invalid email format');
+        }
+        
+        const updateData: any = {};
+        if (senderName) updateData.name = senderName;
+        if (email) updateData.email = email;
+        if (language) updateData.language = language;
+        
+        const sender = await api.updateSender(sender_id, updateData);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Sender updated successfully: ${JSON.stringify(sender, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_delete_sender': {
+        const { sender_id } = args as { sender_id: string };
+        await api.deleteSender(sender_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Sender ${sender_id} deleted successfully`,
+            },
+          ],
+        };
+      }
+
+      // List Management
       case 'cakemail_get_lists': {
-        const { page, per_page, sort, order, status, name } = args as { 
+        const { page, per_page, sort, order } = args as { 
           page?: number; 
           per_page?: number; 
           sort?: string; 
           order?: string; 
-          status?: string; 
-          name?: string; 
         };
         
         const params: any = {};
@@ -277,8 +667,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (per_page) params.per_page = per_page;
         if (sort) params.sort = sort;
         if (order) params.order = order;
-        if (status) params.status = status;
-        if (name) params.name = name;
         
         const lists = await api.getLists(params);
         
@@ -319,6 +707,57 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      case 'cakemail_get_list': {
+        const { list_id } = args as { list_id: string };
+        const list = await api.getList(list_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `List details: ${JSON.stringify(list, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_update_list': {
+        const { list_id, name: listName, description, language } = args as {
+          list_id: string;
+          name?: string;
+          description?: string;
+          language?: string;
+        };
+        
+        const updateData: any = {};
+        if (listName) updateData.name = listName;
+        if (description) updateData.description = description;
+        if (language) updateData.language = language;
+        
+        const list = await api.updateList(list_id, updateData);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `List updated successfully: ${JSON.stringify(list, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_delete_list': {
+        const { list_id } = args as { list_id: string };
+        await api.deleteList(list_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `List ${list_id} deleted successfully`,
+            },
+          ],
+        };
+      }
+
+      // Contact Management
       case 'cakemail_get_contacts': {
         const { list_id, page, per_page } = args as {
           list_id?: string;
@@ -349,6 +788,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           list_id: string;
           custom_fields?: any;
         };
+        
+        if (!validateEmail(email)) {
+          throw new Error('Invalid email format');
+        }
+        
         const contact = await api.createContact({
           email,
           first_name,
@@ -366,6 +810,63 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      case 'cakemail_get_contact': {
+        const { contact_id } = args as { contact_id: string };
+        const contact = await api.getContact(contact_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Contact details: ${JSON.stringify(contact, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_update_contact': {
+        const { contact_id, email, first_name, last_name, custom_fields } = args as {
+          contact_id: string;
+          email?: string;
+          first_name?: string;
+          last_name?: string;
+          custom_fields?: any;
+        };
+        
+        if (email && !validateEmail(email)) {
+          throw new Error('Invalid email format');
+        }
+        
+        const updateData: any = {};
+        if (email) updateData.email = email;
+        if (first_name) updateData.first_name = first_name;
+        if (last_name) updateData.last_name = last_name;
+        if (custom_fields) updateData.custom_fields = custom_fields;
+        
+        const contact = await api.updateContact(contact_id, updateData);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Contact updated successfully: ${JSON.stringify(contact, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_delete_contact': {
+        const { contact_id } = args as { contact_id: string };
+        await api.deleteContact(contact_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Contact ${contact_id} deleted successfully`,
+            },
+          ],
+        };
+      }
+
+      // Transactional Email
       case 'cakemail_send_transactional_email': {
         const { to_email, to_name, sender_id, subject, html_content, text_content, template_id } = args as {
           to_email: string;
@@ -376,19 +877,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           text_content?: string;
           template_id?: string;
         };
+        
+        if (!validateEmail(to_email)) {
+          throw new Error('Invalid recipient email format');
+        }
+        
         const email = await api.sendTransactionalEmail({
-          email: {
-            email: to_email,
-            name: to_name,
-            sender: sender_id,
-            content: {
-              subject,
-              html: html_content,
-              text: text_content,
-              encoding: 'utf-8',
-            },
-            template_id,
-          },
+          to_email,
+          to_name,
+          sender_id,
+          subject,
+          html_content,
+          text_content,
+          template_id,
         });
         return {
           content: [
@@ -400,6 +901,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      // Campaign Management
       case 'cakemail_get_campaigns': {
         const { 
           page, 
@@ -423,6 +925,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           with_count?: boolean; 
         };
         
+        // Validate date formats
+        if (created_after && !validateDate(created_after)) {
+          throw new Error('created_after must be in YYYY-MM-DD format');
+        }
+        if (created_before && !validateDate(created_before)) {
+          throw new Error('created_before must be in YYYY-MM-DD format');
+        }
+        
         const params: any = {};
         if (page) params.page = page;
         if (per_page) params.per_page = per_page;
@@ -436,7 +946,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         
         const campaigns = await api.getCampaigns(params);
         
-        // Enhanced response with filtering info
         let responseText = `Found ${campaigns.data?.length || 0} campaigns`;
         if (campaigns.pagination?.count) {
           responseText += ` (${campaigns.pagination.count} total)`;
@@ -477,6 +986,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           reply_to?: string;
         };
         
+        if (reply_to && !validateEmail(reply_to)) {
+          throw new Error('Invalid reply_to email format');
+        }
+        
         const campaignData = {
           name: campaignName,
           subject,
@@ -490,20 +1003,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         
         const campaign = await api.createCampaign(campaignData);
         
-        // Get the created campaign details for verification
         const campaignDetails = campaign.data || campaign;
-        const content = campaignDetails.content || {};
-        const audience = campaignDetails.audience || {};
-        const sender = campaignDetails.sender || {};
-        
         const verification = [
           `✅ Campaign ID: ${campaignDetails.id}`,
           `✅ Name: ${campaignDetails.name}`,
-          `✅ Subject: ${content.subject || 'NULL'}`,
-          `✅ HTML Content: ${content.html ? 'SAVED' : 'NULL'}`,
-          `✅ Text Content: ${content.text ? 'SAVED' : 'NULL'}`,
-          `✅ List ID: ${audience.list_id || 'NULL'}`,
-          `✅ Sender: ${sender.name || 'NULL'}`,
+          `✅ Subject: ${campaignDetails.subject || 'SAVED'}`,
+          `✅ HTML Content: ${campaignDetails.html_content ? 'SAVED' : 'NULL'}`,
+          `✅ Text Content: ${campaignDetails.text_content ? 'SAVED' : 'NULL'}`,
+          `✅ List ID: ${campaignDetails.list_id || 'NULL'}`,
+          `✅ Sender ID: ${campaignDetails.sender_id || 'NULL'}`,
           `✅ Status: ${campaignDetails.status || 'NULL'}`
         ].join('\n');
         
@@ -512,19 +1020,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: `Draft campaign created successfully!\n\n${verification}\n\nFull response: ${JSON.stringify(campaign, null, 2)}`,
-            },
-          ],
-        };
-      }
-
-      case 'cakemail_send_campaign': {
-        const { campaign_id } = args as { campaign_id: string };
-        const result = await api.sendCampaign(campaign_id);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Campaign sent successfully: ${JSON.stringify(result, null, 2)}`,
             },
           ],
         };
@@ -562,6 +1057,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           reply_to?: string;
         };
         
+        if (reply_to && !validateEmail(reply_to)) {
+          throw new Error('Invalid reply_to email format');
+        }
+        
         const updateData: any = {};
         if (campaignName) updateData.name = campaignName;
         if (subject) updateData.subject = subject;
@@ -581,6 +1080,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      case 'cakemail_send_campaign': {
+        const { campaign_id } = args as { campaign_id: string };
+        const result = await api.sendCampaign(campaign_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Campaign sent successfully: ${JSON.stringify(result, null, 2)}`,
+            },
+          ],
+        };
+      }
+
       case 'cakemail_delete_campaign': {
         const { campaign_id } = args as { campaign_id: string };
         await api.deleteCampaign(campaign_id);
@@ -589,6 +1101,263 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: `Campaign ${campaign_id} deleted successfully`,
+            },
+          ],
+        };
+      }
+
+      // Template Management
+      case 'cakemail_get_templates': {
+        const { page, per_page } = args as { page?: number; per_page?: number };
+        const params: any = {};
+        if (page) params.page = page;
+        if (per_page) params.per_page = per_page;
+        
+        const templates = await api.getTemplates(params);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Templates: ${JSON.stringify(templates, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_template': {
+        const { template_id } = args as { template_id: string };
+        const template = await api.getTemplate(template_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Template details: ${JSON.stringify(template, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_create_template': {
+        const { name, subject, html_content, text_content, description } = args as {
+          name: string;
+          subject?: string;
+          html_content: string;
+          text_content?: string;
+          description?: string;
+        };
+        
+        const template = await api.createTemplate({
+          name,
+          subject,
+          html_content,
+          text_content,
+          description,
+        });
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Template created successfully: ${JSON.stringify(template, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_update_template': {
+        const { template_id, name, subject, html_content, text_content, description } = args as {
+          template_id: string;
+          name?: string;
+          subject?: string;
+          html_content?: string;
+          text_content?: string;
+          description?: string;
+        };
+        
+        const updateData: any = {};
+        if (name) updateData.name = name;
+        if (subject) updateData.subject = subject;
+        if (html_content) updateData.html_content = html_content;
+        if (text_content) updateData.text_content = text_content;
+        if (description) updateData.description = description;
+        
+        const template = await api.updateTemplate(template_id, updateData);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Template updated successfully: ${JSON.stringify(template, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_delete_template': {
+        const { template_id } = args as { template_id: string };
+        await api.deleteTemplate(template_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Template ${template_id} deleted successfully`,
+            },
+          ],
+        };
+      }
+
+      // Analytics
+      case 'cakemail_get_campaign_analytics': {
+        const { campaign_id } = args as { campaign_id: string };
+        const analytics = await api.getCampaignAnalytics(campaign_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Campaign analytics: ${JSON.stringify(analytics, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_transactional_analytics': {
+        const { start_date, end_date } = args as { start_date?: string; end_date?: string };
+        
+        if (start_date && !validateDate(start_date)) {
+          throw new Error('start_date must be in YYYY-MM-DD format');
+        }
+        if (end_date && !validateDate(end_date)) {
+          throw new Error('end_date must be in YYYY-MM-DD format');
+        }
+        
+        const params: any = {};
+        if (start_date) params.start_date = start_date;
+        if (end_date) params.end_date = end_date;
+        
+        const analytics = await api.getTransactionalAnalytics(params);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Transactional analytics: ${JSON.stringify(analytics, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_list_analytics': {
+        const { list_id } = args as { list_id: string };
+        const analytics = await api.getListAnalytics(list_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `List analytics: ${JSON.stringify(analytics, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_account_analytics': {
+        const { start_date, end_date } = args as { start_date?: string; end_date?: string };
+        
+        if (start_date && !validateDate(start_date)) {
+          throw new Error('start_date must be in YYYY-MM-DD format');
+        }
+        if (end_date && !validateDate(end_date)) {
+          throw new Error('end_date must be in YYYY-MM-DD format');
+        }
+        
+        const params: any = {};
+        if (start_date) params.start_date = start_date;
+        if (end_date) params.end_date = end_date;
+        
+        const analytics = await api.getAccountAnalytics(params);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Account analytics: ${JSON.stringify(analytics, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      // Automation
+      case 'cakemail_get_automations': {
+        const { page, per_page, status } = args as { page?: number; per_page?: number; status?: string };
+        const params: any = {};
+        if (page) params.page = page;
+        if (per_page) params.per_page = per_page;
+        if (status) params.status = status;
+        
+        const automations = await api.getAutomations(params);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Automations: ${JSON.stringify(automations, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_automation': {
+        const { automation_id } = args as { automation_id: string };
+        const automation = await api.getAutomation(automation_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Automation details: ${JSON.stringify(automation, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_create_automation': {
+        const { name, description, trigger, actions } = args as {
+          name: string;
+          description?: string;
+          trigger: any;
+          actions: any[];
+        };
+        
+        const automation = await api.createAutomation({
+          name,
+          description,
+          trigger,
+          actions,
+        });
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Automation created successfully: ${JSON.stringify(automation, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_start_automation': {
+        const { automation_id } = args as { automation_id: string };
+        const result = await api.startAutomation(automation_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Automation started successfully: ${JSON.stringify(result, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_stop_automation': {
+        const { automation_id } = args as { automation_id: string };
+        const result = await api.stopAutomation(automation_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Automation stopped successfully: ${JSON.stringify(result, null, 2)}`,
             },
           ],
         };
