@@ -1,467 +1,228 @@
-import fetch, { RequestInit } from 'node-fetch';
+// Main Cakemail API client that composes all sub-APIs
 
-export interface CakemailConfig {
-  username: string;
-  password: string;
-  baseUrl?: string;
-}
+import { CakemailConfig } from './types/cakemail-types.js';
+import { BaseApiClient } from './api/base-client.js';
+import { CampaignApi } from './api/campaign-api.js';
+import { ContactApi } from './api/contact-api.js';
+import { SenderApi } from './api/sender-api.js';
+import { TemplateApi } from './api/template-api.js';
+import { TransactionalApi } from './api/transactional-api.js';
+import { AnalyticsApi } from './api/analytics-api.js';
+import { AutomationApi } from './api/automation-api.js';
+import { AccountApi } from './api/account-api.js';
 
-export interface CakemailToken {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  refresh_token: string;
-}
-
-export interface CakemailError {
-  error: string;
-  error_description?: string;
-  message?: string;
-}
-
-export class CakemailAPI {
-  private config: CakemailConfig;
-  private token: CakemailToken | null = null;
-  private tokenExpiry: Date | null = null;
-  private baseUrl: string;
+export class CakemailAPI extends BaseApiClient {
+  public campaigns: CampaignApi;
+  public contacts: ContactApi;
+  public senders: SenderApi;
+  public templates: TemplateApi;
+  public transactional: TransactionalApi;
+  public analytics: AnalyticsApi;
+  public automations: AutomationApi;
+  public account: AccountApi;
 
   constructor(config: CakemailConfig) {
-    this.config = config;
-    this.baseUrl = config.baseUrl || 'https://api.cakemail.dev';
-  }
-
-  async authenticate(): Promise<void> {
-    // Try refresh token first if available and not expired
-    if (this.token?.refresh_token && this.tokenExpiry && new Date() < new Date(this.tokenExpiry.getTime() - 300000)) {
-      try {
-        await this.refreshToken();
-        return;
-      } catch (error) {
-        console.warn('Refresh token failed, falling back to password authentication');
-      }
-    }
-
-    // Password authentication
-    const response = await fetch(`${this.baseUrl}/token`, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'content-type': 'application/x-www-form-urlencoded'
-      },
-      body: new URLSearchParams({
-        grant_type: 'password',
-        username: this.config.username,
-        password: this.config.password
-      }).toString()
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      let errorMessage = `Authentication failed (${response.status}): ${response.statusText}`;
-      
-      try {
-        const errorData = JSON.parse(errorBody) as CakemailError;
-        errorMessage += ` - ${errorData.error_description || errorData.message || errorData.error}`;
-      } catch {
-        errorMessage += ` - ${errorBody}`;
-      }
-      
-      throw new Error(errorMessage);
-    }
-
-    const tokenData = await response.json() as CakemailToken;
-    this.token = tokenData;
-    this.tokenExpiry = new Date(Date.now() + (tokenData.expires_in * 1000) - 60000); // 1 minute buffer
-  }
-
-  private async refreshToken(): Promise<void> {
-    if (!this.token?.refresh_token) {
-      throw new Error('No refresh token available');
-    }
-
-    const response = await fetch(`${this.baseUrl}/token`, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'content-type': 'application/x-www-form-urlencoded'
-      },
-      body: new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: this.token.refresh_token
-      }).toString()
-    });
-
-    if (!response.ok) {
-      throw new Error(`Token refresh failed: ${response.statusText}`);
-    }
-
-    const tokenData = await response.json() as CakemailToken;
-    this.token = tokenData;
-    this.tokenExpiry = new Date(Date.now() + (tokenData.expires_in * 1000) - 60000);
-  }
-
-  private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
-    await this.authenticate();
-
-    const headers: Record<string, string> = {
-      'Authorization': `Bearer ${this.token!.access_token}`,
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    };
-
-    if (options.headers) {
-      Object.assign(headers, options.headers);
-    }
-
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      let errorMessage = `API request failed (${response.status}): ${response.statusText}`;
-      
-      try {
-        const errorData = JSON.parse(errorBody) as CakemailError;
-        errorMessage += ` - ${errorData.error_description || errorData.message || errorData.error}`;
-      } catch {
-        if (errorBody) {
-          errorMessage += ` - ${errorBody}`;
-        }
-      }
-      
-      throw new Error(errorMessage);
-    }
-
-    // Handle empty responses (like DELETE operations)
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      return response.json();
-    }
+    super(config);
     
-    return { success: true, status: response.status };
+    // Initialize all sub-APIs with the same config
+    this.campaigns = new CampaignApi(config);
+    this.contacts = new ContactApi(config);
+    this.senders = new SenderApi(config);
+    this.templates = new TemplateApi(config);
+    this.transactional = new TransactionalApi(config);
+    this.analytics = new AnalyticsApi(config);
+    this.automations = new AutomationApi(config);
+    this.account = new AccountApi(config);
   }
 
-  // Campaign API methods - Fixed structure
-  async createCampaign(data: any) {
-    // Use flatter structure that matches API documentation
-    const campaignData: Record<string, any> = {
-      name: data.name,
-      subject: data.subject,
-      html_content: data.html_content,
-      text_content: data.text_content,
-      list_id: data.list_id, // Keep as string - don't parse to int
-      sender_id: data.sender_id,
-      from_name: data.from_name,
-      reply_to: data.reply_to
-    };
-    
-    // Remove undefined fields to keep the request clean
-    Object.keys(campaignData).forEach(key => {
-      if (campaignData[key] === undefined) {
-        delete campaignData[key];
-      }
-    });
-    
-    return this.makeRequest('/campaigns', {
-      method: 'POST',
-      body: JSON.stringify(campaignData)
-    });
-  }
-
+  // Legacy method proxies for backward compatibility
+  
+  // Campaign methods
   async getCampaigns(params?: any) {
-    // Validate pagination limits according to docs
-    if (params?.per_page && params.per_page > 50) {
-      throw new Error('per_page cannot exceed 50 (API limit)');
-    }
-    
-    // Validate date formats
-    if (params?.created_after && !this.isValidDate(params.created_after)) {
-      throw new Error('created_after must be in YYYY-MM-DD format');
-    }
-    if (params?.created_before && !this.isValidDate(params.created_before)) {
-      throw new Error('created_before must be in YYYY-MM-DD format');
-    }
-    
-    const query = params ? `?${new URLSearchParams(params)}` : '';
-    return this.makeRequest(`/campaigns${query}`);
+    return this.campaigns.getCampaigns(params);
+  }
+
+  async getLatestCampaign(status?: string) {
+    return this.campaigns.getLatestCampaign(status);
+  }
+
+  async getCampaignsWithDefaults(params?: any) {
+    return this.campaigns.getCampaignsWithDefaults(params);
   }
 
   async getCampaign(id: string) {
-    return this.makeRequest(`/campaigns/${id}`);
+    return this.campaigns.getCampaign(id);
   }
 
-  async sendCampaign(id: string) {
-    return this.makeRequest(`/campaigns/${id}/send`, { method: 'POST' });
+  async createCampaign(data: any) {
+    return this.campaigns.createCampaign(data);
   }
 
   async updateCampaign(id: string, data: any) {
-    // Use consistent flat structure like create
-    const updateData: Record<string, any> = {
-      name: data.name,
-      subject: data.subject,
-      html_content: data.html_content,
-      text_content: data.text_content,
-      from_name: data.from_name,
-      reply_to: data.reply_to
-    };
-    
-    // Remove undefined fields
-    Object.keys(updateData).forEach(key => {
-      if (updateData[key] === undefined) {
-        delete updateData[key];
-      }
-    });
-    
-    return this.makeRequest(`/campaigns/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(updateData)
-    });
+    return this.campaigns.updateCampaign(id, data);
+  }
+
+  async sendCampaign(id: string) {
+    return this.campaigns.sendCampaign(id);
   }
 
   async deleteCampaign(id: string) {
-    return this.makeRequest(`/campaigns/${id}`, { method: 'DELETE' });
+    return this.campaigns.deleteCampaign(id);
   }
 
-  // Contact API methods
-  async createContact(data: any) {
-    // Validate email format
-    if (!this.isValidEmail(data.email)) {
-      throw new Error('Invalid email format');
-    }
-    
-    return this.makeRequest('/contacts', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
+  async debugCampaignAccess(campaignId?: string) {
+    return this.campaigns.debugCampaignAccess(campaignId);
   }
 
+  // Contact methods
   async getContacts(params?: any) {
-    const query = params ? `?${new URLSearchParams(params)}` : '';
-    return this.makeRequest(`/contacts${query}`);
+    return this.contacts.getContacts(params);
   }
 
-  async getContact(id: string) {
-    return this.makeRequest(`/contacts/${id}`);
+  async createContact(data: any) {
+    return this.contacts.createContact(data);
   }
 
-  async updateContact(id: string, data: any) {
-    // Validate email format if provided
-    if (data.email && !this.isValidEmail(data.email)) {
-      throw new Error('Invalid email format');
-    }
-    
-    return this.makeRequest(`/contacts/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data)
-    });
+  async getContact(contactId: string) {
+    return this.contacts.getContact(contactId);
   }
 
-  async deleteContact(id: string) {
-    return this.makeRequest(`/contacts/${id}`, { method: 'DELETE' });
+  async updateContact(contactId: string, data: any) {
+    return this.contacts.updateContact(contactId, data);
   }
 
-  // List API methods
-  async createList(data: any) {
-    return this.makeRequest('/lists', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
+  async deleteContact(contactId: string) {
+    return this.contacts.deleteContact(contactId);
   }
 
+  // List methods
   async getLists(params?: any) {
-    const query = params ? `?${new URLSearchParams(params)}` : '';
-    return this.makeRequest(`/lists${query}`);
+    return this.contacts.getLists(params);
   }
 
-  async getList(id: string) {
-    return this.makeRequest(`/lists/${id}`);
+  async createList(data: any) {
+    return this.contacts.createList(data);
   }
 
-  async updateList(id: string, data: any) {
-    return this.makeRequest(`/lists/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data)
-    });
+  async getList(listId: string) {
+    return this.contacts.getList(listId);
   }
 
-  async deleteList(id: string) {
-    return this.makeRequest(`/lists/${id}`, { method: 'DELETE' });
+  async updateList(listId: string, data: any) {
+    return this.contacts.updateList(listId, data);
   }
 
-  // Transactional API methods - Fixed structure
-  async sendTransactionalEmail(data: any) {
-    // Use flatter structure based on documentation examples
-    const emailData: Record<string, any> = {
-      to_email: data.to_email,
-      to_name: data.to_name,
-      sender_id: data.sender_id,
-      subject: data.subject,
-      html_content: data.html_content,
-      text_content: data.text_content,
-      template_id: data.template_id
-    };
-    
-    // Remove undefined fields
-    Object.keys(emailData).forEach(key => {
-      if (emailData[key] === undefined) {
-        delete emailData[key];
-      }
-    });
-    
-    // Validate email format
-    if (!this.isValidEmail(emailData.to_email)) {
-      throw new Error('Invalid recipient email format');
-    }
-    
-    return this.makeRequest('/transactional/emails', {
-      method: 'POST',
-      body: JSON.stringify(emailData)
-    });
+  async deleteList(listId: string) {
+    return this.contacts.deleteList(listId);
   }
 
-  // Sender API methods - Enhanced
-  async createSender(data: any) {
-    // Validate email format
-    if (!this.isValidEmail(data.email)) {
-      throw new Error('Invalid sender email format');
-    }
-    
-    return this.makeRequest('/brands/default/senders', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
-  }
-
+  // Sender methods
   async getSenders() {
-    return this.makeRequest('/brands/default/senders');
+    return this.senders.getSenders();
   }
 
-  async getSender(id: string) {
-    return this.makeRequest(`/brands/default/senders/${id}`);
+  async createSender(data: any) {
+    return this.senders.createSender(data);
   }
 
-  async updateSender(id: string, data: any) {
-    if (data.email && !this.isValidEmail(data.email)) {
-      throw new Error('Invalid sender email format');
-    }
-    
-    return this.makeRequest(`/brands/default/senders/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data)
-    });
+  async getSender(senderId: string) {
+    return this.senders.getSender(senderId);
   }
 
-  async deleteSender(id: string) {
-    return this.makeRequest(`/brands/default/senders/${id}`, { method: 'DELETE' });
+  async updateSender(senderId: string, data: any) {
+    return this.senders.updateSender(senderId, data);
   }
 
-  // Template API methods - New functionality
+  async deleteSender(senderId: string) {
+    return this.senders.deleteSender(senderId);
+  }
+
+  // Template methods
   async getTemplates(params?: any) {
-    const query = params ? `?${new URLSearchParams(params)}` : '';
-    return this.makeRequest(`/templates${query}`);
+    return this.templates.getTemplates(params);
   }
 
-  async getTemplate(id: string) {
-    return this.makeRequest(`/templates/${id}`);
+  async getTemplate(templateId: string) {
+    return this.templates.getTemplate(templateId);
   }
 
   async createTemplate(data: any) {
-    return this.makeRequest('/templates', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
+    return this.templates.createTemplate(data);
   }
 
-  async updateTemplate(id: string, data: any) {
-    return this.makeRequest(`/templates/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data)
-    });
+  async updateTemplate(templateId: string, data: any) {
+    return this.templates.updateTemplate(templateId, data);
   }
 
-  async deleteTemplate(id: string) {
-    return this.makeRequest(`/templates/${id}`, { method: 'DELETE' });
+  async deleteTemplate(templateId: string) {
+    return this.templates.deleteTemplate(templateId);
   }
 
-  // Analytics API methods - Enhanced
-  async getCampaignAnalytics(id: string) {
-    return this.makeRequest(`/campaigns/${id}/analytics`);
+  // Transactional methods
+  async sendTransactionalEmail(data: any) {
+    return this.transactional.sendTransactionalEmail(data);
+  }
+
+  // Analytics methods
+  async getCampaignAnalytics(campaignId: string) {
+    return this.analytics.getCampaignAnalytics(campaignId);
   }
 
   async getTransactionalAnalytics(params?: any) {
-    const query = params ? `?${new URLSearchParams(params)}` : '';
-    return this.makeRequest(`/transactional/analytics${query}`);
+    return this.analytics.getTransactionalAnalytics(params);
   }
 
-  async getListAnalytics(id: string) {
-    return this.makeRequest(`/lists/${id}/analytics`);
+  async getListAnalytics(listId: string) {
+    return this.analytics.getListAnalytics(listId);
   }
 
   async getAccountAnalytics(params?: any) {
-    const query = params ? `?${new URLSearchParams(params)}` : '';
-    return this.makeRequest(`/analytics${query}`);
+    return this.analytics.getAccountAnalytics(params);
   }
 
-  // Automation API methods - New functionality
+  // Automation methods
   async getAutomations(params?: any) {
-    const query = params ? `?${new URLSearchParams(params)}` : '';
-    return this.makeRequest(`/automations${query}`);
+    return this.automations.getAutomations(params);
   }
 
-  async getAutomation(id: string) {
-    return this.makeRequest(`/automations/${id}`);
+  async getAutomation(automationId: string) {
+    return this.automations.getAutomation(automationId);
   }
 
   async createAutomation(data: any) {
-    return this.makeRequest('/automations', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
+    return this.automations.createAutomation(data);
   }
 
-  async updateAutomation(id: string, data: any) {
-    return this.makeRequest(`/automations/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data)
-    });
+  async startAutomation(automationId: string) {
+    return this.automations.startAutomation(automationId);
   }
 
-  async deleteAutomation(id: string) {
-    return this.makeRequest(`/automations/${id}`, { method: 'DELETE' });
+  async stopAutomation(automationId: string) {
+    return this.automations.stopAutomation(automationId);
   }
 
-  async startAutomation(id: string) {
-    return this.makeRequest(`/automations/${id}/start`, { method: 'POST' });
+  // Account methods
+  async getSelfAccount() {
+    return this.account.getSelfAccount();
   }
 
-  async stopAutomation(id: string) {
-    return this.makeRequest(`/automations/${id}/stop`, { method: 'POST' });
+  async patchSelfAccount(data: any) {
+    return this.account.patchSelfAccount(data);
   }
 
-  // Utility methods for validation
-  private isValidEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }
-
-  private isValidDate(date: string): boolean {
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(date)) return false;
-    
-    const parsedDate = new Date(date);
-    return parsedDate instanceof Date && !isNaN(parsedDate.getTime());
-  }
-
-  // Health check method
-  async healthCheck() {
-    try {
-      await this.authenticate();
-      return { status: 'healthy', authenticated: true };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return { status: 'unhealthy', error: errorMessage };
-    }
+  async convertSelfAccountToOrganization() {
+    return this.account.convertSelfAccountToOrganization();
   }
 }
+
+// Export everything for convenience
+export * from './types/cakemail-types.js';
+export { BaseApiClient } from './api/base-client.js';
+export { CampaignApi } from './api/campaign-api.js';
+export { ContactApi } from './api/contact-api.js';
+export { SenderApi } from './api/sender-api.js';
+export { TemplateApi } from './api/template-api.js';
+export { TransactionalApi } from './api/transactional-api.js';
+export { AnalyticsApi } from './api/analytics-api.js';
+export { AutomationApi } from './api/automation-api.js';
+export { AccountApi } from './api/account-api.js';

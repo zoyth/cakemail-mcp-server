@@ -1,6 +1,6 @@
 {
   "name": "cakemail-mcp-server",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Enhanced MCP server for Cakemail API integration with Claude AI - fully aligned with official API documentation",
   "type": "module",
   "main": "./build/index.js",

@@ -9,7 +9,7 @@ import { CakemailAPI } from './cakemail-api.js';
 const server = new Server(
   {
     name: 'cakemail-mcp-server',
-    version: '1.1.0',
+    version: '1.2.0',
   },
   {
     capabilities: {
@@ -45,6 +45,56 @@ function validateEmail(email: string): boolean {
 function validateDate(date: string): boolean {
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
   return dateRegex.test(date);
+}
+
+// Helper function to format campaign data intelligently
+function formatCampaignSummary(campaign: any): string {
+  // Fix: Convert Unix timestamp (seconds) to Date by multiplying by 1000
+  const created = campaign.created_on ? new Date(campaign.created_on * 1000).toLocaleString() : 'Unknown';
+  const updated = campaign.updated_on ? new Date(campaign.updated_on * 1000).toLocaleString() : 'Unknown';
+  
+  return [
+    `📧 Campaign: ${campaign.name || 'Unnamed'}`,
+    `🆔 ID: ${campaign.id}`,
+    `📌 Status: ${campaign.status || 'Unknown'}`,
+    `📝 Subject: ${campaign.subject || 'No subject'}`,
+    `📅 Created: ${created}`,
+    `🔄 Updated: ${updated}`,
+    campaign.list_id ? `📋 List ID: ${campaign.list_id}` : '',
+    campaign.sender_id ? `👤 Sender ID: ${campaign.sender_id}` : '',
+  ].filter(Boolean).join('\n');
+}
+
+// Helper function to format campaign analytics
+function formatCampaignAnalytics(analytics: any): string {
+  if (!analytics || typeof analytics !== 'object') {
+    return 'No analytics data available';
+  }
+
+  const sections = [];
+  
+  if (analytics.sent_count !== undefined) {
+    sections.push(`📊 **Delivery Stats:**`);
+    sections.push(`   • Sent: ${analytics.sent_count || 0}`);
+    sections.push(`   • Delivered: ${analytics.delivered_count || 0}`);
+    sections.push(`   • Bounced: ${analytics.bounce_count || 0}`);
+  }
+
+  if (analytics.open_count !== undefined) {
+    sections.push(`\n👀 **Engagement Stats:**`);
+    sections.push(`   • Opens: ${analytics.open_count || 0}`);
+    sections.push(`   • Unique Opens: ${analytics.unique_open_count || 0}`);
+    sections.push(`   • Open Rate: ${analytics.open_rate ? (analytics.open_rate * 100).toFixed(2) + '%' : 'N/A'}`);
+  }
+
+  if (analytics.click_count !== undefined) {
+    sections.push(`\n🖱️ **Click Stats:**`);
+    sections.push(`   • Clicks: ${analytics.click_count || 0}`);
+    sections.push(`   • Unique Clicks: ${analytics.unique_click_count || 0}`);
+    sections.push(`   • Click Rate: ${analytics.click_rate ? (analytics.click_rate * 100).toFixed(2) + '%' : 'N/A'}`);
+  }
+
+  return sections.length > 0 ? sections.join('\n') : 'No analytics data available';
 }
 
 // List tools handler with expanded functionality
@@ -125,14 +175,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // List Management
       {
         name: 'cakemail_get_lists',
-        description: 'Get contact lists',
+        description: 'Get contact lists (defaults to latest first: sort=created_on&order=desc)',
         inputSchema: {
           type: 'object',
           properties: {
             page: { type: 'number', description: 'Page number for pagination' },
             per_page: { type: 'number', description: 'Number of lists per page' },
-            sort: { type: 'string', enum: ['name', 'created_on'], description: 'Sort field' },
-            order: { type: 'string', enum: ['asc', 'desc'], description: 'Sort direction' },
+            sort: { type: 'string', enum: ['name', 'created_on'], description: 'Sort field (defaults to created_on)' },
+            order: { type: 'string', enum: ['asc', 'desc'], description: 'Sort direction (defaults to desc for latest first)' },
           },
           required: [],
         },
@@ -190,7 +240,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // Contact Management
       {
         name: 'cakemail_get_contacts',
-        description: 'Get contacts from lists',
+        description: 'Get contacts from lists (defaults to latest first: sort=created_on&order=desc)',
         inputSchema: {
           type: 'object',
           properties: {
@@ -273,22 +323,34 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
 
-      // Campaign Management
+      // Enhanced Campaign Management
       {
         name: 'cakemail_get_campaigns',
-        description: 'Get list of campaigns with filtering and sorting',
+        description: 'Get list of campaigns with filtering and sorting (defaults to latest first: sort=created_on&order=desc)',
         inputSchema: {
           type: 'object',
           properties: {
             page: { type: 'number', description: 'Page number for pagination' },
             per_page: { type: 'number', description: 'Number of campaigns per page (max 50)', maximum: 50 },
-            sort: { type: 'string', enum: ['name', 'created_on'], description: 'Sort field' },
-            order: { type: 'string', enum: ['asc', 'desc'], description: 'Sort direction' },
+            sort: { type: 'string', enum: ['name', 'created_on'], description: 'Sort field (defaults to created_on)' },
+            order: { type: 'string', enum: ['asc', 'desc'], description: 'Sort direction (defaults to desc for latest first)' },
             status: { type: 'string', enum: ['incomplete', 'draft', 'scheduled', 'sending', 'sent', 'archived'], description: 'Filter by campaign status' },
             name: { type: 'string', description: 'Filter campaigns by name (partial match)' },
             created_after: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Filter campaigns created after date (YYYY-MM-DD)' },
             created_before: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Filter campaigns created before date (YYYY-MM-DD)' },
             with_count: { type: 'boolean', description: 'Include total count in response' }
+          },
+          required: [],
+        },
+      },
+      {
+        name: 'cakemail_get_latest_campaign',
+        description: 'Get the most recently created campaign with intelligent formatting and optional analytics',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            status: { type: 'string', enum: ['incomplete', 'draft', 'scheduled', 'sending', 'sent', 'archived'], description: 'Filter by campaign status' },
+            include_analytics: { type: 'boolean', description: 'Include performance analytics if available' }
           },
           required: [],
         },
@@ -365,7 +427,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // Template Management
       {
         name: 'cakemail_get_templates',
-        description: 'Get list of email templates',
+        description: 'Get list of email templates (defaults to latest first: sort=created_on&order=desc)',
         inputSchema: {
           type: 'object',
           properties: {
@@ -473,6 +535,38 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             start_date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Start date (YYYY-MM-DD)' },
             end_date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'End date (YYYY-MM-DD)' },
           },
+          required: [],
+        },
+      },
+
+      // Account Management
+      {
+        name: 'cakemail_get_self_account',
+        description: 'Get current account details',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+          required: [],
+        },
+      },
+      {
+        name: 'cakemail_patch_self_account',
+        description: 'Update current account details',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Account name' },
+            email: { type: 'string', description: 'Account email' },
+          },
+          required: [],
+        },
+      },
+      {
+        name: 'cakemail_convert_account_to_organization',
+        description: 'Convert current account to an organization',
+        inputSchema: {
+          type: 'object',
+          properties: {},
           required: [],
         },
       },
@@ -653,7 +747,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      // List Management
+      // List Management with default sorting
       case 'cakemail_get_lists': {
         const { page, per_page, sort, order } = args as { 
           page?: number; 
@@ -662,17 +756,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           order?: string; 
         };
         
-        const params: any = {};
+        // Apply intelligent defaults for better UX
+        const params: any = {
+          sort: sort || 'created_on',
+          order: order || 'desc'
+        };
         if (page) params.page = page;
         if (per_page) params.per_page = per_page;
-        if (sort) params.sort = sort;
-        if (order) params.order = order;
         
         const lists = await api.getLists(params);
         
         let responseText = `Found ${lists.data?.length || 0} lists`;
-        if (Object.keys(params).length > 0) {
-          responseText += `\nFilters applied: ${JSON.stringify(params, null, 2)}`;
+        if (lists.pagination?.count) {
+          responseText += ` (${lists.pagination.count} total)`;
+        }
+        responseText += `\nSorted by: ${params.sort} ${params.order}`;
+        if (Object.keys(args || {}).length > 0) {
+          responseText += `\nCustom filters: ${JSON.stringify(args, null, 2)}`;
         }
         responseText += `\n\nLists: ${JSON.stringify(lists, null, 2)}`;
         
@@ -757,13 +857,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      // Contact Management
+      // Contact Management with default sorting
       case 'cakemail_get_contacts': {
         const { list_id, page, per_page } = args as {
           list_id?: string;
           page?: number;
           per_page?: number;
         };
+        
         const params: any = {};
         if (list_id) params.list_id = list_id;
         if (page) params.page = page;
@@ -901,7 +1002,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      // Campaign Management
+      // Enhanced Campaign Management
       case 'cakemail_get_campaigns': {
         const { 
           page, 
@@ -933,28 +1034,79 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error('created_before must be in YYYY-MM-DD format');
         }
         
-        const params: any = {};
+        // Apply intelligent defaults for better UX
+        const params: any = {
+          sort: sort || 'created_on',
+          order: order || 'desc'
+        };
         if (page) params.page = page;
         if (per_page) params.per_page = per_page;
-        if (sort) params.sort = sort;
-        if (order) params.order = order;
         if (status) params.status = status;
         if (name) params.name = name;
         if (created_after) params.created_after = created_after;
         if (created_before) params.created_before = created_before;
         if (with_count) params.with_count = with_count;
         
-        const campaigns = await api.getCampaigns(params);
+        const campaigns = await api.getCampaignsWithDefaults(params);
         
         let responseText = `Found ${campaigns.data?.length || 0} campaigns`;
         if (campaigns.pagination?.count) {
           responseText += ` (${campaigns.pagination.count} total)`;
         }
-        if (Object.keys(params).length > 0) {
-          responseText += `\nFilters applied: ${JSON.stringify(params, null, 2)}`;
+        responseText += `\nSorted by: ${params.sort} ${params.order} (latest first)`;
+        if (Object.keys(args || {}).length > 0) {
+          responseText += `\nCustom filters: ${JSON.stringify(args, null, 2)}`;
         }
         responseText += `\n\nCampaigns: ${JSON.stringify(campaigns, null, 2)}`;
         
+        return {
+          content: [
+            {
+              type: 'text',
+              text: responseText,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_latest_campaign': {
+        const { status, include_analytics } = args as {
+          status?: string;
+          include_analytics?: boolean;
+        };
+
+        // Get the latest campaign using enhanced API method
+        const latestCampaign = await api.getLatestCampaign(status);
+        
+        if (!latestCampaign) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: status 
+                  ? `No campaigns found with status: ${status}`
+                  : 'No campaigns found in your account',
+              },
+            ],
+          };
+        }
+
+        let responseText = `🎯 **Latest Campaign**\n\n${formatCampaignSummary(latestCampaign)}`;
+
+        // Include analytics if requested and campaign is sent
+        if (include_analytics && latestCampaign.status === 'sent') {
+          try {
+            const analytics = await api.getCampaignAnalytics(String(latestCampaign.id));
+            responseText += `\n\n📊 **Performance Analytics**\n${formatCampaignAnalytics(analytics)}`;
+          } catch (error) {
+            responseText += `\n\n📊 **Analytics**: Not available yet (${getErrorMessage(error)})`;
+          }
+        } else if (include_analytics) {
+          responseText += `\n\n📊 **Analytics**: Not available (campaign status: ${latestCampaign.status})`;
+        }
+
+        responseText += `\n\n**Raw Data:**\n${JSON.stringify(latestCampaign, null, 2)}`;
+
         return {
           content: [
             {
@@ -1276,6 +1428,56 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: `Account analytics: ${JSON.stringify(analytics, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      // Account Management
+      case 'cakemail_get_self_account': {
+        const account = await api.getSelfAccount();
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Account details: ${JSON.stringify(account, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_patch_self_account': {
+        const { name, email } = args as {
+          name?: string;
+          email?: string;
+        };
+        
+        if (email && !validateEmail(email)) {
+          throw new Error('Invalid email format');
+        }
+        
+        const updateData: any = {};
+        if (name) updateData.name = name;
+        if (email) updateData.email = email;
+        
+        const account = await api.patchSelfAccount(updateData);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Account updated successfully: ${JSON.stringify(account, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_convert_account_to_organization': {
+        const account = await api.convertSelfAccountToOrganization();
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Account converted to organization: ${JSON.stringify(account, null, 2)}`,
             },
           ],
         };
