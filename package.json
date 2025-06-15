@@ -1,0 +1,63 @@
+{
+  "name": "cakemail-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for Cakemail API integration with Claude AI",
+  "type": "module",
+  "main": "./build/index.js",
+  "bin": {
+    "cakemail-mcp-server": "./build/index.js"
+  },
+  "files": [
+    "build",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc && chmod +x build/index.js",
+    "dev": "tsc --watch",
+    "start": "node build/index.js",
+    "prepare": "npm run build",
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js",
+    "clean": "rm -rf build",
+    "rebuild": "npm run clean && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/cakemail-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/cakemail-mcp-server/issues"
+  },
+  "homepage": "https://github.com/yourusername/cakemail-mcp-server#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.6.0",
+    "dotenv": "^16.5.0",
+    "node-fetch": "^3.3.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "typescript": "^5.3.3"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "cakemail",
+    "email",
+    "email-marketing",
+    "api",
+    "claude",
+    "ai",
+    "automation",
+    "typescript",
+    "nodejs"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "François Lane",
+    "email": "your-email@example.com"
+  }
+}
