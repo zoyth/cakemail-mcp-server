@@ -134,61 +134,6 @@ function validateEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
-function validateDate(date: string): boolean {
-  const dateRegex = /^\\d{4}-\\d{2}-\\d{2}$/;
-  return dateRegex.test(date);
-}
-
-// Helper function to format campaign data intelligently
-function formatCampaignSummary(campaign: any): string {
-  // Fix: Convert Unix timestamp (seconds) to Date by multiplying by 1000
-  const created = campaign.created_on ? new Date(campaign.created_on * 1000).toLocaleString() : 'Unknown';
-  const updated = campaign.updated_on ? new Date(campaign.updated_on * 1000).toLocaleString() : 'Unknown';
-  
-  return [
-    `📧 Campaign: ${campaign.name || 'Unnamed'}`,
-    `🆔 ID: ${campaign.id}`,
-    `📌 Status: ${campaign.status || 'Unknown'}`,
-    `📝 Subject: ${campaign.subject || 'No subject'}`,
-    `📅 Created: ${created}`,
-    `🔄 Updated: ${updated}`,
-    campaign.list_id ? `📋 List ID: ${campaign.list_id}` : '',
-    campaign.sender_id ? `👤 Sender ID: ${campaign.sender_id}` : '',
-  ].filter(Boolean).join('\\n');
-}
-
-// Helper function to format campaign analytics
-function formatCampaignAnalytics(analytics: any): string {
-  if (!analytics || typeof analytics !== 'object') {
-    return 'No analytics data available';
-  }
-
-  const sections = [];
-  
-  if (analytics.sent_count !== undefined) {
-    sections.push(`📊 **Delivery Stats:**`);
-    sections.push(`   • Sent: ${analytics.sent_count || 0}`);
-    sections.push(`   • Delivered: ${analytics.delivered_count || 0}`);
-    sections.push(`   • Bounced: ${analytics.bounce_count || 0}`);
-  }
-
-  if (analytics.open_count !== undefined) {
-    sections.push(`\\n👀 **Engagement Stats:**`);
-    sections.push(`   • Opens: ${analytics.open_count || 0}`);
-    sections.push(`   • Unique Opens: ${analytics.unique_open_count || 0}`);
-    sections.push(`   • Open Rate: ${analytics.open_rate ? (analytics.open_rate * 100).toFixed(2) + '%' : 'N/A'}`);
-  }
-
-  if (analytics.click_count !== undefined) {
-    sections.push(`\\n🖱️ **Click Stats:**`);
-    sections.push(`   • Clicks: ${analytics.click_count || 0}`);
-    sections.push(`   • Unique Clicks: ${analytics.unique_click_count || 0}`);
-    sections.push(`   • Click Rate: ${analytics.click_rate ? (analytics.click_rate * 100).toFixed(2) + '%' : 'N/A'}`);
-  }
-
-  return sections.length > 0 ? sections.join('\\n') : 'No analytics data available';
-}
-
 // List tools handler with expanded functionality
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
