@@ -6,7 +6,7 @@ import { CampaignApi } from './api/campaign-api.js';
 import { ContactApi } from './api/contact-api.js';
 import { SenderApi } from './api/sender-api.js';
 import { TemplateApi } from './api/template-api.js';
-import { TransactionalApi } from './api/transactional-api.js';
+import { EmailApi } from './api/email-api.js';
 import { AnalyticsApi } from './api/analytics-api.js';
 import { AutomationApi } from './api/automation-api.js';
 import { AccountApi } from './api/account-api.js';
@@ -16,10 +16,15 @@ export class CakemailAPI extends BaseApiClient {
   public contacts: ContactApi;
   public senders: SenderApi;
   public templates: TemplateApi;
-  public transactional: TransactionalApi;
+  public email: EmailApi;
   public analytics: AnalyticsApi;
   public automations: AutomationApi;
   public account: AccountApi;
+
+  // Legacy property for backward compatibility
+  public get transactional(): EmailApi {
+    return this.email;
+  }
 
   constructor(config: CakemailConfig | EnhancedCakemailConfig) {
     super(config);
@@ -29,7 +34,7 @@ export class CakemailAPI extends BaseApiClient {
     this.contacts = new ContactApi(config);
     this.senders = new SenderApi(config);
     this.templates = new TemplateApi(config);
-    this.transactional = new TransactionalApi(config);
+    this.email = new EmailApi(config);
     this.analytics = new AnalyticsApi(config);
     this.automations = new AutomationApi(config);
     this.account = new AccountApi(config);
@@ -158,9 +163,21 @@ export class CakemailAPI extends BaseApiClient {
     return this.templates.deleteTemplate(templateId);
   }
 
-  // Transactional methods
+  // Email methods (updated naming)
+  async sendEmail(data: any) {
+    return this.email.sendEmail(data);
+  }
+
   async sendTransactionalEmail(data: any) {
-    return this.transactional.sendTransactionalEmail(data);
+    return this.email.sendTransactionalEmail(data);
+  }
+
+  async sendMarketingEmail(data: any) {
+    return this.email.sendMarketingEmail(data);
+  }
+
+  async getEmailStatus(emailId: string) {
+    return this.email.getEmailStatus(emailId);
   }
 
   // Analytics methods
@@ -224,7 +241,10 @@ export { CampaignApi } from './api/campaign-api.js';
 export { ContactApi } from './api/contact-api.js';
 export { SenderApi } from './api/sender-api.js';
 export { TemplateApi } from './api/template-api.js';
-export { TransactionalApi } from './api/transactional-api.js';
+export { EmailApi } from './api/email-api.js';
 export { AnalyticsApi } from './api/analytics-api.js';
 export { AutomationApi } from './api/automation-api.js';
 export { AccountApi } from './api/account-api.js';
+
+// Legacy export for backward compatibility
+export { EmailApi as TransactionalApi } from './api/email-api.js';
