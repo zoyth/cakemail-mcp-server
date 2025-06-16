@@ -264,138 +264,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
 
-      // List Management
-      {
-        name: 'cakemail_get_lists',
-        description: 'Get contact lists (defaults to latest first: sort=created_on&order=desc)',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            page: { type: 'number', description: 'Page number for pagination' },
-            per_page: { type: 'number', description: 'Number of lists per page' },
-            sort: { type: 'string', enum: ['name', 'created_on'], description: 'Sort field (defaults to created_on)' },
-            order: { type: 'string', enum: ['asc', 'desc'], description: 'Sort direction (defaults to desc for latest first)' },
-          },
-          required: [],
-        },
-      },
-      {
-        name: 'cakemail_create_list',
-        description: 'Create a new contact list',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            name: { type: 'string', description: 'List name' },
-            description: { type: 'string', description: 'List description' },
-            language: { type: 'string', description: 'List language (e.g., en_US)' },
-          },
-          required: ['name'],
-        },
-      },
-      {
-        name: 'cakemail_get_list',
-        description: 'Get details of a specific list',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            list_id: { type: 'string', description: 'List ID to retrieve' },
-          },
-          required: ['list_id'],
-        },
-      },
-      {
-        name: 'cakemail_update_list',
-        description: 'Update an existing list',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            list_id: { type: 'string', description: 'List ID to update' },
-            name: { type: 'string', description: 'List name' },
-            description: { type: 'string', description: 'List description' },
-            language: { type: 'string', description: 'List language' },
-          },
-          required: ['list_id'],
-        },
-      },
-      {
-        name: 'cakemail_delete_list',
-        description: 'Delete a contact list',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            list_id: { type: 'string', description: 'List ID to delete' },
-          },
-          required: ['list_id'],
-        },
-      },
-
-      // Contact Management
-      {
-        name: 'cakemail_get_contacts',
-        description: 'Get contacts from lists (defaults to latest first: sort=created_on&order=desc)',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            list_id: { type: 'string', description: 'Filter contacts by list ID' },
-            page: { type: 'number', description: 'Page number for pagination' },
-            per_page: { type: 'number', description: 'Number of contacts per page' },
-          },
-          required: [],
-        },
-      },
-      {
-        name: 'cakemail_create_contact',
-        description: 'Create a new contact',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            email: { type: 'string', description: 'Contact email address' },
-            first_name: { type: 'string', description: 'Contact first name' },
-            last_name: { type: 'string', description: 'Contact last name' },
-            list_id: { type: 'string', description: 'List ID to add contact to' },
-            custom_fields: { type: 'object', description: 'Custom field data' },
-          },
-          required: ['email', 'list_id'],
-        },
-      },
-      {
-        name: 'cakemail_get_contact',
-        description: 'Get details of a specific contact',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            contact_id: { type: 'string', description: 'Contact ID to retrieve' },
-          },
-          required: ['contact_id'],
-        },
-      },
-      {
-        name: 'cakemail_update_contact',
-        description: 'Update an existing contact',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            contact_id: { type: 'string', description: 'Contact ID to update' },
-            email: { type: 'string', description: 'Contact email address' },
-            first_name: { type: 'string', description: 'Contact first name' },
-            last_name: { type: 'string', description: 'Contact last name' },
-            custom_fields: { type: 'object', description: 'Custom field data' },
-          },
-          required: ['contact_id'],
-        },
-      },
-      {
-        name: 'cakemail_delete_contact',
-        description: 'Delete a contact',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            contact_id: { type: 'string', description: 'Contact ID to delete' },
-          },
-          required: ['contact_id'],
-        },
-      },
-
       // Email API (updated naming and description)
       {
         name: 'cakemail_send_transactional_email',
@@ -414,58 +282,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             email_type: { type: 'string', enum: ['transactional', 'marketing'], description: 'Email type (defaults to transactional)' },
           },
           required: ['to_email', 'sender_id', 'subject'],
-        },
-      },
-
-      // Campaign Management, Templates, Analytics, Account, Retry Config, and Automation tools...
-      // (I'll include just a few key ones to avoid hitting length limits)
-
-      // Campaign Management
-      {
-        name: 'cakemail_get_campaigns',
-        description: 'Get list of campaigns with filtering and sorting (defaults to latest first: sort=created_on&order=desc)',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            page: { type: 'number', description: 'Page number for pagination' },
-            per_page: { type: 'number', description: 'Number of campaigns per page (max 50)', maximum: 50 },
-            sort: { type: 'string', enum: ['name', 'created_on'], description: 'Sort field (defaults to created_on)' },
-            order: { type: 'string', enum: ['asc', 'desc'], description: 'Sort direction (defaults to desc for latest first)' },
-            status: { type: 'string', enum: ['incomplete', 'draft', 'scheduled', 'sending', 'sent', 'archived'], description: 'Filter by campaign status' },
-            name: { type: 'string', description: 'Filter campaigns by name (partial match)' },
-            created_after: { type: 'string', pattern: '^\\\\d{4}-\\\\d{2}-\\\\d{2}$', description: 'Filter campaigns created after date (YYYY-MM-DD)' },
-            created_before: { type: 'string', pattern: '^\\\\d{4}-\\\\d{2}-\\\\d{2}$', description: 'Filter campaigns created before date (YYYY-MM-DD)' },
-            with_count: { type: 'boolean', description: 'Include total count in response' }
-          },
-          required: [],
-        },
-      },
-
-      // Template Management
-      {
-        name: 'cakemail_get_templates',
-        description: 'Get list of email templates (defaults to latest first: sort=created_on&order=desc)',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            page: { type: 'number', description: 'Page number for pagination' },
-            per_page: { type: 'number', description: 'Number of templates per page' },
-          },
-          required: [],
-        },
-      },
-
-      // Analytics
-      {
-        name: 'cakemail_get_transactional_analytics',
-        description: 'Get email analytics (for transactional and marketing emails)',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            start_date: { type: 'string', pattern: '^\\\\d{4}-\\\\d{2}-\\\\d{2}$', description: 'Start date (YYYY-MM-DD)' },
-            end_date: { type: 'string', pattern: '^\\\\d{4}-\\\\d{2}-\\\\d{2}$', description: 'End date (YYYY-MM-DD)' },
-          },
-          required: [],
         },
       },
 
@@ -546,6 +362,60 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: `Sender created successfully: ${JSON.stringify(sender, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_sender': {
+        const { sender_id } = args as { sender_id: string };
+        const sender = await api.getSender(sender_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Sender details: ${JSON.stringify(sender, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_update_sender': {
+        const { sender_id, name: senderName, email, language } = args as {
+          sender_id: string;
+          name?: string;
+          email?: string;
+          language?: string;
+        };
+        
+        if (email && !validateEmail(email)) {
+          throw new Error('Invalid email format');
+        }
+        
+        const updateData: any = {};
+        if (senderName) updateData.name = senderName;
+        if (email) updateData.email = email;
+        if (language) updateData.language = language;
+        
+        const sender = await api.updateSender(sender_id, updateData);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Sender updated successfully: ${JSON.stringify(sender, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_delete_sender': {
+        const { sender_id } = args as { sender_id: string };
+        await api.deleteSender(sender_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Sender ${sender_id} deleted successfully`,
             },
           ],
         };
@@ -635,7 +505,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                     `• Jitter Enabled: ${config.jitter ? 'Yes' : 'No'}\\n` +
                     `• Retryable Status Codes: ${config.retryableStatusCodes.join(', ')}\\n` +
                     `• Retryable Errors: ${config.retryableErrors.join(', ')}\\n\\n` +
-                    `**Raw Config:**\\n\\`\\`\\`json\\n${JSON.stringify(config, null, 2)}\\n\\`\\`\\``,
+                    `**Raw Config:**\\n\`\`\`json\\n${JSON.stringify(config, null, 2)}\\n\`\`\``,
             },
           ],
         };
