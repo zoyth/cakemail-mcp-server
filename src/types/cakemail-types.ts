@@ -217,6 +217,132 @@ export interface PatchAccountResponse {
   };
 }
 
+// Sub-Account specific types and responses
+export interface SubAccount {
+  id: string;
+  name: string;
+  email: string;
+  status: 'pending' | 'active' | 'suspended' | 'inactive';
+  type?: 'organization' | 'individual';
+  partner_account_id?: number;
+  created_on?: string;
+  updated_on?: string;
+  verified?: boolean;
+  company?: string;
+  language?: string;
+  timezone?: string;
+  country?: string;
+  phone?: string;
+  website?: string;
+  description?: string;
+  [key: string]: any;
+}
+
+export interface SubAccountsResponse {
+  data: SubAccount[];
+  pagination?: {
+    count?: number;
+    page?: number;
+    per_page?: number;
+    total_pages?: number;
+  };
+}
+
+export interface SubAccountResponse {
+  data: SubAccount;
+}
+
+export interface CreateSubAccountResponse {
+  data: SubAccount;
+}
+
+export interface PatchSubAccountResponse {
+  data: SubAccount;
+}
+
+export interface DeleteSubAccountResponse {
+  data: {
+    id: string;
+    deleted: boolean;
+  };
+}
+
+export interface SuspendSubAccountResponse {
+  data: {
+    id: string;
+    status: 'suspended';
+    suspended_on: string;
+  };
+}
+
+export interface UnsuspendSubAccountResponse {
+  data: {
+    id: string;
+    status: 'active';
+    unsuspended_on: string;
+  };
+}
+
+export interface ConfirmSubAccountResponse {
+  data: SubAccount;
+}
+
+export interface ResendSubAccountVerificationResponse {
+  data: {
+    message: string;
+    email: string;
+    sent_on: string;
+  };
+}
+
+// Sub-Account input data interfaces
+export interface CreateSubAccountData {
+  name: string;
+  email: string;
+  password: string;
+  company?: string;
+  language?: string;
+  timezone?: string;
+  country?: string;
+  phone?: string;
+  website?: string;
+  description?: string;
+  [key: string]: any;
+}
+
+export interface UpdateSubAccountData {
+  name?: string;
+  email?: string;
+  company?: string;
+  language?: string;
+  timezone?: string;
+  country?: string;
+  phone?: string;
+  website?: string;
+  description?: string;
+  [key: string]: any;
+}
+
+export interface ConfirmSubAccountData {
+  confirmation_code: string;
+  password?: string;
+}
+
+export interface ResendVerificationEmailData {
+  email: string;
+}
+
+export interface ConvertSubAccountData {
+  migrate_owner?: boolean;
+}
+
+export interface SubAccountFilters {
+  name?: string;
+  status?: 'pending' | 'active' | 'suspended' | 'inactive';
+  type?: 'organization' | 'individual';
+  partner_account_id?: number;
+}
+
 // Error response types from OpenAPI spec
 export interface HTTPBadRequestError {
   detail: string;
