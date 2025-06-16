@@ -188,19 +188,29 @@ export class SubAccountApi extends BaseApiClient {
     per_page?: number;
     recursive?: boolean;
   }): Promise<SubAccountsResponse> {
-    return this.listSubAccounts({
+    const listParams: {
+      recursive?: boolean;
+      pagination?: PaginationParams;
+      sort?: SortParams;
+      filters?: SubAccountFilters;
+    } = {
       recursive: params?.recursive || false,
       pagination: {
         page: params?.page || 1,
         per_page: params?.per_page || 50,
         with_count: true
       },
-      filters: params?.status ? { status: params.status } : undefined,
       sort: {
         sort: 'created_on',
         order: 'desc'
       }
-    });
+    };
+    
+    if (params?.status) {
+      listParams.filters = { status: params.status as 'pending' | 'active' | 'suspended' | 'inactive' };
+    }
+    
+    return this.listSubAccounts(listParams);
   }
 
   /**
@@ -257,7 +267,7 @@ export class SubAccountApi extends BaseApiClient {
     per_page?: number;
   }): Promise<SubAccountsResponse> {
     return this.listSubAccounts({
-      filters: { status },
+      filters: { status: status as 'pending' | 'active' | 'suspended' | 'inactive' },
       pagination: {
         page: params?.page || 1,
         per_page: params?.per_page || 50,

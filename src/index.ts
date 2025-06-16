@@ -134,8 +134,8 @@ function validateEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
-function validatePassword(password: string): boolean {
-  return password && password.length >= 8;
+function validatePassword(password: string | boolean): boolean {
+  return typeof password === 'string' && password.length >= 8;
 }
 
 // List tools handler with expanded functionality including sub-accounts
@@ -213,7 +213,120 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
 
-      // Sub-Account Management (Enterprise/Agency Features)
+      // Campaign Management
+            {
+              name: 'cakemail_list_campaigns',
+              description: 'List campaigns with filtering, sorting and pagination',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  page: { type: 'number', description: 'Page number (default: 1)' },
+                  per_page: { type: 'number', description: 'Items per page (default: 10, max: 50)' },
+                  status: { type: 'string', description: 'Filter by campaign status' },
+                  name: { type: 'string', description: 'Filter by campaign name' },
+                  type: { type: 'string', description: 'Filter by campaign type' },
+                  list_id: { type: 'string', description: 'Filter by list ID' },
+                  sort: { type: 'string', enum: ['name', 'created_on', 'scheduled_for', 'scheduled_on', 'updated_on', 'type'], description: 'Sort field (default: created_on)' },
+                  order: { type: 'string', enum: ['asc', 'desc'], description: 'Sort direction (default: desc)' },
+                  with_count: { type: 'boolean', description: 'Include total count in response' },
+                  account_id: { type: 'number', description: 'Account ID for scoped access' },
+                },
+                required: [],
+              },
+            },
+            {
+              name: 'cakemail_get_latest_campaigns',
+              description: 'Get the latest campaigns (shortcut for recent campaigns)',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  count: { type: 'number', description: 'Number of latest campaigns to retrieve (default: 10, max: 50)' },
+                  status: { type: 'string', description: 'Filter by status (optional)' },
+                },
+                required: [],
+              },
+            },
+            {
+              name: 'cakemail_get_campaign',
+              description: 'Get details of a specific campaign',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to retrieve' },
+                },
+                required: ['campaign_id'],
+              },
+            },
+            {
+              name: 'cakemail_create_campaign',
+              description: 'Create a new email campaign',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', description: 'Campaign name' },
+                  subject: { type: 'string', description: 'Email subject line' },
+                  html_content: { type: 'string', description: 'HTML email content' },
+                  text_content: { type: 'string', description: 'Plain text email content' },
+                  list_id: { type: 'string', description: 'List ID to send to' },
+                  sender_id: { type: 'string', description: 'Sender ID to use' },
+                  from_name: { type: 'string', description: 'From name (optional)' },
+                  reply_to: { type: 'string', description: 'Reply-to email address (optional)' },
+                },
+                required: ['name', 'subject', 'list_id', 'sender_id'],
+              },
+            },
+            {
+              name: 'cakemail_update_campaign',
+              description: 'Update an existing campaign',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to update' },
+                  name: { type: 'string', description: 'Campaign name' },
+                  subject: { type: 'string', description: 'Email subject line' },
+                  html_content: { type: 'string', description: 'HTML email content' },
+                  text_content: { type: 'string', description: 'Plain text email content' },
+                  from_name: { type: 'string', description: 'From name' },
+                  reply_to: { type: 'string', description: 'Reply-to email address' },
+                },
+                required: ['campaign_id'],
+              },
+            },
+            {
+              name: 'cakemail_send_campaign',
+              description: 'Send or schedule a campaign for delivery',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to send' },
+                },
+                required: ['campaign_id'],
+              },
+            },
+            {
+              name: 'cakemail_delete_campaign',
+              description: 'Delete a campaign (permanent action)',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to delete' },
+                },
+                required: ['campaign_id'],
+              },
+            },
+            {
+              name: 'cakemail_debug_campaign_access',
+              description: 'Debug campaign access and test different access patterns',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Optional: specific campaign ID to test access' },
+                },
+                required: [],
+              },
+            },
+
+            // Sub-Account Management (Enterprise/Agency Features)
       {
         name: 'cakemail_list_sub_accounts',
         description: 'List all sub-accounts with filtering and pagination (Enterprise feature)',
@@ -551,6 +664,296 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: `Sender ${sender_id} deleted successfully`,
+            },
+          ],
+        };
+      }
+
+      // Campaign Management
+      case 'cakemail_list_campaigns': {
+        const { 
+          page, per_page, status, name, type, list_id, sort, order, with_count, account_id 
+        } = args as {
+          page?: number;
+          per_page?: number;
+          status?: string;
+          name?: string;
+          type?: string;
+          list_id?: string;
+          sort?: string;
+          order?: string;
+          with_count?: boolean;
+          account_id?: number;
+        };
+        
+        const campaigns = await api.getCampaigns({
+          page: page || 1,
+          per_page: per_page || 10,
+          status,
+          name,
+          type,
+          list_id,
+          sort: sort || 'created_on',
+          order: order || 'desc',
+          with_count: with_count !== false,
+          account_id
+        });
+
+        const total = campaigns.pagination?.count || 0;
+        const campaignList = campaigns.data?.slice(0, 20).map((campaign) => ({
+          id: campaign.id,
+          name: campaign.name,
+          subject: campaign.subject,
+          status: campaign.status,
+          type: campaign.type,
+          created_on: campaign.created_on,
+          updated_on: campaign.updated_on
+        }));
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📧 **Campaigns (${total} total)**\n\n` +
+                    `**Applied Filters:**\n` +
+                    `• Status: ${status || 'all'}\n` +
+                    `• Name Filter: ${name || 'none'}\n` +
+                    `• Type: ${type || 'all'}\n` +
+                    `• List ID: ${list_id || 'none'}\n` +
+                    `• Sort: ${sort || 'created_on'} (${order || 'desc'})\n\n` +
+                    `**Showing ${campaignList?.length || 0} campaigns:**\n\n` +
+                    (campaignList?.map((camp, i) => 
+                      `${i + 1}. **${camp.name}** (${camp.id})\n` +
+                      `   📋 Subject: ${camp.subject || 'N/A'}\n` +
+                      `   🏷️ Status: ${camp.status || 'N/A'}\n` +
+                      `   📂 Type: ${camp.type || 'N/A'}\n` +
+                      `   📅 Created: ${camp.created_on || 'N/A'}\n` +
+                      `   🔄 Updated: ${camp.updated_on || 'N/A'}`
+                    ).join('\n\n') || 'No campaigns found.') +
+                    (total > 20 ? `\n\n**... and ${total - 20} more campaigns**` : '') +
+                    `\n\n**Full Response:**\n${JSON.stringify(campaigns, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_latest_campaigns': {
+        const { count, status } = args as {
+          count?: number;
+          status?: string;
+        };
+        
+        const campaigns = await api.getCampaigns({
+          page: 1,
+          per_page: Math.min(count || 10, 50),
+          sort: 'created_on',
+          order: 'desc',
+          status,
+          with_count: true
+        });
+
+        const total = campaigns.pagination?.count || 0;
+        const latestCampaigns = campaigns.data?.map((campaign) => ({
+          id: campaign.id,
+          name: campaign.name,
+          subject: campaign.subject,
+          status: campaign.status,
+          type: campaign.type,
+          created_on: campaign.created_on
+        }));
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📧 **Latest ${count || 10} Campaigns**\n\n` +
+                    `**Total Campaigns:** ${total}\n` +
+                    `**Status Filter:** ${status || 'all'}\n\n` +
+                    (latestCampaigns?.map((camp, i) => 
+                      `${i + 1}. **${camp.name}** (${camp.id})\n` +
+                      `   📋 Subject: ${camp.subject || 'N/A'}\n` +
+                      `   🏷️ Status: ${camp.status || 'N/A'}\n` +
+                      `   📂 Type: ${camp.type || 'N/A'}\n` +
+                      `   📅 Created: ${camp.created_on || 'N/A'}`
+                    ).join('\n\n') || 'No campaigns found.') +
+                    `\n\n**Full Response:**\n${JSON.stringify(campaigns, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_campaign': {
+        const { campaign_id } = args as { campaign_id: string };
+        const campaign = await api.getCampaign(campaign_id);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📧 **Campaign Details**\n\n` +
+                    `**Campaign ID:** ${campaign.data.id}\n` +
+                    `**Name:** ${campaign.data.name}\n` +
+                    `**Subject:** ${campaign.data.subject || 'N/A'}\n` +
+                    `**Status:** ${campaign.data.status || 'N/A'}\n` +
+                    `**Type:** ${campaign.data.type || 'N/A'}\n` +
+                    `**From Name:** ${campaign.data.from_name || 'N/A'}\n` +
+                    `**Reply To:** ${campaign.data.reply_to || 'N/A'}\n` +
+                    `**List ID:** ${campaign.data.list_id || 'N/A'}\n` +
+                    `**Sender ID:** ${campaign.data.sender_id || 'N/A'}\n` +
+                    `**Created:** ${campaign.data.created_on || 'N/A'}\n` +
+                    `**Updated:** ${campaign.data.updated_on || 'N/A'}\n` +
+                    `**Scheduled For:** ${campaign.data.scheduled_for || 'N/A'}\n\n` +
+                    `**Full Response:**\n${JSON.stringify(campaign, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_create_campaign': {
+        const { 
+          name, subject, html_content, text_content, list_id, sender_id, from_name, reply_to 
+        } = args as {
+          name: string;
+          subject: string;
+          html_content?: string;
+          text_content?: string;
+          list_id: string;
+          sender_id: string;
+          from_name?: string;
+          reply_to?: string;
+        };
+        
+        if (!html_content && !text_content) {
+          throw new Error('Either html_content or text_content must be provided');
+        }
+        
+        const campaign = await api.createCampaign({
+          name,
+          subject,
+          html_content,
+          text_content,
+          list_id,
+          sender_id,
+          from_name,
+          reply_to
+        });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📧 **Campaign Created Successfully!**\n\n` +
+                    `✅ **Campaign ID:** ${campaign.data.id}\n` +
+                    `✅ **Name:** ${campaign.data.name}\n` +
+                    `✅ **Subject:** ${campaign.data.subject}\n` +
+                    `✅ **Status:** ${campaign.data.status || 'draft'}\n` +
+                    `✅ **List ID:** ${campaign.data.list_id}\n` +
+                    `✅ **Sender ID:** ${campaign.data.sender_id}\n` +
+                    `✅ **Created:** ${campaign.data.created_on}\n\n` +
+                    `**Next Steps:** Use cakemail_send_campaign to send this campaign.\n\n` +
+                    `**Full Response:**\n${JSON.stringify(campaign, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_update_campaign': {
+        const { 
+          campaign_id, name, subject, html_content, text_content, from_name, reply_to 
+        } = args as {
+          campaign_id: string;
+          name?: string;
+          subject?: string;
+          html_content?: string;
+          text_content?: string;
+          from_name?: string;
+          reply_to?: string;
+        };
+        
+        const updateData: any = {};
+        if (name) updateData.name = name;
+        if (subject) updateData.subject = subject;
+        if (html_content) updateData.html_content = html_content;
+        if (text_content) updateData.text_content = text_content;
+        if (from_name) updateData.from_name = from_name;
+        if (reply_to) updateData.reply_to = reply_to;
+        
+        const campaign = await api.updateCampaign(campaign_id, updateData);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📧 **Campaign Updated Successfully!**\n\n` +
+                    `✅ **Campaign ID:** ${campaign.data.id}\n` +
+                    `✅ **Name:** ${campaign.data.name}\n` +
+                    `✅ **Subject:** ${campaign.data.subject}\n` +
+                    `✅ **Status:** ${campaign.data.status}\n` +
+                    `✅ **Updated:** ${campaign.data.updated_on}\n\n` +
+                    `**Updated Fields:** ${Object.keys(updateData).join(', ')}\n\n` +
+                    `**Full Response:**\n${JSON.stringify(campaign, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_send_campaign': {
+        const { campaign_id } = args as { campaign_id: string };
+        const result = await api.sendCampaign(campaign_id);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🚀 **Campaign Sent Successfully!**\n\n` +
+                    `✅ **Campaign ID:** ${campaign_id}\n` +
+                    `✅ **Status:** ${result.success ? 'Sent/Scheduled' : 'Failed'}\n` +
+                    `✅ **Response Code:** ${result.status}\n\n` +
+                    `The campaign has been queued for delivery.\n\n` +
+                    `**Full Response:**\n${JSON.stringify(result, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_delete_campaign': {
+        const { campaign_id } = args as { campaign_id: string };
+        const result = await api.deleteCampaign(campaign_id);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🗑️ **Campaign Deleted Successfully**\n\n` +
+                    `✅ **Campaign ID:** ${campaign_id}\n` +
+                    `✅ **Deleted:** Yes\n\n` +
+                    `⚠️ **This action is permanent and cannot be undone.**\n\n` +
+                    `**Full Response:**\n${JSON.stringify(result, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_debug_campaign_access': {
+        const { campaign_id } = args as { campaign_id?: string };
+        const debug = await api.debugCampaignAccess(campaign_id);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🔍 **Campaign Access Debug**\n\n` +
+                    `**Test Results:**\n\n` +
+                    debug.tests.map((test, i) => 
+                      `${i + 1}. **${test.test}**\n` +
+                      `   ${test.success ? '✅ Success' : '❌ Failed'}\n` +
+                      (test.success 
+                        ? `   📊 Campaign Count: ${test.campaignCount || 0}\n` +
+                          `   🆔 First Campaign: ${test.firstCampaignId || 'None'}\n` +
+                          (test.accountId ? `   🏢 Account ID: ${test.accountId}\n` : '')
+                        : `   ❌ Error: ${test.error}\n`)
+                    ).join('\n') +
+                    `\n**Full Debug Info:**\n${JSON.stringify(debug, null, 2)}`,
             },
           ],
         };
