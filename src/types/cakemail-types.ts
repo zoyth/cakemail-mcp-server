@@ -131,12 +131,29 @@ export interface CreateTemplateResponse {
   data: Template;
 }
 
-// Transactional email responses
+// Transactional email responses - Updated for v2 API
 export interface TransactionalEmailResponse {
+  email: string;
+  object: string;
+  submitted: boolean;
   data: {
     id: string;
     status: string;
-    message?: string;
+  };
+}
+
+// Email status response for v2 API
+export interface EmailStatusResponse {
+  data: {
+    id: string;
+    status: string;
+    email: string;
+    submitted_on?: string;
+    delivered_on?: string;
+    opened_on?: string;
+    clicked_on?: string;
+    bounced_on?: string;
+    [key: string]: any;
   };
 }
 
@@ -366,15 +383,16 @@ export interface UpdateTemplateData {
   description?: string;
 }
 
-// Transactional email interfaces
+// Transactional email interfaces - Updated for v2 API
 export interface TransactionalEmailData {
   to_email: string;
   to_name?: string;
   sender_id: string | number;
   subject: string;
-  html_content: string;
+  html_content?: string;
   text_content?: string;
-  template_id?: string;
+  template_id?: string | number;
+  list_id?: string | number; // Required for v2 API, but can be auto-resolved
 }
 
 // Analytics interfaces
