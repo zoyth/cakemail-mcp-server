@@ -318,6 +318,10 @@ export class CakemailAPI extends BaseApiClient {
     return this.logs.getTransactionalEmailLogs(params);
   }
 
+  async getListLogs(listId: string, params?: any) {
+    return this.logs.getListLogs(listId, params);
+  }
+
   async debugLogsAccess(params?: any) {
     return this.logs.debugLogsAccess(params);
   }
@@ -327,6 +331,7 @@ export class CakemailAPI extends BaseApiClient {
 export * from './types/cakemail-types.js';
 export * from './types/errors.js';
 export * from './types/retry.js';
+export * from './types/event-taxonomy.js';
 export { BaseApiClient, EnhancedCakemailConfig } from './api/base-client.js';
 export { CampaignApi } from './api/campaign-api.js';
 export { ContactApi } from './api/contact-api.js';

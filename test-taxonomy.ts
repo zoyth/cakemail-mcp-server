@@ -1,0 +1,1 @@
+// Test file to check if our types compile\nimport { CAKEMAIL_EVENT_TAXONOMY, EventTaxonomyHelper } from './src/types/event-taxonomy.js';\n\nconsole.log('Event taxonomy test:', CAKEMAIL_EVENT_TAXONOMY.categories.length);\nconsole.log('Helper test:', EventTaxonomyHelper.getEventCategory('click'));\n\nexport {};\n
