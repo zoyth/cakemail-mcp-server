@@ -10,6 +10,7 @@ import { EmailApi } from './api/email-api.js';
 import { AnalyticsApi } from './api/analytics-api.js';
 import { AutomationApi } from './api/automation-api.js';
 import { AccountApi } from './api/account-api.js';
+import { SubAccountApi } from './api/sub-account-api.js';
 
 export class CakemailAPI extends BaseApiClient {
   public campaigns: CampaignApi;
@@ -20,6 +21,7 @@ export class CakemailAPI extends BaseApiClient {
   public analytics: AnalyticsApi;
   public automations: AutomationApi;
   public account: AccountApi;
+  public subAccounts: SubAccountApi;
 
   // Legacy property for backward compatibility
   public get transactional(): EmailApi {
@@ -38,6 +40,7 @@ export class CakemailAPI extends BaseApiClient {
     this.analytics = new AnalyticsApi(config);
     this.automations = new AutomationApi(config);
     this.account = new AccountApi(config);
+    this.subAccounts = new SubAccountApi(config);
   }
 
   // Legacy method proxies for backward compatibility
@@ -230,6 +233,67 @@ export class CakemailAPI extends BaseApiClient {
   async convertSelfAccountToOrganization() {
     return this.account.convertSelfAccountToOrganization();
   }
+
+  // Sub-Account methods
+  async listSubAccounts(params?: any) {
+    return this.subAccounts.listSubAccounts(params);
+  }
+
+  async createSubAccount(data: any, options?: any) {
+    return this.subAccounts.createSubAccount(data, options);
+  }
+
+  async getSubAccount(accountId: string) {
+    return this.subAccounts.getSubAccount(accountId);
+  }
+
+  async updateSubAccount(accountId: string, data: any) {
+    return this.subAccounts.updateSubAccount(accountId, data);
+  }
+
+  async deleteSubAccount(accountId: string) {
+    return this.subAccounts.deleteSubAccount(accountId);
+  }
+
+  async suspendSubAccount(accountId: string) {
+    return this.subAccounts.suspendSubAccount(accountId);
+  }
+
+  async unsuspendSubAccount(accountId: string) {
+    return this.subAccounts.unsuspendSubAccount(accountId);
+  }
+
+  async confirmSubAccount(accountId: string, data: any) {
+    return this.subAccounts.confirmSubAccount(accountId, data);
+  }
+
+  async resendVerificationEmail(data: any) {
+    return this.subAccounts.resendVerificationEmail(data);
+  }
+
+  async convertSubAccountToOrganization(accountId: string, data?: any) {
+    return this.subAccounts.convertSubAccountToOrganization(accountId, data);
+  }
+
+  async getSubAccountsWithDefaults(params?: any) {
+    return this.subAccounts.getSubAccountsWithDefaults(params);
+  }
+
+  async getLatestSubAccount() {
+    return this.subAccounts.getLatestSubAccount();
+  }
+
+  async searchSubAccountsByName(name: string, params?: any) {
+    return this.subAccounts.searchSubAccountsByName(name, params);
+  }
+
+  async getSubAccountsByStatus(status: string, params?: any) {
+    return this.subAccounts.getSubAccountsByStatus(status, params);
+  }
+
+  async debugSubAccountAccess(accountId?: string) {
+    return this.subAccounts.debugSubAccountAccess(accountId);
+  }
 }
 
 // Export everything for convenience
@@ -245,6 +309,7 @@ export { EmailApi } from './api/email-api.js';
 export { AnalyticsApi } from './api/analytics-api.js';
 export { AutomationApi } from './api/automation-api.js';
 export { AccountApi } from './api/account-api.js';
+export { SubAccountApi } from './api/sub-account-api.js';
 
 // Legacy export for backward compatibility
 export { EmailApi as TransactionalApi } from './api/email-api.js';
