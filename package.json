@@ -1,7 +1,7 @@
 {
   "name": "cakemail-mcp-server",
-  "version": "1.2.0",
-  "description": "Enhanced MCP server for Cakemail API integration with Claude AI - fully aligned with official API documentation",
+  "version": "1.4.0",
+  "description": "Enterprise MCP server for Cakemail API integration with Claude AI - includes comprehensive sub-account management",
   "type": "module",
   "main": "./build/index.js",
   "bin": {
@@ -10,7 +10,8 @@
   "files": [
     "build",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "docs"
   ],
   "scripts": {
     "build": "tsc && chmod +x build/index.js",
@@ -57,7 +58,11 @@
     "transactional-email",
     "campaigns",
     "analytics",
-    "templates"
+    "templates",
+    "enterprise",
+    "sub-accounts",
+    "multi-tenant",
+    "agency"
   ],
   "engines": {
     "node": ">=18.0.0"
