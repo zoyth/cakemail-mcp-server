@@ -2,9 +2,9 @@
 
 A comprehensive Model Context Protocol (MCP) server for integrating with the Cakemail API. This server provides tools for email marketing campaigns, contact management, transactional emails, templates, automation, analytics, and detailed reporting through the Cakemail platform.
 
-## 🎯 Version 1.5.0 - Complete Reports & Analytics
+## 🎯 Version 1.6.0 - Complete Logs API Implementation
 
-This version adds **comprehensive reporting and analytics capabilities** with full integration of the Cakemail Reports API, providing detailed campaign performance metrics, link analytics, account statistics, and export functionality.
+This version adds **comprehensive logs functionality** with full integration of the Cakemail `/logs/` API endpoints, providing detailed campaign activity logs, workflow automation tracking, and transactional email delivery logs.
 
 ## ✨ Features
 
@@ -58,6 +58,16 @@ This version adds **comprehensive reporting and analytics capabilities** with fu
 - ✅ Suppressed emails export functionality
 - ✅ Comprehensive performance summaries
 - ✅ Debug tools for reports API access
+
+### 📋 Detailed Logs & Activity Tracking
+- ✅ Campaign activity logs (opens, clicks, bounces, unsubscribes)
+- ✅ Workflow automation logs for email sequences
+- ✅ Workflow action logs for specific automation steps
+- ✅ Transactional email delivery logs and tracking
+- ✅ Time-based log filtering with Unix timestamps
+- ✅ Pagination and sorting for large log datasets
+- ✅ Log type filtering (opens, clicks, bounces, etc.)
+- ✅ Debug tools for logs API access and testing
 
 ### 🏥 Production Features
 - ✅ Retry logic with exponential backoff
@@ -156,9 +166,12 @@ In Claude Desktop: `"Check my Cakemail API health status"`
 - Sender Management: `create`, `get`, `update`, `delete`, `list` senders
 - Template Management: `create`, `get`, `update`, `delete`, `list` templates
 
-### Analytics, Reporting & Automation
+### Analytics, Reporting, Logs & Automation
 - **Campaign Analytics**: Detailed performance metrics, open/click rates, link tracking
-- **Account Analytics**: Performance overviews, growth metrics, time-based statistics  
+- **Campaign Logs**: Complete activity tracking for opens, clicks, bounces, unsubscribes
+- **Account Analytics**: Performance overviews, growth metrics, time-based statistics
+- **Workflow Logs**: Automation sequence tracking and action-level logging
+- **Transactional Logs**: Individual email delivery tracking and status monitoring
 - **Export Reports**: Generate and download campaign reports in CSV/XLSX formats
 - **Automation**: Create and manage email automation workflows
 - **Transactional**: Send individual emails with template support
@@ -180,15 +193,19 @@ In Claude Desktop: `"Check my Cakemail API health status"`
 "Add a new contact with email sara@example.com and first name Sara to my main contact list"
 ```
 
-### Analytics & Reporting
+### Analytics, Reporting & Logs
 ```
 "Show me the performance metrics for my latest campaign including open rates and click rates"
 
-"Get detailed link statistics for campaign 12345 including which links were clicked most"
+"Get detailed campaign logs for campaign 12345 to see all opens and clicks"
+
+"Show me workflow logs for automation 456 to track email sequence performance"
+
+"Get transactional email logs for the last week filtered by delivered status"
 
 "Create a campaign performance export for campaigns 123, 456, and 789 in Excel format"
 
-"Show me account performance overview for the last 30 days"
+"Debug my logs API access to test campaign and workflow log endpoints"
 ```
 
 ## 🔧 Advanced Configuration
@@ -238,6 +255,15 @@ DEBUG=mcp:* npm start
 ```
 
 ## 📝 Recent Changes
+
+### Version 1.6.0
+- ✅ Complete Logs API integration with 5 new tools
+- ✅ Campaign activity logs with detailed tracking
+- ✅ Workflow automation logs and action-level tracking
+- ✅ Transactional email delivery logs and monitoring
+- ✅ Time-based log filtering with pagination support
+- ✅ Debug functionality for logs API testing
+- ✅ Full integration with existing analytics and reporting
 
 ### Version 1.5.0
 - ✅ Complete Reports API integration with 12+ new tools

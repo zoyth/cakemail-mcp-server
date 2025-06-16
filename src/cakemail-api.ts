@@ -12,6 +12,7 @@ import { AutomationApi } from './api/automation-api.js';
 import { AccountApi } from './api/account-api.js';
 import { SubAccountApi } from './api/sub-account-api.js';
 import { ReportsApi } from './api/reports-api.js';
+import { LogsApi } from './api/logs-api.js';
 
 export class CakemailAPI extends BaseApiClient {
   public campaigns: CampaignApi;
@@ -24,6 +25,7 @@ export class CakemailAPI extends BaseApiClient {
   public account: AccountApi;
   public subAccounts: SubAccountApi;
   public reports: ReportsApi;
+  public logs: LogsApi;
 
   // Legacy property for backward compatibility
   public get transactional(): EmailApi {
@@ -44,6 +46,7 @@ export class CakemailAPI extends BaseApiClient {
     this.account = new AccountApi(config);
     this.subAccounts = new SubAccountApi(config);
     this.reports = new ReportsApi(config);
+    this.logs = new LogsApi(config);
   }
 
   // Legacy method proxies for backward compatibility
@@ -297,6 +300,27 @@ export class CakemailAPI extends BaseApiClient {
   async debugSubAccountAccess(accountId?: string) {
     return this.subAccounts.debugSubAccountAccess(accountId);
   }
+
+  // Logs methods
+  async getCampaignLogs(campaignId: string, params?: any) {
+    return this.logs.getCampaignLogs(campaignId, params);
+  }
+
+  async getWorkflowActionLogs(workflowId: string, actionId: string, params?: any) {
+    return this.logs.getWorkflowActionLogs(workflowId, actionId, params);
+  }
+
+  async getWorkflowLogs(workflowId: string, params?: any) {
+    return this.logs.getWorkflowLogs(workflowId, params);
+  }
+
+  async getTransactionalEmailLogs(params?: any) {
+    return this.logs.getTransactionalEmailLogs(params);
+  }
+
+  async debugLogsAccess(params?: any) {
+    return this.logs.debugLogsAccess(params);
+  }
 }
 
 // Export everything for convenience
@@ -314,6 +338,7 @@ export { AutomationApi } from './api/automation-api.js';
 export { AccountApi } from './api/account-api.js';
 export { SubAccountApi } from './api/sub-account-api.js';
 export { ReportsApi } from './api/reports-api.js';
+export { LogsApi } from './api/logs-api.js';
 
 // Legacy export for backward compatibility
 export { EmailApi as TransactionalApi } from './api/email-api.js';

@@ -17,7 +17,7 @@ import {
 const server = new Server(
   {
     name: 'cakemail-mcp-server',
-    version: '1.5.0', // Bump version for Reports and Analytics
+    version: '1.6.0', // Bump version for Logs API implementation
   },
   {
     capabilities: {
@@ -721,6 +721,98 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           type: 'object',
           properties: {
             campaign_id: { type: 'string', description: 'Optional campaign ID to test campaign reports access' },
+          },
+          required: [],
+        },
+      },
+
+      // Logs API
+      {
+        name: 'cakemail_get_campaign_logs',
+        description: 'Get detailed campaign logs and activity tracking',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            campaign_id: { type: 'string', description: 'Campaign ID to get logs for' },
+            account_id: { type: 'number', description: 'Optional account ID for scoped access' },
+            page: { type: 'number', description: 'Page number for pagination (default: 1)' },
+            per_page: { type: 'number', description: 'Items per page (default: 50, max: 100)' },
+            with_count: { type: 'boolean', description: 'Include total count in response' },
+            sort: { type: 'string', description: 'Sort field for results' },
+            order: { type: 'string', enum: ['asc', 'desc'], description: 'Sort direction' },
+            type: { type: 'string', description: 'Filter by log type (opens, clicks, bounces, etc.)' },
+            start_time: { type: 'number', description: 'Start time for log filtering (Unix timestamp)' },
+            end_time: { type: 'number', description: 'End time for log filtering (Unix timestamp)' },
+          },
+          required: ['campaign_id'],
+        },
+      },
+      {
+        name: 'cakemail_get_workflow_action_logs',
+        description: 'Get logs for specific workflow actions in automation',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            workflow_id: { type: 'string', description: 'Workflow ID to get action logs for' },
+            action_id: { type: 'string', description: 'Action ID within the workflow' },
+            account_id: { type: 'number', description: 'Optional account ID for scoped access' },
+            page: { type: 'number', description: 'Page number for pagination (default: 1)' },
+            per_page: { type: 'number', description: 'Items per page (default: 50, max: 100)' },
+            with_count: { type: 'boolean', description: 'Include total count in response' },
+            start_time: { type: 'number', description: 'Start time for log filtering (Unix timestamp)' },
+            end_time: { type: 'number', description: 'End time for log filtering (Unix timestamp)' },
+          },
+          required: ['workflow_id', 'action_id'],
+        },
+      },
+      {
+        name: 'cakemail_get_workflow_logs',
+        description: 'Get complete workflow logs for automation tracking',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            workflow_id: { type: 'string', description: 'Workflow ID to get logs for' },
+            account_id: { type: 'number', description: 'Optional account ID for scoped access' },
+            page: { type: 'number', description: 'Page number for pagination (default: 1)' },
+            per_page: { type: 'number', description: 'Items per page (default: 50, max: 100)' },
+            with_count: { type: 'boolean', description: 'Include total count in response' },
+            sort: { type: 'string', description: 'Sort field for results' },
+            order: { type: 'string', enum: ['asc', 'desc'], description: 'Sort direction' },
+            start_time: { type: 'number', description: 'Start time for log filtering (Unix timestamp)' },
+            end_time: { type: 'number', description: 'End time for log filtering (Unix timestamp)' },
+          },
+          required: ['workflow_id'],
+        },
+      },
+      {
+        name: 'cakemail_get_transactional_email_logs',
+        description: 'Get transactional email logs and delivery tracking',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            account_id: { type: 'number', description: 'Optional account ID for scoped access' },
+            page: { type: 'number', description: 'Page number for pagination (default: 1)' },
+            per_page: { type: 'number', description: 'Items per page (default: 50, max: 100)' },
+            with_count: { type: 'boolean', description: 'Include total count in response' },
+            sort: { type: 'string', description: 'Sort field for results' },
+            order: { type: 'string', enum: ['asc', 'desc'], description: 'Sort direction' },
+            start_time: { type: 'number', description: 'Start time for log filtering (Unix timestamp)' },
+            end_time: { type: 'number', description: 'End time for log filtering (Unix timestamp)' },
+            email_id: { type: 'string', description: 'Filter by specific email ID' },
+            sender_id: { type: 'string', description: 'Filter by sender ID' },
+            status: { type: 'string', description: 'Filter by delivery status' },
+          },
+          required: [],
+        },
+      },
+      {
+        name: 'cakemail_debug_logs_access',
+        description: 'Debug logs API access and test different log endpoints',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            campaign_id: { type: 'string', description: 'Optional: specific campaign ID to test logs access' },
+            workflow_id: { type: 'string', description: 'Optional: specific workflow ID to test logs access' },
           },
           required: [],
         },
@@ -1769,6 +1861,238 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                           (test.linksCount !== undefined ? `   🔗 Links Count: ${test.linksCount}\n` : '') +
                           (test.exportsCount !== undefined ? `   📤 Exports Count: ${test.exportsCount}\n` : '')
                         : `   ❌ Error: ${test.error}\n`)
+                    ).join('\n') +
+                    `\n**Full Debug Info:**\n${JSON.stringify(debug, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      // Logs API Handlers
+      case 'cakemail_get_campaign_logs': {
+        const { 
+          campaign_id, account_id, page, per_page, with_count, sort, order, type, start_time, end_time 
+        } = args as {
+          campaign_id: string;
+          account_id?: number;
+          page?: number;
+          per_page?: number;
+          with_count?: boolean;
+          sort?: string;
+          order?: 'asc' | 'desc';
+          type?: string;
+          start_time?: number;
+          end_time?: number;
+        };
+
+        const logs = await api.getCampaignLogs(campaign_id, {
+          account_id,
+          page,
+          per_page,
+          with_count,
+          sort,
+          order,
+          type,
+          start_time,
+          end_time
+        });
+
+        const logCount = Array.isArray(logs.data) ? logs.data.length : 0;
+        const timeRange = start_time && end_time 
+          ? `${new Date(start_time * 1000).toLocaleDateString()} - ${new Date(end_time * 1000).toLocaleDateString()}`
+          : 'All time';
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📋 **Campaign Logs**\n\n` +
+                    `**Campaign ID:** ${campaign_id}\n` +
+                    `${account_id ? `**Account ID:** ${account_id}\n` : ''}` +
+                    `**Log Count:** ${logCount}\n` +
+                    `**Time Range:** ${timeRange}\n` +
+                    `${type ? `**Log Type Filter:** ${type}\n` : ''}` +
+                    `${page ? `**Page:** ${page}\n` : ''}` +
+                    `${per_page ? `**Per Page:** ${per_page}\n` : ''}\n` +
+                    `**Full Response:**\n${JSON.stringify(logs, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_workflow_action_logs': {
+        const { 
+          workflow_id, action_id, account_id, page, per_page, with_count, start_time, end_time 
+        } = args as {
+          workflow_id: string;
+          action_id: string;
+          account_id?: number;
+          page?: number;
+          per_page?: number;
+          with_count?: boolean;
+          start_time?: number;
+          end_time?: number;
+        };
+
+        const logs = await api.getWorkflowActionLogs(workflow_id, action_id, {
+          account_id,
+          page,
+          per_page,
+          with_count,
+          start_time,
+          end_time
+        });
+
+        const logCount = Array.isArray(logs.data) ? logs.data.length : 0;
+        const timeRange = start_time && end_time 
+          ? `${new Date(start_time * 1000).toLocaleDateString()} - ${new Date(end_time * 1000).toLocaleDateString()}`
+          : 'All time';
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🔄 **Workflow Action Logs**\n\n` +
+                    `**Workflow ID:** ${workflow_id}\n` +
+                    `**Action ID:** ${action_id}\n` +
+                    `${account_id ? `**Account ID:** ${account_id}\n` : ''}` +
+                    `**Log Count:** ${logCount}\n` +
+                    `**Time Range:** ${timeRange}\n` +
+                    `${page ? `**Page:** ${page}\n` : ''}` +
+                    `${per_page ? `**Per Page:** ${per_page}\n` : ''}\n` +
+                    `**Full Response:**\n${JSON.stringify(logs, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_workflow_logs': {
+        const { 
+          workflow_id, account_id, page, per_page, with_count, sort, order, start_time, end_time 
+        } = args as {
+          workflow_id: string;
+          account_id?: number;
+          page?: number;
+          per_page?: number;
+          with_count?: boolean;
+          sort?: string;
+          order?: 'asc' | 'desc';
+          start_time?: number;
+          end_time?: number;
+        };
+
+        const logs = await api.getWorkflowLogs(workflow_id, {
+          account_id,
+          page,
+          per_page,
+          with_count,
+          sort,
+          order,
+          start_time,
+          end_time
+        });
+
+        const logCount = Array.isArray(logs.data) ? logs.data.length : 0;
+        const timeRange = start_time && end_time 
+          ? `${new Date(start_time * 1000).toLocaleDateString()} - ${new Date(end_time * 1000).toLocaleDateString()}`
+          : 'All time';
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🔄 **Workflow Logs**\n\n` +
+                    `**Workflow ID:** ${workflow_id}\n` +
+                    `${account_id ? `**Account ID:** ${account_id}\n` : ''}` +
+                    `**Log Count:** ${logCount}\n` +
+                    `**Time Range:** ${timeRange}\n` +
+                    `${page ? `**Page:** ${page}\n` : ''}` +
+                    `${per_page ? `**Per Page:** ${per_page}\n` : ''}\n` +
+                    `**Full Response:**\n${JSON.stringify(logs, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_transactional_email_logs': {
+        const { 
+          account_id, page, per_page, with_count, sort, order, start_time, end_time, 
+          email_id, sender_id, status 
+        } = args as {
+          account_id?: number;
+          page?: number;
+          per_page?: number;
+          with_count?: boolean;
+          sort?: string;
+          order?: 'asc' | 'desc';
+          start_time?: number;
+          end_time?: number;
+          email_id?: string;
+          sender_id?: string;
+          status?: string;
+        };
+
+        const logs = await api.getTransactionalEmailLogs({
+          account_id,
+          page,
+          per_page,
+          with_count,
+          sort,
+          order,
+          start_time,
+          end_time,
+          email_id,
+          sender_id,
+          status
+        });
+
+        const logCount = Array.isArray(logs.data) ? logs.data.length : 0;
+        const timeRange = start_time && end_time 
+          ? `${new Date(start_time * 1000).toLocaleDateString()} - ${new Date(end_time * 1000).toLocaleDateString()}`
+          : 'All time';
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📧 **Transactional Email Logs**\n\n` +
+                    `${account_id ? `**Account ID:** ${account_id}\n` : ''}` +
+                    `**Log Count:** ${logCount}\n` +
+                    `**Time Range:** ${timeRange}\n` +
+                    `${email_id ? `**Email ID Filter:** ${email_id}\n` : ''}` +
+                    `${sender_id ? `**Sender ID Filter:** ${sender_id}\n` : ''}` +
+                    `${status ? `**Status Filter:** ${status}\n` : ''}` +
+                    `${page ? `**Page:** ${page}\n` : ''}` +
+                    `${per_page ? `**Per Page:** ${per_page}\n` : ''}\n` +
+                    `**Full Response:**\n${JSON.stringify(logs, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_debug_logs_access': {
+        const { campaign_id, workflow_id } = args as {
+          campaign_id?: string;
+          workflow_id?: string;
+        };
+
+        const debug = await api.debugLogsAccess({ campaign_id, workflow_id });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🔍 **Logs API Access Debug**\n\n` +
+                    `**Test Results:**\n\n` +
+                    debug.tests.map((test, i) => 
+                      `${i + 1}. **${test.test}**\n` +
+                      `   ${test.success ? '✅ Success' : '❌ Failed'}\n` +
+                      (test.success 
+                        ? `   📊 Has Data: ${test.hasData ? 'Yes' : 'No'}\n` +
+                          (test.dataType ? `   📋 Data Type: ${test.dataType}\n` : '') +
+                          (test.campaign_id ? `   🆔 Campaign ID: ${test.campaign_id}\n` : '') +
+                          (test.workflow_id ? `   🔄 Workflow ID: ${test.workflow_id}\n` : '')
+                        : `   🚫 Error: ${test.error}\n`)
                     ).join('\n') +
                     `\n**Full Debug Info:**\n${JSON.stringify(debug, null, 2)}`,
             },
