@@ -17,7 +17,7 @@ import {
 const server = new Server(
   {
     name: 'cakemail-mcp-server',
-    version: '1.4.0', // Bump version for Sub-Account Management
+    version: '1.5.0', // Bump version for Reports and Analytics
   },
   {
     capabilities: {
@@ -551,6 +551,177 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {},
+          required: [],
+        },
+      },
+
+      // Reports and Analytics
+      {
+        name: 'cakemail_get_campaign_stats',
+        description: 'Get detailed campaign performance statistics and analytics',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            campaign_id: { type: 'string', description: 'Campaign ID to get stats for' },
+            account_id: { type: 'number', description: 'Optional account ID for scoped access' },
+          },
+          required: ['campaign_id'],
+        },
+      },
+      {
+        name: 'cakemail_get_campaign_links_stats',
+        description: 'Get campaign link click statistics and performance data',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            campaign_id: { type: 'string', description: 'Campaign ID to get link stats for' },
+            start_time: { type: 'number', description: 'Start time for the report (Unix timestamp)' },
+            end_time: { type: 'number', description: 'End time for the report (Unix timestamp)' },
+            account_id: { type: 'number', description: 'Optional account ID for scoped access' },
+            page: { type: 'number', description: 'Page number (default: 1)' },
+            per_page: { type: 'number', description: 'Items per page (default: 50, max: 100)' },
+            sort: { type: 'string', enum: ['unique', 'total', 'link'], description: 'Sort field' },
+            order: { type: 'string', enum: ['asc', 'desc'], description: 'Sort direction' },
+          },
+          required: ['campaign_id'],
+        },
+      },
+      {
+        name: 'cakemail_get_email_stats',
+        description: 'Get transactional email statistics for a time period',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            start_time: { type: 'number', description: 'Start time for the report (Unix timestamp)' },
+            end_time: { type: 'number', description: 'End time for the report (Unix timestamp)' },
+            account_id: { type: 'number', description: 'Optional account ID for scoped access' },
+          },
+          required: ['start_time', 'end_time'],
+        },
+      },
+      {
+        name: 'cakemail_get_list_stats',
+        description: 'Get contact list statistics and performance metrics',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            list_id: { type: 'string', description: 'List ID to get stats for' },
+            account_id: { type: 'number', description: 'Optional account ID for scoped access' },
+          },
+          required: ['list_id'],
+        },
+      },
+      {
+        name: 'cakemail_get_account_stats',
+        description: 'Get account-wide statistics and performance overview',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            account_id: { type: 'string', description: 'Account ID to get stats for (omit for self account)' },
+            start_time: { type: 'number', description: 'Start time for the report (Unix timestamp)' },
+            end_time: { type: 'number', description: 'End time for the report (Unix timestamp)' },
+          },
+          required: [],
+        },
+      },
+      {
+        name: 'cakemail_get_campaign_performance_summary',
+        description: 'Get comprehensive campaign performance summary with stats and links data',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            campaign_id: { type: 'string', description: 'Campaign ID to get performance summary for' },
+            account_id: { type: 'number', description: 'Optional account ID for scoped access' },
+          },
+          required: ['campaign_id'],
+        },
+      },
+      {
+        name: 'cakemail_get_account_performance_overview',
+        description: 'Get account performance overview with key metrics',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            account_id: { type: 'number', description: 'Account ID (omit for self account)' },
+            start_time: { type: 'number', description: 'Start time for the report (Unix timestamp)' },
+            end_time: { type: 'number', description: 'End time for the report (Unix timestamp)' },
+          },
+          required: [],
+        },
+      },
+      {
+        name: 'cakemail_list_campaign_reports_exports',
+        description: 'List all campaign reports exports with filtering options',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            account_id: { type: 'number', description: 'Optional account ID for scoped access' },
+            page: { type: 'number', description: 'Page number (default: 1)' },
+            per_page: { type: 'number', description: 'Items per page (default: 50, max: 100)' },
+            status: { type: 'string', description: 'Filter by export status' },
+            progress: { type: 'string', description: 'Filter by export progress' },
+          },
+          required: [],
+        },
+      },
+      {
+        name: 'cakemail_create_campaign_reports_export',
+        description: 'Create a new campaign reports export for download',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            campaign_ids: { type: 'array', items: { type: 'string' }, description: 'List of campaign IDs to export' },
+            format: { type: 'string', enum: ['csv', 'xlsx'], description: 'Export format (default: csv)' },
+            description: { type: 'string', description: 'Optional description for the export' },
+            account_id: { type: 'number', description: 'Optional account ID for scoped access' },
+          },
+          required: ['campaign_ids'],
+        },
+      },
+      {
+        name: 'cakemail_get_campaign_reports_export',
+        description: 'Get details of a specific campaign reports export',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            export_id: { type: 'string', description: 'Export ID to retrieve' },
+            account_id: { type: 'number', description: 'Optional account ID for scoped access' },
+          },
+          required: ['export_id'],
+        },
+      },
+      {
+        name: 'cakemail_download_campaign_reports_export',
+        description: 'Get download URL for a campaign reports export',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            export_id: { type: 'string', description: 'Export ID to download' },
+            account_id: { type: 'number', description: 'Optional account ID for scoped access' },
+          },
+          required: ['export_id'],
+        },
+      },
+      {
+        name: 'cakemail_delete_campaign_reports_export',
+        description: 'Delete a campaign reports export',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            export_id: { type: 'string', description: 'Export ID to delete' },
+            account_id: { type: 'number', description: 'Optional account ID for scoped access' },
+          },
+          required: ['export_id'],
+        },
+      },
+      {
+        name: 'cakemail_debug_reports_access',
+        description: 'Debug reports API access and test functionality',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            campaign_id: { type: 'string', description: 'Optional campaign ID to test campaign reports access' },
+          },
           required: [],
         },
       },
@@ -1487,6 +1658,119 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                     `• Retryable Status Codes: ${config.retryableStatusCodes.join(', ')}\\n` +
                     `• Retryable Errors: ${config.retryableErrors.join(', ')}\\n\\n` +
                     `**Raw Config:**\\n\`\`\`json\\n${JSON.stringify(config, null, 2)}\\n\`\`\``,
+            },
+          ],
+        };
+      }
+
+      // Reports and Analytics
+      case 'cakemail_get_campaign_stats': {
+        const { campaign_id, account_id } = args as {
+          campaign_id: string;
+          account_id?: number;
+        };
+        
+        const stats = await api.reports.getCampaignStats(campaign_id, account_id);
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📊 **Campaign Statistics**\n\n` +
+                    `**Campaign ID:** ${campaign_id}\n` +
+                    `**Account ID:** ${account_id || 'default'}\n\n` +
+                    `**Performance Metrics:**\n` +
+                    `• Sent: ${stats.data?.sent || 0}\n` +
+                    `• Delivered: ${stats.data?.delivered || 0}\n` +
+                    `• Opens: ${stats.data?.opens || 0}\n` +
+                    `• Unique Opens: ${stats.data?.unique_opens || 0}\n` +
+                    `• Clicks: ${stats.data?.clicks || 0}\n` +
+                    `• Unique Clicks: ${stats.data?.unique_clicks || 0}\n` +
+                    `• Bounces: ${stats.data?.bounces || 0}\n` +
+                    `• Unsubscribes: ${stats.data?.unsubscribes || 0}\n` +
+                    `• Spam Reports: ${stats.data?.spam_reports || 0}\n\n` +
+                    `**Rates:**\n` +
+                    `• Open Rate: ${stats.data?.open_rate ? (stats.data.open_rate * 100).toFixed(2) + '%' : 'N/A'}\n` +
+                    `• Click Rate: ${stats.data?.click_rate ? (stats.data.click_rate * 100).toFixed(2) + '%' : 'N/A'}\n` +
+                    `• Bounce Rate: ${stats.data?.bounce_rate ? (stats.data.bounce_rate * 100).toFixed(2) + '%' : 'N/A'}\n` +
+                    `• Unsubscribe Rate: ${stats.data?.unsubscribe_rate ? (stats.data.unsubscribe_rate * 100).toFixed(2) + '%' : 'N/A'}\n\n` +
+                    `**Full Response:**\n${JSON.stringify(stats, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_campaign_links_stats': {
+        const { 
+          campaign_id, start_time, end_time, account_id, page, per_page, sort, order 
+        } = args as {
+          campaign_id: string;
+          start_time?: number;
+          end_time?: number;
+          account_id?: number;
+          page?: number;
+          per_page?: number;
+          sort?: string;
+          order?: string;
+        };
+        
+        const linksStats = await api.reports.getCampaignLinksStats(campaign_id, {
+          ...(start_time !== undefined && { start_time }),
+          ...(end_time !== undefined && { end_time }),
+          ...(account_id !== undefined && { account_id }),
+          ...(page !== undefined && { page }),
+          ...(per_page !== undefined && { per_page }),
+          ...(sort !== undefined && { sort }),
+          ...(order !== undefined && (order === 'asc' || order === 'desc') && { order: order as 'asc' | 'desc' })
+        });
+        
+        const totalLinks = linksStats.data?.length || 0;
+        const topLinks = linksStats.data?.slice(0, 10) || [];
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🔗 **Campaign Links Statistics**\n\n` +
+                    `**Campaign ID:** ${campaign_id}\n` +
+                    `**Total Links:** ${totalLinks}\n` +
+                    `**Period:** ${start_time ? new Date(start_time * 1000).toLocaleDateString() : 'All time'} - ${end_time ? new Date(end_time * 1000).toLocaleDateString() : 'Present'}\n\n` +
+                    `**Top ${Math.min(topLinks.length, 10)} Links:**\n\n` +
+                    (topLinks.map((link, i) => 
+                      `${i + 1}. **${link.url || 'N/A'}**\n` +
+                      `   • Total Clicks: ${link.total || 0}\n` +
+                      `   • Unique Clicks: ${link.unique || 0}\n` +
+                      `   • Link ID: ${link.id || 'N/A'}`
+                    ).join('\n\n') || 'No links found.') +
+                    (totalLinks > 10 ? `\n\n**... and ${totalLinks - 10} more links**` : '') +
+                    `\n\n**Full Response:**\n${JSON.stringify(linksStats, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_debug_reports_access': {
+        const { campaign_id } = args as { campaign_id?: string };
+        const debug = await api.reports.debugReportsAccess(campaign_id);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🔍 **Reports API Access Debug**\n\n` +
+                    `**Test Results:**\n\n` +
+                    debug.tests.map((test, i) => 
+                      `${i + 1}. **${test.test}**\n` +
+                      `   ${test.success ? '✅ Success' : '❌ Failed'}\n` +
+                      (test.success 
+                        ? `   📊 Has Data: ${test.hasData ? 'Yes' : 'No'}\n` +
+                          (test.dataKeys ? `   🔑 Data Keys: ${test.dataKeys.join(', ')}\n` : '') +
+                          (test.campaignId ? `   🆔 Campaign ID: ${test.campaignId}\n` : '') +
+                          (test.linksCount !== undefined ? `   🔗 Links Count: ${test.linksCount}\n` : '') +
+                          (test.exportsCount !== undefined ? `   📤 Exports Count: ${test.exportsCount}\n` : '')
+                        : `   ❌ Error: ${test.error}\n`)
+                    ).join('\n') +
+                    `\n**Full Debug Info:**\n${JSON.stringify(debug, null, 2)}`,
             },
           ],
         };

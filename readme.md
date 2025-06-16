@@ -1,10 +1,10 @@
 # Cakemail MCP Server
 
-A comprehensive Model Context Protocol (MCP) server for integrating with the Cakemail API. This server provides tools for email marketing campaigns, contact management, transactional emails, templates, automation, and analytics through the Cakemail platform.
+A comprehensive Model Context Protocol (MCP) server for integrating with the Cakemail API. This server provides tools for email marketing campaigns, contact management, transactional emails, templates, automation, analytics, and detailed reporting through the Cakemail platform.
 
-## 🎯 Version 1.2.0 - Fully API Compliant
+## 🎯 Version 1.5.0 - Complete Reports & Analytics
 
-This version brings the MCP server into **full compliance** with the official Cakemail API documentation, with enhanced reliability, comprehensive error handling, and intelligent retry logic for production use.
+This version adds **comprehensive reporting and analytics capabilities** with full integration of the Cakemail Reports API, providing detailed campaign performance metrics, link analytics, account statistics, and export functionality.
 
 ## ✨ Features
 
@@ -48,11 +48,16 @@ This version brings the MCP server into **full compliance** with the official Ca
 - ✅ Trigger-based email automation
 - ✅ Start/stop automation controls
 
-### 📊 Advanced Analytics
-- ✅ Campaign performance metrics (opens, clicks, bounces)
-- ✅ Transactional email analytics
-- ✅ List growth and engagement analytics
-- ✅ Account-wide performance insights
+### 📊 Advanced Analytics & Reporting
+- ✅ Campaign performance metrics (opens, clicks, bounces, rates)
+- ✅ Campaign link click tracking and statistics
+- ✅ Transactional email analytics with time ranges
+- ✅ Contact list growth and engagement analytics
+- ✅ Account-wide performance insights and overviews
+- ✅ Campaign reports export (CSV/XLSX) with download
+- ✅ Suppressed emails export functionality
+- ✅ Comprehensive performance summaries
+- ✅ Debug tools for reports API access
 
 ### 🏥 Production Features
 - ✅ Retry logic with exponential backoff
@@ -151,10 +156,12 @@ In Claude Desktop: `"Check my Cakemail API health status"`
 - Sender Management: `create`, `get`, `update`, `delete`, `list` senders
 - Template Management: `create`, `get`, `update`, `delete`, `list` templates
 
-### Analytics & Automation
-- Analytics: Campaign, transactional, list, and account analytics
-- Automation: Create and manage email automation workflows
-- Transactional: Send individual emails with template support
+### Analytics, Reporting & Automation
+- **Campaign Analytics**: Detailed performance metrics, open/click rates, link tracking
+- **Account Analytics**: Performance overviews, growth metrics, time-based statistics  
+- **Export Reports**: Generate and download campaign reports in CSV/XLSX formats
+- **Automation**: Create and manage email automation workflows
+- **Transactional**: Send individual emails with template support
 
 ## 💡 Usage Examples
 
@@ -173,9 +180,15 @@ In Claude Desktop: `"Check my Cakemail API health status"`
 "Add a new contact with email sara@example.com and first name Sara to my main contact list"
 ```
 
-### Analytics
+### Analytics & Reporting
 ```
 "Show me the performance metrics for my latest campaign including open rates and click rates"
+
+"Get detailed link statistics for campaign 12345 including which links were clicked most"
+
+"Create a campaign performance export for campaigns 123, 456, and 789 in Excel format"
+
+"Show me account performance overview for the last 30 days"
 ```
 
 ## 🔧 Advanced Configuration
@@ -225,6 +238,15 @@ DEBUG=mcp:* npm start
 ```
 
 ## 📝 Recent Changes
+
+### Version 1.5.0
+- ✅ Complete Reports API integration with 12+ new tools
+- ✅ Campaign performance statistics and analytics
+- ✅ Campaign link click tracking and analysis
+- ✅ Account and list performance metrics
+- ✅ Export functionality for campaign reports (CSV/XLSX)
+- ✅ Time-based reporting with custom date ranges
+- ✅ Enhanced error handling for reports API
 
 ### Version 1.2.0
 - ✅ Enhanced UX with latest-first default sorting

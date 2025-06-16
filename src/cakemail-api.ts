@@ -11,6 +11,7 @@ import { AnalyticsApi } from './api/analytics-api.js';
 import { AutomationApi } from './api/automation-api.js';
 import { AccountApi } from './api/account-api.js';
 import { SubAccountApi } from './api/sub-account-api.js';
+import { ReportsApi } from './api/reports-api.js';
 
 export class CakemailAPI extends BaseApiClient {
   public campaigns: CampaignApi;
@@ -22,6 +23,7 @@ export class CakemailAPI extends BaseApiClient {
   public automations: AutomationApi;
   public account: AccountApi;
   public subAccounts: SubAccountApi;
+  public reports: ReportsApi;
 
   // Legacy property for backward compatibility
   public get transactional(): EmailApi {
@@ -41,6 +43,7 @@ export class CakemailAPI extends BaseApiClient {
     this.automations = new AutomationApi(config);
     this.account = new AccountApi(config);
     this.subAccounts = new SubAccountApi(config);
+    this.reports = new ReportsApi(config);
   }
 
   // Legacy method proxies for backward compatibility
@@ -310,6 +313,7 @@ export { AnalyticsApi } from './api/analytics-api.js';
 export { AutomationApi } from './api/automation-api.js';
 export { AccountApi } from './api/account-api.js';
 export { SubAccountApi } from './api/sub-account-api.js';
+export { ReportsApi } from './api/reports-api.js';
 
 // Legacy export for backward compatibility
 export { EmailApi as TransactionalApi } from './api/email-api.js';

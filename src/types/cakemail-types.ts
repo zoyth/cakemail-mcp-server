@@ -336,6 +336,201 @@ export interface ConvertSubAccountData {
   migrate_owner?: boolean;
 }
 
+// Reports API types
+export interface CampaignStats {
+  sent_count?: number;
+  delivered_count?: number;
+  bounce_count?: number;
+  hard_bounce_count?: number;
+  soft_bounce_count?: number;
+  open_count?: number;
+  unique_open_count?: number;
+  open_rate?: number;
+  click_count?: number;
+  unique_click_count?: number;
+  click_rate?: number;
+  unsubscribe_count?: number;
+  unsubscribe_rate?: number;
+  spam_complaint_count?: number;
+  spam_complaint_rate?: number;
+  delivery_rate?: number;
+  [key: string]: any;
+}
+
+export interface CampaignLinkStats {
+  link: string;
+  unique: number;
+  total: number;
+  [key: string]: any;
+}
+
+export interface EmailStats {
+  sent_count?: number;
+  delivered_count?: number;
+  bounce_count?: number;
+  open_count?: number;
+  click_count?: number;
+  spam_complaint_count?: number;
+  [key: string]: any;
+}
+
+export interface ListStats {
+  subscriber_count?: number;
+  active_count?: number;
+  unsubscribed_count?: number;
+  bounced_count?: number;
+  growth_rate?: number;
+  [key: string]: any;
+}
+
+export interface AccountStats {
+  campaigns_sent?: number;
+  emails_sent?: number;
+  total_opens?: number;
+  total_clicks?: number;
+  total_bounces?: number;
+  total_unsubscribes?: number;
+  [key: string]: any;
+}
+
+export interface ActionStats {
+  executions?: number;
+  success_rate?: number;
+  average_duration?: number;
+  [key: string]: any;
+}
+
+export interface CampaignReportExport {
+  id: string;
+  status: 'processing' | 'completed' | 'failed';
+  progress?: number;
+  created_on?: string;
+  completed_on?: string;
+  download_url?: string;
+  [key: string]: any;
+}
+
+export interface SuppressedEmailsExport {
+  id: string;
+  status: 'processing' | 'completed' | 'failed';
+  description?: string;
+  created_on?: string;
+  completed_on?: string;
+  download_url?: string;
+  [key: string]: any;
+}
+
+// Report Response Types
+export interface CampaignStatsResponse {
+  data: CampaignStats;
+}
+
+export interface CampaignLinksStatsResponse {
+  data: CampaignLinkStats[];
+  pagination?: {
+    count?: number;
+    page?: number;
+    per_page?: number;
+    total_pages?: number;
+  };
+}
+
+export interface EmailStatsResponse {
+  data: EmailStats;
+}
+
+export interface ListStatsResponse {
+  data: ListStats;
+}
+
+export interface AccountStatsResponse {
+  data: AccountStats;
+}
+
+export interface ActionStatsResponse {
+  data: ActionStats;
+}
+
+export interface CampaignsReportsExportsResponse {
+  data: CampaignReportExport[];
+  pagination?: {
+    count?: number;
+    page?: number;
+    per_page?: number;
+    total_pages?: number;
+  };
+}
+
+export interface CreateCampaignReportExportResponse {
+  data: CampaignReportExport;
+}
+
+export interface GetCampaignReportExportResponse {
+  data: CampaignReportExport;
+}
+
+export interface DeleteCampaignReportExportResponse {
+  data: {
+    id: string;
+    deleted: boolean;
+  };
+}
+
+export interface DownloadCampaignReportExportResponse {
+  data: {
+    download_url: string;
+    expires_at?: string;
+  };
+}
+
+export interface SuppressedEmailsExportsResponse {
+  data: SuppressedEmailsExport[];
+  pagination?: {
+    count?: number;
+    page?: number;
+    per_page?: number;
+    total_pages?: number;
+  };
+}
+
+export interface CreateSuppressedEmailsExportResponse {
+  data: SuppressedEmailsExport;
+}
+
+export interface GetSuppressedEmailsExportResponse {
+  data: SuppressedEmailsExport;
+}
+
+export interface DeleteSuppressedEmailsExportResponse {
+  data: {
+    id: string;
+    deleted: boolean;
+  };
+}
+
+export interface DownloadSuppressedEmailsExportResponse {
+  data: {
+    download_url: string;
+    expires_at?: string;
+  };
+}
+
+// Report Input Data Types
+export interface CreateCampaignReportExportData {
+  campaign_ids?: string[];
+  start_date?: string;
+  end_date?: string;
+  format?: 'csv' | 'xlsx';
+  fields?: string[];
+  [key: string]: any;
+}
+
+export interface ReportFilters {
+  status?: string;
+  progress?: string;
+  [key: string]: any;
+}
+
 export interface SubAccountFilters {
   name?: string;
   status?: 'pending' | 'active' | 'suspended' | 'inactive';
