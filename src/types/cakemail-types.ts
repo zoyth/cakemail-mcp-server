@@ -131,8 +131,8 @@ export interface CreateTemplateResponse {
   data: Template;
 }
 
-// Transactional email responses - Updated for v2 API
-export interface TransactionalEmailResponse {
+// Email API responses - Updated for v2 API (renamed from Transactional)
+export interface EmailResponse {
   email: string;
   object: string;
   submitted: boolean;
@@ -156,6 +156,9 @@ export interface EmailStatusResponse {
     [key: string]: any;
   };
 }
+
+// Legacy type alias for backward compatibility
+export interface TransactionalEmailResponse extends EmailResponse {}
 
 // Analytics specific responses
 export interface CampaignAnalyticsResponse {
@@ -383,8 +386,8 @@ export interface UpdateTemplateData {
   description?: string;
 }
 
-// Transactional email interfaces - Updated for v2 API
-export interface TransactionalEmailData {
+// Email API interfaces - Updated for v2 API (renamed from Transactional)
+export interface EmailData {
   to_email: string;
   to_name?: string;
   sender_id: string | number;
@@ -393,7 +396,11 @@ export interface TransactionalEmailData {
   text_content?: string;
   template_id?: string | number;
   list_id?: string | number; // Required for v2 API, but can be auto-resolved
+  email_type?: 'transactional' | 'marketing'; // v2 API content type
 }
+
+// Legacy type alias for backward compatibility
+export interface TransactionalEmailData extends EmailData {}
 
 // Analytics interfaces
 export interface CampaignAnalytics {
