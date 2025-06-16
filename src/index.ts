@@ -211,8 +211,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 
       // Email API (updated naming and description)
       {
-        name: 'cakemail_send_transactional_email',
-        description: 'Send an email using Cakemail v2 Email API (supports both transactional and marketing emails)',
+        name: 'cakemail_send_email',
+        description: 'Send an email using Cakemail Email API (supports both transactional and marketing emails)',
         inputSchema: {
           type: 'object',
           properties: {
@@ -367,7 +367,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       // Email API (updated to use new EmailApi)
-      case 'cakemail_send_transactional_email': {
+      case 'cakemail_send_email': {
         const { 
           to_email, 
           to_name, 
@@ -410,7 +410,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [
             {
               type: 'text',
-              text: `📧 **Email sent successfully via v2 API!**\\n\\n` +
+              text: `📧 **Email sent successfully via Email API!**\\n\\n` +
                     `✅ **Email ID:** ${email.data?.id}\\n` +
                     `✅ **Status:** ${email.data?.status}\\n` +
                     `✅ **Type:** ${email_type || 'transactional'}\\n` +
