@@ -15,7 +15,7 @@ export class SenderApi extends BaseApiClient {
     const accountId = await this.getCurrentAccountId();
     const query = accountId ? `?account_id=${accountId}` : '';
     
-    return this.makeRequest(`/senders${query}`);
+    return this.makeRequest(`/brands/default/senders${query}`);
   }
 
   async createSender(data: CreateSenderData): Promise<CreateSenderResponse> {
@@ -32,7 +32,7 @@ export class SenderApi extends BaseApiClient {
     const accountId = await this.getCurrentAccountId();
     const query = accountId ? `?account_id=${accountId}` : '';
 
-    return this.makeRequest(`/senders${query}`, {
+    return this.makeRequest(`/brands/default/senders${query}`, {
       method: 'POST',
       body: JSON.stringify(senderData)
     });
@@ -42,7 +42,7 @@ export class SenderApi extends BaseApiClient {
     const accountId = await this.getCurrentAccountId();
     const query = accountId ? `?account_id=${accountId}` : '';
     
-    return this.makeRequest(`/senders/${senderId}${query}`);
+    return this.makeRequest(`/brands/default/senders/${senderId}${query}`);
   }
 
   async updateSender(senderId: string, data: UpdateSenderData): Promise<SenderResponse> {
@@ -66,7 +66,7 @@ export class SenderApi extends BaseApiClient {
     const accountId = await this.getCurrentAccountId();
     const query = accountId ? `?account_id=${accountId}` : '';
 
-    return this.makeRequest(`/senders/${senderId}${query}`, {
+    return this.makeRequest(`/brands/default/senders/${senderId}${query}`, {
       method: 'PATCH',
       body: JSON.stringify(updateData)
     });
@@ -76,7 +76,7 @@ export class SenderApi extends BaseApiClient {
     const accountId = await this.getCurrentAccountId();
     const query = accountId ? `?account_id=${accountId}` : '';
     
-    return this.makeRequest(`/senders/${senderId}${query}`, { 
+    return this.makeRequest(`/brands/default/senders/${senderId}${query}`, { 
       method: 'DELETE' 
     });
   }
