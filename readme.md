@@ -358,7 +358,7 @@ DEBUG=mcp:* npm start
 
 - **Cakemail API**: https://cakemail.dev
 - **MCP Protocol**: https://github.com/modelcontextprotocol
-- **Issues**: https://github.com/zoyth/cakemail-mcp-server/issues
+- **Issues**: https://github.com/cakemail/cakemail-mcp-server/issues
 
 ## 📝 License
 
