@@ -5,6 +5,322 @@ All notable changes to the Cakemail MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2025-06-16
+
+### 🎯 Complete Logs API Implementation
+
+This version adds **comprehensive logs functionality** with full integration of the Cakemail `/logs/` API endpoints, providing detailed campaign activity logs, workflow automation tracking, and transactional email delivery logs.
+
+### 🆕 Added
+
+#### **New LogsApi Class**
+- Complete implementation of all Cakemail `/logs/` endpoints
+- Campaign activity tracking with detailed event categorization
+- Workflow automation logs for email sequences
+- Transactional email delivery logs and monitoring
+- Advanced filtering with smart syntax validation
+- Time-based filtering with Unix timestamp support
+
+#### **New MCP Tools (5 additions)**
+- **`cakemail_get_campaign_logs`** - Detailed campaign activity tracking (opens, clicks, bounces, unsubscribes) with intelligent event categorization
+- **`cakemail_get_workflow_logs`** - Complete workflow automation sequence logging
+- **`cakemail_get_workflow_action_logs`** - Action-level tracking for specific automation steps
+- **`cakemail_get_transactional_email_logs`** - Individual email delivery tracking and monitoring
+- **`cakemail_get_list_logs`** - Contact list activity and engagement logs
+- **`cakemail_debug_logs_access`** - Debug and test logs API endpoint availability
+
+#### **Smart Filtering System**
+- **Intelligent filter syntax**: `term==value;term2==value2` format
+- **Event categorization**: ENGAGEMENT (click, open, view), BOUNCES (hard, soft, blocked), LIST_MANAGEMENT (subscribe, unsubscribe)
+- **Endpoint-specific validation**: Different filter terms per API endpoint
+- **Backward compatibility**: Existing `type` parameter still supported
+- **Graceful handling**: Invalid filters warn but don't fail requests
+
+### 🔧 Enhanced
+
+#### **Comprehensive Parameter Support**
+- **Pagination**: Full support for large log datasets with cursor-based pagination
+- **Time ranges**: Unix timestamp support for start_time and end_time filtering
+- **Sorting options**: Configurable sort fields and direction
+- **Type filtering**: Filter logs by specific activity types
+- **Advanced options**: Support for all API parameters including totals, uniques, grouping
+
+#### **Integration Quality**
+- **Full API integration**: All log methods available through main CakemailAPI client
+- **TypeScript interfaces**: Complete type definitions for all log parameters and responses
+- **Consistent patterns**: Following existing server architecture and error handling
+- **Enhanced responses**: Rich formatting with activity summaries and filter information
+
+### 📋 Technical Implementation
+
+#### **Filter Validation Examples**
+```typescript
+// Campaign logs - engagement events
+filter: "type==click;type==open;type==view"
+
+// Critical issues - hard bounces and spam
+filter: "type==bounce_hb;type==spam;type==bounce_mb"
+
+// Temporary failures - soft bounces and DNS issues  
+filter: "type==bounce_sb;type==bounce_df;type==bounce_fm"
+
+// List management - subscription changes
+filter: "type==subscribe;type==unsubscribe;type==global_unsubscribe"
+```
+
+#### **Event Type Categories**
+- **ENGAGEMENT**: click, open, view, forward, share (user interactions)
+- **BOUNCES**: bounce_hb (hard), bounce_sb (soft), bounce_mb (blocked), bounce_df (DNS), bounce_fm (full mailbox), bounce_tr (transient)
+- **LIST_MANAGEMENT**: subscribe, unsubscribe, global_unsubscribe (list changes)
+- **DELIVERABILITY_ISSUES**: spam, auto_responder (reputation threats)
+- **DELIVERY_PIPELINE**: generating, in_queue, sent, received, skipped (processing status)
+
+### 🔄 Backward Compatibility
+- **No breaking changes**: All existing tools continue to work unchanged
+- **Enhanced existing tools**: Campaign and analytics tools now have richer log data available
+- **Same configuration**: No changes to environment variables or setup required
+- **Seamless upgrade**: Drop-in replacement with immediate access to new functionality
+
+---
+
+## [1.5.0] - 2025-06-15
+
+### 🎯 Complete Reports API Implementation
+
+This version adds **comprehensive reporting and analytics functionality** with full integration of the Cakemail `/reports/` API endpoints, providing detailed campaign performance metrics, account analytics, and data export capabilities.
+
+### 🆕 Added
+
+#### **New ReportsApi Integration**
+- Complete implementation of all Cakemail `/reports/` endpoints
+- Campaign performance statistics with calculated rates
+- Link-by-link click tracking and analysis
+- Account-wide performance insights and trends
+- Contact list growth and engagement metrics
+- Export functionality for campaign reports (CSV/XLSX)
+
+#### **New MCP Tools (12 additions)**
+
+**Campaign Analytics:**
+- **`cakemail_get_campaign_stats`** - Detailed campaign performance metrics (open/click/bounce rates)
+- **`cakemail_get_campaign_links_stats`** - Link click tracking and performance analysis
+- **`cakemail_get_campaign_performance_summary`** - Comprehensive campaign overview with top links
+
+**Account & List Analytics:**
+- **`cakemail_get_account_stats`** - Account-wide performance statistics
+- **`cakemail_get_account_performance_overview`** - Formatted account performance summary
+- **`cakemail_get_list_stats`** - Contact list growth and engagement metrics
+
+**Email Analytics:**
+- **`cakemail_get_email_stats`** - Transactional email performance for time periods
+
+**Export Management:**
+- **`cakemail_list_campaign_reports_exports`** - List all campaign report exports
+- **`cakemail_create_campaign_reports_export`** - Create new exports (CSV/XLSX formats)
+- **`cakemail_get_campaign_reports_export`** - Check export status and progress
+- **`cakemail_download_campaign_reports_export`** - Get download URLs for completed exports
+- **`cakemail_delete_campaign_reports_export`** - Clean up completed exports
+
+**Debug Tools:**
+- **`cakemail_debug_reports_access`** - Test reports API connectivity and permissions
+
+### 🔧 Enhanced Features
+
+#### **Rich Analytics Data**
+- **Performance metrics**: Open rates, click rates, bounce rates with percentages
+- **Link analysis**: Click tracking with top performer identification
+- **Time-based reporting**: Custom date ranges with Unix timestamp support
+- **Trend analysis**: Account performance over time with growth metrics
+- **Engagement insights**: List-level subscriber behavior and churn analysis
+
+#### **Export Capabilities**
+- **Multiple formats**: CSV and Excel (XLSX) export support
+- **Bulk reporting**: Multi-campaign exports in single file
+- **Progress monitoring**: Real-time export status and completion tracking
+- **Download management**: Secure download URLs with expiration handling
+- **Automatic cleanup**: Export lifecycle management
+
+#### **Enhanced User Experience**
+- **📊 Rich formatting**: Performance metrics with emojis and clear sections
+- **📈 Calculated rates**: Automatic percentage calculations for all metrics
+- **🔗 Link insights**: Top-performing link identification and ranking
+- **⏱️ Time formatting**: Human-readable date ranges and periods
+- **✅ Status indicators**: Clear success/failure/progress indicators
+
+### 📋 API Coverage
+
+All official Cakemail Reports API endpoints now supported:
+- `GET /reports/campaigns/{campaign_id}` - Campaign statistics
+- `GET /reports/campaigns/{campaign_id}/links` - Link performance
+- `GET /reports/accounts/self` - Account performance
+- `GET /reports/lists/{list_id}` - List statistics
+- `GET /reports/emails` - Transactional email stats
+- `GET /reports/campaigns-exports` - Export management
+- `POST /reports/campaigns-exports` - Create exports
+- `GET /reports/campaigns-exports/{export_id}` - Export status
+- `DELETE /reports/campaigns-exports/{export_id}` - Delete exports
+- `GET /reports/campaigns-exports/{export_id}/download` - Download exports
+
+### 🔄 Backward Compatibility
+- **No breaking changes**: All existing analytics tools enhanced, not replaced
+- **Enhanced responses**: Existing analytics now include richer data formatting
+- **Same interface**: All existing campaign and account tools work unchanged
+- **Added value**: Users get enhanced analytics without changing their workflows
+
+---
+
+## [1.4.0] - 2025-06-10
+
+### 🎯 Enterprise Sub-Account Management
+
+This version introduces **comprehensive sub-account management** capabilities, enabling enterprise and agency functionality for multi-tenant email marketing operations.
+
+### 🆕 Added
+
+#### **New SubAccountApi Class**
+- Complete sub-account lifecycle management (create, read, update, delete)
+- Advanced filtering, searching, and pagination for account lists
+- Account suspension/unsuspension for temporary access control
+- Email verification workflows with resend capabilities
+- Organization conversion for account type changes
+- Debug and troubleshooting utilities for access management
+
+#### **New MCP Tools (14 additions)**
+
+**Core Management:**
+- **`cakemail_list_sub_accounts`** - List all sub-accounts with advanced filtering
+- **`cakemail_create_sub_account`** - Create new sub-accounts with full profile data
+- **`cakemail_get_sub_account`** - Get detailed sub-account information
+- **`cakemail_update_sub_account`** - Update sub-account details and settings
+- **`cakemail_delete_sub_account`** - Permanently delete sub-accounts
+
+**Lifecycle Management:**
+- **`cakemail_suspend_sub_account`** - Temporarily disable accounts
+- **`cakemail_unsuspend_sub_account`** - Re-enable suspended accounts
+- **`cakemail_confirm_sub_account`** - Complete email verification process
+- **`cakemail_resend_verification_email`** - Resend verification emails
+
+**Advanced Operations:**
+- **`cakemail_convert_sub_account_to_organization`** - Convert accounts to organizations
+- **`cakemail_get_latest_sub_account`** - Get most recently created account
+- **`cakemail_search_sub_accounts_by_name`** - Search accounts by name
+- **`cakemail_get_sub_accounts_by_status`** - Filter accounts by status
+- **`cakemail_debug_sub_account_access`** - Debug access and permissions
+
+### 🏢 Enterprise Features
+
+#### **Multi-Tenant Support**
+- **Client separation**: Isolated accounts for different clients/departments
+- **Hierarchical management**: Parent accounts can manage sub-accounts
+- **Brand isolation**: Separate sender identities and configurations
+- **Access control**: Account-level permissions and restrictions
+
+#### **Advanced Filtering & Search**
+- **Status filtering**: Active, pending, suspended, inactive accounts
+- **Name searching**: Partial matching for account and company names
+- **Partner filtering**: Organize by partner account relationships
+- **Pagination**: Efficient handling of large account lists
+
+#### **Security & Validation**
+- **Email verification**: Required verification workflows for new accounts
+- **Password policies**: Minimum 8 characters with complexity requirements
+- **Input sanitization**: Protection against injection attacks
+- **Access isolation**: Sub-accounts cannot access each other's data
+
+### 💼 Use Cases
+
+#### **Digital Marketing Agencies**
+- **Client management**: Separate accounts for each client with isolated campaigns
+- **Team access**: Different team members access specific client accounts
+- **Billing separation**: Track usage and costs per client
+- **White-label operations**: Branded experiences for different clients
+
+#### **Large Corporations**
+- **Department segmentation**: Marketing, Sales, Support teams get separate accounts
+- **Regional operations**: Geographic divisions operate independently
+- **Subsidiary management**: Parent company manages multiple subsidiary accounts
+- **Compliance separation**: Different accounts for regulatory requirements
+
+### 🔄 API Coverage
+
+**100% coverage** of Cakemail sub-account management endpoints:
+- `GET /accounts` - List sub-accounts
+- `POST /accounts` - Create sub-account
+- `GET /accounts/{id}` - Get sub-account details
+- `PATCH /accounts/{id}` - Update sub-account
+- `DELETE /accounts/{id}` - Delete sub-account
+- `POST /accounts/{id}/suspend` - Suspend account
+- `POST /accounts/{id}/unsuspend` - Unsuspend account
+- `POST /accounts/{id}/confirm` - Confirm account
+- `POST /accounts/resend-verification-email` - Resend verification
+- `POST /accounts/{id}/convert-to-organization` - Convert to organization
+
+---
+
+## [1.2.0] - 2024-12-20
+
+### 🎯 Enhanced User Experience
+
+This version focuses on improving the user experience with intelligent defaults, better formatting, and enhanced campaign management capabilities.
+
+### 🆕 Added
+
+#### **New Tools**
+- **`cakemail_get_latest_campaign`** - Get most recent campaign with optional analytics
+  - Optional status filtering (draft, sent, scheduled, etc.)
+  - Integrated performance metrics for sent campaigns
+  - Human-readable formatting with emojis and context
+
+#### **Enhanced Default Behavior**
+- **Latest-first sorting**: All list operations now default to `sort=created_on&order=desc`
+- **Smart parameters**: User parameters override defaults when specified
+- **Contextual responses**: Responses show applied sorting and filters
+
+### 🔧 Enhanced
+
+#### **Response Formatting**
+- **Human-readable output**: Campaign summaries with emojis and clear structure
+- **Performance integration**: Analytics automatically included when available
+- **Status awareness**: Different outputs based on campaign status
+- **Context indicators**: "Latest first" and filter information shown
+
+#### **API Methods**
+- **`getCampaignsWithDefaults()`** - Enhanced campaign listing with intelligent defaults
+- **`getLatestCampaign(status?, analytics?)`** - Get single latest campaign
+- **`formatCampaignSummary()`** - Human-readable campaign formatting
+- **`formatCampaignAnalytics()`** - Performance metrics formatting
+
+#### **Production Features**
+- **Retry logic**: Exponential backoff with jitter for failed requests
+- **Rate limiting**: Automatic handling of API rate limits and server responses
+- **Circuit breaker**: Automatic failure detection and recovery
+- **Request queuing**: Concurrency control for batch operations
+
+### 📊 User Experience Improvements
+
+#### **Before vs After**
+| Issue | Before | After |
+|-------|--------|---------|
+| **Campaign Order** | Random/unpredictable | Latest first automatically |
+| **Latest Campaign** | Manual filtering needed | Dedicated tool with analytics |
+| **Data Format** | Raw JSON dumps | Human-readable summaries |
+| **Analytics** | Separate API calls | Integrated with campaign data |
+| **Context** | No sorting indicators | Clear "latest first" labels |
+
+#### **Smart Defaults Applied To**
+- `cakemail_get_campaigns` - Campaigns latest first
+- `cakemail_get_lists` - Lists latest first
+- `cakemail_get_contacts` - Contacts latest first  
+- `cakemail_get_templates` - Templates latest first
+
+### 🔄 Backward Compatibility
+- **Fully backward compatible**: All existing tools work unchanged
+- **Enhanced responses**: Better formatting without breaking existing flows
+- **Parameter override**: Users can still specify custom sorting when needed
+- **Same configuration**: No changes to environment variables or setup
+
+---
+
 ## [1.1.0] - 2024-12-15
 
 ### 🎯 Major Improvements - API Alignment

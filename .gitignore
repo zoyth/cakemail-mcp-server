@@ -79,5 +79,11 @@ Desktop.ini
 tmp/
 temp/
 
+# Development artifacts
+*.tmp
+*.temp
+commit-message.txt
+chroma/
+
 # Archive directory for old documentation
 archive/
