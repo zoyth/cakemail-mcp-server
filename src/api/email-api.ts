@@ -3,6 +3,7 @@
 import { BaseApiClient } from './base-client.js';
 import { 
   EmailData,
+  LegacyEmailData,
   EmailAPILogsResponse,
   EmailAPIStatsResponse,
   SubmitEmailRequest,
@@ -20,38 +21,53 @@ export class EmailApi extends BaseApiClient {
    * Submit an email to be sent using v2 API
    * Fully compliant with POST /v2/emails specification
    */
-  async sendEmail(data: EmailData): Promise<SubmitEmailResponse> {
+  async sendEmail(data: EmailData | LegacyEmailData): Promise<SubmitEmailResponse> {
+    // Convert legacy format to new format if needed
+    const emailData = this.normalizeEmailData(data);
+    
     // Enhanced validation
-    if (!this.isValidEmail(data.to_email)) {
-      throw EmailAPIError.forInvalidEmail(data.to_email);
+    if (!this.isValidEmail(emailData.email)) {
+      throw EmailAPIError.forInvalidEmail(emailData.email);
     }
 
-    if (!data.sender_id) {
-      throw new EmailAPIError('sender_id is required', 400);
+    if (!emailData.sender?.id) {
+      throw new EmailAPIError('sender.id is required', 400);
     }
-    if (!data.subject) {
-      throw new EmailAPIError('subject is required', 400);
+    if (!emailData.content?.subject) {
+      throw new EmailAPIError('content.subject is required', 400);
     }
 
     // Must have either content or template
-    if (!data.html_content && !data.text_content && !data.template_id) {
+    if (!emailData.content.html && !emailData.content.text && !emailData.content.template?.id) {
       throw EmailAPIError.forMissingContent();
     }
 
     // Structure request according to v2 API specification
     const submitRequest: SubmitEmailRequest = {
-      to: data.to_email,
-      sender_id: String(data.sender_id),
-      subject: data.subject
+      sender: {
+        id: emailData.sender.id,
+        ...(emailData.sender.name && { name: emailData.sender.name })
+      },
+      content: {
+        subject: emailData.content.subject,
+        ...(emailData.content.html && { html: emailData.content.html }),
+        ...(emailData.content.text && { text: emailData.content.text }),
+        ...(emailData.content.template?.id && { template: { id: emailData.content.template.id } }),
+        ...(emailData.content.encoding && { encoding: emailData.content.encoding }),
+        ...(emailData.content.custom_attributes && { custom_attributes: emailData.content.custom_attributes }),
+        ...(emailData.content.type && { type: emailData.content.type }),
+        ...(emailData.content.markup && { markup: emailData.content.markup })
+      },
+      email: emailData.email
     };
 
     // Add optional fields only if provided
-    if (data.to_name) submitRequest.to_name = data.to_name;
-    if (data.html_content) submitRequest.html_content = data.html_content;
-    if (data.text_content) submitRequest.text_content = data.text_content;
-    if (data.template_id) submitRequest.template_id = String(data.template_id);
-    if (data.tags) submitRequest.tags = data.tags;
-    if (data.metadata) submitRequest.metadata = data.metadata;
+    if (emailData.list_id !== undefined) submitRequest.list_id = emailData.list_id;
+    if (emailData.contact_id !== undefined) submitRequest.contact_id = emailData.contact_id;
+    if (emailData.tags) submitRequest.tags = emailData.tags;
+    if (emailData.tracking) submitRequest.tracking = emailData.tracking;
+    if (emailData.additional_headers) submitRequest.additional_headers = emailData.additional_headers;
+    if (emailData.attachment) submitRequest.attachment = emailData.attachment;
 
     if (this.debugMode) {
       console.log('[Email API] v2 Submit request:', JSON.stringify(submitRequest, null, 2));
@@ -73,6 +89,43 @@ export class EmailApi extends BaseApiClient {
       }
       throw error;
     }
+  }
+
+  /**
+   * Normalize email data - convert legacy format to new v2 format
+   */
+  private normalizeEmailData(data: EmailData | LegacyEmailData): EmailData {
+    // Check if this is already in the new format
+    if ('email' in data && 'sender' in data && 'content' in data) {
+      return data as EmailData;
+    }
+
+    // Convert from legacy format
+    const legacyData = data as LegacyEmailData;
+    
+    return {
+      email: legacyData.to_email,
+      sender: {
+        id: String(legacyData.sender_id),
+        ...(legacyData.to_name && { name: legacyData.to_name })
+      },
+      content: {
+        subject: legacyData.subject,
+        ...(legacyData.html_content && { html: legacyData.html_content }),
+        ...(legacyData.text_content && { text: legacyData.text_content }),
+        ...(legacyData.template_id && { template: { id: Number(legacyData.template_id) } }),
+        encoding: 'utf-8',
+        ...(legacyData.email_type && { type: legacyData.email_type })
+      },
+      ...(legacyData.list_id !== undefined && { list_id: Number(legacyData.list_id) }),
+      ...(legacyData.tags && { tags: legacyData.tags }),
+      // Set default tracking
+      tracking: {
+        opens: true,
+        clicks_html: true,
+        clicks_text: true
+      }
+    };
   }
 
   /**
@@ -328,21 +381,33 @@ export class EmailApi extends BaseApiClient {
   /**
    * Helper method to send transactional email (backward compatibility)
    */
-  async sendTransactionalEmail(data: EmailData): Promise<SubmitEmailResponse> {
-    return this.sendEmail({
-      ...data,
-      email_type: 'transactional'
-    });
+  async sendTransactionalEmail(data: EmailData | LegacyEmailData): Promise<SubmitEmailResponse> {
+    const emailData = this.normalizeEmailData(data);
+    emailData.content.type = 'transactional';
+    return this.sendEmail(emailData);
   }
 
   /**
    * Helper method to send marketing email
    */
-  async sendMarketingEmail(data: EmailData): Promise<SubmitEmailResponse> {
-    return this.sendEmail({
-      ...data,
-      email_type: 'marketing'
-    });
+  async sendMarketingEmail(data: EmailData | LegacyEmailData): Promise<SubmitEmailResponse> {
+    const emailData = this.normalizeEmailData(data);
+    emailData.content.type = 'marketing';
+    return this.sendEmail(emailData);
+  }
+
+  /**
+   * Send email with the full v2 API structure (new method)
+   */
+  async sendEmailV2(data: EmailData): Promise<SubmitEmailResponse> {
+    return this.sendEmail(data);
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   */
+  async sendLegacyEmail(data: LegacyEmailData): Promise<SubmitEmailResponse> {
+    return this.sendEmail(data);
   }
 
   /**

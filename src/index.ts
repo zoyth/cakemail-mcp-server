@@ -670,17 +670,105 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            to_email: { type: 'string', description: 'Recipient email address' },
-            to_name: { type: 'string', description: 'Recipient name' },
-            sender_id: { type: 'string', description: 'Sender ID to use' },
-            subject: { type: 'string', description: 'Email subject' },
-            html_content: { type: 'string', description: 'HTML email content' },
-            text_content: { type: 'string', description: 'Plain text email content' },
-            template_id: { type: 'string', description: 'Template ID to use' },
-            list_id: { type: 'string', description: 'List ID (optional - will auto-select if not provided)' },
-            email_type: { type: 'string', enum: ['transactional', 'marketing'], description: 'Email type (defaults to transactional)' },
+            // v2 API Structure
+            email: { type: 'string', description: 'Recipient email address' },
+            sender: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', description: 'Sender ID' },
+                name: { type: 'string', description: 'Sender name (optional)' }
+              },
+              required: ['id']
+            },
+            content: {
+              type: 'object',
+              properties: {
+                subject: { type: 'string', description: 'Email subject' },
+                html: { type: 'string', description: 'HTML email content' },
+                text: { type: 'string', description: 'Plain text email content' },
+                template: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'number', description: 'Template ID' }
+                  },
+                  required: ['id']
+                },
+                encoding: { type: 'string', description: 'Content encoding (default: utf-8)' },
+                custom_attributes: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string' },
+                      value: { type: 'string' }
+                    },
+                    required: ['name', 'value']
+                  },
+                  description: 'Custom attributes'
+                },
+                type: { type: 'string', enum: ['marketing', 'transactional'], description: 'Email type' },
+                markup: { type: 'object', description: 'Additional markup data' }
+              },
+              required: ['subject']
+            },
+            list_id: { type: 'number', description: 'List ID (optional)' },
+            contact_id: { type: 'number', description: 'Contact ID (optional)' },
+            tags: { type: 'array', items: { type: 'string' }, description: 'Tags for filtering and organization' },
+            tracking: {
+              type: 'object',
+              properties: {
+                opens: { type: 'boolean', description: 'Track email opens' },
+                clicks_html: { type: 'boolean', description: 'Track HTML clicks' },
+                clicks_text: { type: 'boolean', description: 'Track text clicks' }
+              },
+              description: 'Tracking settings'
+            },
+            additional_headers: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  value: { type: 'string' }
+                },
+                required: ['name', 'value']
+              },
+              description: 'Additional email headers'
+            },
+            attachment: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  filename: { type: 'string' },
+                  type: { type: 'string' },
+                  content: { type: 'string' }
+                },
+                required: ['filename', 'type', 'content']
+              },
+              description: 'Email attachments'
+            },
+            
+            // Legacy fields for backward compatibility
+            to_email: { type: 'string', description: '[LEGACY] Recipient email address (use email instead)' },
+            to_name: { type: 'string', description: '[LEGACY] Recipient name (use sender.name instead)' },
+            sender_id: { type: 'string', description: '[LEGACY] Sender ID (use sender.id instead)' },
+            subject: { type: 'string', description: '[LEGACY] Email subject (use content.subject instead)' },
+            html_content: { type: 'string', description: '[LEGACY] HTML content (use content.html instead)' },
+            text_content: { type: 'string', description: '[LEGACY] Text content (use content.text instead)' },
+            template_id: { type: 'string', description: '[LEGACY] Template ID (use content.template.id instead)' },
+            email_type: { type: 'string', enum: ['transactional', 'marketing'], description: '[LEGACY] Email type (use content.type instead)' },
           },
-          required: ['to_email', 'sender_id', 'subject'],
+          anyOf: [
+            {
+              // v2 API format
+              required: ['email', 'sender', 'content'],
+            },
+            {
+              // Legacy format
+              required: ['to_email', 'sender_id', 'subject'],
+            }
+          ],
         },
       },
 

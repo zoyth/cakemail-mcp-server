@@ -735,18 +735,46 @@ export type IntervalEnum = 'hour' | 'day' | 'week' | 'month';
 
 /**
  * Request schema for POST /v2/emails
- * Matches the SubmitEmail schema from OpenAPI spec
+ * Matches the complete v2 API specification
  */
 export interface SubmitEmailRequest {
-  to: string;
-  to_name?: string;
-  sender_id: string;
-  subject: string;
-  html_content?: string;
-  text_content?: string;
-  template_id?: string;
+  sender: {
+    id: string;
+    name?: string;
+  };
+  content: {
+    subject: string;
+    html?: string;
+    text?: string;
+    template?: {
+      id: number;
+    };
+    encoding?: string;
+    custom_attributes?: Array<{
+      name: string;
+      value: string;
+    }>;
+    type?: 'marketing' | 'transactional';
+    markup?: Record<string, any>;
+  };
+  email: string;
+  list_id?: number;
+  contact_id?: number;
   tags?: string[];
-  metadata?: Record<string, any>;
+  tracking?: {
+    opens?: boolean;
+    clicks_html?: boolean;
+    clicks_text?: boolean;
+  };
+  additional_headers?: Array<{
+    name: string;
+    value: string;
+  }>;
+  attachment?: Array<{
+    filename: string;
+    type: string;
+    content: string;
+  }>;
 }
 
 /**
@@ -885,8 +913,52 @@ export interface EmailAPIErrorDetails {
   suggestion?: string;
 }
 
-// Email API interfaces - Updated for v2 API (renamed from Transactional)
+// Email API interfaces - Updated for v2 API to match complete specification
 export interface EmailData {
+  // Required fields
+  email: string; // Recipient email
+  sender: {
+    id: string;
+    name?: string;
+  };
+  content: {
+    subject: string;
+    html?: string;
+    text?: string;
+    template?: {
+      id: number;
+    };
+    encoding?: string;
+    custom_attributes?: Array<{
+      name: string;
+      value: string;
+    }>;
+    type?: 'marketing' | 'transactional';
+    markup?: Record<string, any>;
+  };
+  
+  // Optional fields
+  list_id?: number;
+  contact_id?: number;
+  tags?: string[];
+  tracking?: {
+    opens?: boolean;
+    clicks_html?: boolean;
+    clicks_text?: boolean;
+  };
+  additional_headers?: Array<{
+    name: string;
+    value: string;
+  }>;
+  attachment?: Array<{
+    filename: string;
+    type: string;
+    content: string;
+  }>;
+}
+
+// Legacy interface for backward compatibility
+export interface LegacyEmailData {
   to_email: string;
   to_name?: string;
   sender_id: string | number;
