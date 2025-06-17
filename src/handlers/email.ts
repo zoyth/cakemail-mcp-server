@@ -34,29 +34,57 @@ export async function handleSendEmail(args: any, api: CakemailAPI) {
       throw new EmailAPIError('Either html_content, text_content, or template_id is required', 400);
     }
 
-    // Build email data
+    // Build email data according to v2 API specification
     const emailData: any = {
       email: email,
       sender: {
-        id: sender_id
+        id: sender_id  // Keep as string, API might expect string format
       },
       content: {
-        subject,
-        type: email_type
+        subject: subject
       }
     };
 
-    // Add content
+    // Add content based on what's provided
     if (template_id) {
-      emailData.content.template = { id: parseInt(template_id) };
+      // Template ID should be a number according to schema
+      const templateIdNum = parseInt(template_id);
+      if (!isNaN(templateIdNum)) {
+        emailData.content.template = { id: templateIdNum };
+      } else {
+        throw new EmailAPIError('template_id must be a valid number', 400);
+      }
     } else {
-      if (html_content) emailData.content.html = html_content;
-      if (text_content) emailData.content.text = text_content;
+      // Must have either html or text content if no template
+      if (html_content) {
+        emailData.content.html = html_content;
+      }
+      if (text_content) {
+        emailData.content.text = text_content;
+      }
+      
+      // Add required encoding when content is provided
+      if (html_content || text_content) {
+        emailData.content.encoding = 'utf-8';
+      }
     }
 
-    // Add optional list_id
+    // Add email type to content if specified
+    if (email_type) {
+      emailData.content.type = email_type;
+    }
+
+    // Add optional list_id as number
     if (list_id) {
-      emailData.list_id = parseInt(list_id);
+      const listIdNum = parseInt(list_id);
+      if (!isNaN(listIdNum)) {
+        emailData.list_id = listIdNum;
+      } else {
+        throw new EmailAPIError('list_id must be a valid number', 400);
+      }
+    } else if (email_type === 'marketing') {
+      // Marketing emails typically require a list_id
+      throw new EmailAPIError('list_id is required for marketing emails', 400);
     }
 
     const result = await api.email.sendEmail(emailData);

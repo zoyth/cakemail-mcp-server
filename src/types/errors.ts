@@ -30,10 +30,35 @@ export class CakemailAuthenticationError extends CakemailError {
 export class CakemailBadRequestError extends CakemailError {
   public readonly detail: string;
 
-  constructor(errorResponse: HTTPBadRequestError) {
-    super(`Bad Request: ${errorResponse.detail}`, 400, errorResponse);
+  constructor(errorResponse: HTTPBadRequestError | any) {
+    let detail: string;
+    
+    if (typeof errorResponse === 'string') {
+      detail = errorResponse;
+    } else if (errorResponse && typeof errorResponse === 'object') {
+      if (errorResponse.detail && typeof errorResponse.detail === 'string') {
+        detail = errorResponse.detail;
+      } else if (Array.isArray(errorResponse.detail)) {
+        // Handle validation errors format
+        detail = errorResponse.detail.map((err: any) => {
+          const field = Array.isArray(err.loc) ? err.loc.join('.') : 'unknown';
+          return `${field}: ${err.msg || 'validation error'}`;
+        }).join(', ');
+      } else {
+        // Fallback: try to stringify the object
+        try {
+          detail = JSON.stringify(errorResponse, null, 2);
+        } catch {
+          detail = String(errorResponse);
+        }
+      }
+    } else {
+      detail = String(errorResponse);
+    }
+    
+    super(`Bad Request: ${detail}`, 400, errorResponse);
     this.name = 'CakemailBadRequestError';
-    this.detail = errorResponse.detail;
+    this.detail = detail;
   }
 }
 

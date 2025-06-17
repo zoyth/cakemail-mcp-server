@@ -41,33 +41,81 @@ export class EmailApi extends BaseApiClient {
     if (!emailData.content.html && !emailData.content.text && !emailData.content.template?.id) {
       throw EmailAPIError.forMissingContent();
     }
+    
+    // For marketing emails or accounts that require list management, ensure list_id is provided
+    if (emailData.content.type === 'marketing' && !emailData.list_id) {
+      throw new EmailAPIError('list_id is required for marketing emails', 400);
+    }
+    
+    // Some accounts require list_id for all emails (list management cannot be disabled)
+    // This is a common requirement for newer accounts or certain account types
+    if (!emailData.list_id && emailData.content.type !== 'transactional') {
+      console.warn('[Email API] Warning: Some accounts require list_id for all emails. Consider providing list_id.');
+    }
 
     // Structure request according to v2 API specification
-    const submitRequest: SubmitEmailRequest = {
+    // Based on the OpenAPI schema, the structure should match the SubmitEmail schema
+    const submitRequest: any = {
       sender: {
-        id: emailData.sender.id,
-        ...(emailData.sender.name && { name: emailData.sender.name })
+        id: emailData.sender.id
       },
       content: {
-        subject: emailData.content.subject,
-        ...(emailData.content.html && { html: emailData.content.html }),
-        ...(emailData.content.text && { text: emailData.content.text }),
-        ...(emailData.content.template?.id && { template: { id: emailData.content.template.id } }),
-        ...(emailData.content.encoding && { encoding: emailData.content.encoding }),
-        ...(emailData.content.custom_attributes && { custom_attributes: emailData.content.custom_attributes }),
-        ...(emailData.content.type && { type: emailData.content.type }),
-        ...(emailData.content.markup && { markup: emailData.content.markup })
+        subject: emailData.content.subject
       },
       email: emailData.email
     };
 
-    // Add optional fields only if provided
-    if (emailData.list_id !== undefined) submitRequest.list_id = emailData.list_id;
-    if (emailData.contact_id !== undefined) submitRequest.contact_id = emailData.contact_id;
-    if (emailData.tags) submitRequest.tags = emailData.tags;
-    if (emailData.tracking) submitRequest.tracking = emailData.tracking;
-    if (emailData.additional_headers) submitRequest.additional_headers = emailData.additional_headers;
-    if (emailData.attachment) submitRequest.attachment = emailData.attachment;
+    // Add content fields conditionally
+    if (emailData.content.html) {
+      submitRequest.content.html = emailData.content.html;
+    }
+    if (emailData.content.text) {
+      submitRequest.content.text = emailData.content.text;
+    }
+    if (emailData.content.template?.id) {
+      submitRequest.content.template = { id: emailData.content.template.id };
+    }
+    
+    // Set encoding - required when html or text content is present
+    if (emailData.content.html || emailData.content.text) {
+      submitRequest.content.encoding = emailData.content.encoding || 'utf-8';
+    } else if (emailData.content.encoding) {
+      submitRequest.content.encoding = emailData.content.encoding;
+    }
+    if (emailData.content.custom_attributes) {
+      submitRequest.content.custom_attributes = emailData.content.custom_attributes;
+    }
+    if (emailData.content.type) {
+      submitRequest.content.type = emailData.content.type;
+    }
+    if (emailData.content.markup) {
+      submitRequest.content.markup = emailData.content.markup;
+    }
+
+    // Add optional sender name
+    if (emailData.sender.name) {
+      submitRequest.sender.name = emailData.sender.name;
+    }
+
+    // Add optional top-level fields
+    if (emailData.list_id !== undefined) {
+      submitRequest.list_id = emailData.list_id;
+    }
+    if (emailData.contact_id !== undefined) {
+      submitRequest.contact_id = emailData.contact_id;
+    }
+    if (emailData.tags && Array.isArray(emailData.tags)) {
+      submitRequest.tags = emailData.tags;
+    }
+    if (emailData.tracking) {
+      submitRequest.tracking = emailData.tracking;
+    }
+    if (emailData.additional_headers && Array.isArray(emailData.additional_headers)) {
+      submitRequest.additional_headers = emailData.additional_headers;
+    }
+    if (emailData.attachment && Array.isArray(emailData.attachment)) {
+      submitRequest.attachment = emailData.attachment;
+    }
 
     if (this.debugMode) {
       console.log('[Email API] v2 Submit request:', JSON.stringify(submitRequest, null, 2));
@@ -84,9 +132,82 @@ export class EmailApi extends BaseApiClient {
 
       return response as SubmitEmailResponse;
     } catch (error) {
+      // Enhanced error handling with better details
       if (error instanceof Error) {
-        throw new EmailAPIError(`Failed to send email: ${error.message}`, 500);
+      const errorMessage = error.message;
+      let detailedMessage = `Failed to send email: ${errorMessage}`;
+      
+      // Extract more details from the error if available
+      if ((error as any).response) {
+      try {
+      const responseDetails = JSON.stringify((error as any).response, null, 2);
+      detailedMessage += `\n\nAPI Response Details:\n${responseDetails}`;
+      } catch {
+      detailedMessage += `\n\nAPI Response: ${String((error as any).response)}`;
       }
+      }
+      
+      // If it's a CakemailError, extract more specific details
+      if ((error as any).statusCode && (error as any).response) {
+      const statusCode = (error as any).statusCode;
+      const response = (error as any).response;
+      
+      if (response && typeof response === 'object') {
+      // Handle FastAPI validation errors (Pydantic format)
+      if (Array.isArray(response.detail)) {
+      const validationErrors = response.detail.map((err: any) => {
+      const field = Array.isArray(err.loc) ? err.loc.join('.') : 'unknown';
+      return `${field}: ${err.msg}`;
+      }).join(', ');
+      detailedMessage = `Failed to send email (${statusCode}): Validation errors - ${validationErrors}`;
+        
+        // Provide helpful suggestions for common validation errors
+        if (validationErrors.includes('content.encoding is required')) {
+        detailedMessage += '\n\nSuggestion: Add encoding: "utf-8" to your content when using html or text.';
+        }
+        if (validationErrors.includes('List Management') || detailedMessage.includes('list_id')) {
+          detailedMessage += '\n\nSuggestion: This account requires a list_id. Please provide a valid list_id parameter.';
+      }
+      } 
+      // Handle simple error messages
+      else if (response.detail && typeof response.detail === 'string') {
+      detailedMessage = `Failed to send email (${statusCode}): ${response.detail}`;
+        
+        // Provide helpful suggestions for common error messages
+        if (response.detail.includes('List Management')) {
+        detailedMessage += '\n\nSuggestion: This account requires a list_id. Please provide a valid list_id parameter.';
+      }
+      }
+      // Handle generic error objects
+      else if (response.message) {
+        detailedMessage = `Failed to send email (${statusCode}): ${response.message}`;
+        }
+          // Handle error field
+          else if (response.error) {
+            detailedMessage = `Failed to send email (${statusCode}): ${response.error}`;
+        }
+      // Fallback to JSON serialization
+      else {
+        try {
+          detailedMessage = `Failed to send email (${statusCode}): ${JSON.stringify(response)}`;
+          } catch {
+              detailedMessage = `Failed to send email (${statusCode}): Error parsing response`;
+            }
+          }
+          }
+          }
+          
+          if (this.debugMode) {
+            console.error('[Email API] Detailed error:', {
+              message: errorMessage,
+              error: error,
+              response: (error as any).response,
+              submitRequest: submitRequest
+            });
+          }
+          
+          throw new EmailAPIError(detailedMessage, 500);
+        }
       throw error;
     }
   }
