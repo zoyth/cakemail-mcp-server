@@ -1,10 +1,10 @@
 # Cakemail MCP Server
 
-A comprehensive Model Context Protocol (MCP) server for integrating with the Cakemail API. This server provides tools for email marketing campaigns, contact management, transactional emails, templates, automation, and detailed reporting through the Cakemail platform.
+An enterprise Model Context Protocol (MCP) server for integrating with the Cakemail API. This server provides comprehensive tools for email marketing campaigns, contact management, transactional emails, templates, automation, detailed reporting, and enterprise sub-account management through the Cakemail platform.
 
-## 🎯 Version 1.6.0 - Complete Logs API Implementation
+## 🎯 Version 1.7.0 - Enterprise Sub-Account Management
 
-This version adds **comprehensive logs functionality** with full integration of the Cakemail `/logs/` API endpoints, providing detailed campaign activity logs, workflow automation tracking, and transactional email delivery logs.
+This version introduces **comprehensive sub-account management** capabilities, enabling enterprise and agency functionality for multi-tenant email marketing operations, along with complete logs functionality and advanced reporting features.
 
 ## ✨ Features
 
@@ -47,6 +47,16 @@ This version adds **comprehensive logs functionality** with full integration of 
 - ✅ Create and manage automation sequences
 - ✅ Trigger-based email automation
 - ✅ Start/stop automation controls
+
+### 🏢 Enterprise Sub-Account Management
+- ✅ Create, update, and delete sub-accounts with full profile data
+- ✅ Advanced filtering, searching, and pagination for account lists
+- ✅ Account suspension/unsuspension for temporary access control
+- ✅ Email verification workflows with resend capabilities
+- ✅ Organization conversion for account type changes
+- ✅ Multi-tenant support for agencies and large corporations
+- ✅ Hierarchical account management and brand isolation
+- ✅ Debug and troubleshooting utilities for access management
 
 ### 📊 Advanced Reporting & Analytics
 - ✅ Campaign performance metrics (opens, clicks, bounces, rates)
@@ -165,8 +175,9 @@ In Claude Desktop: `"Check my Cakemail API health status"`
 - List Management: `create`, `get`, `update`, `delete`, `list` contact lists
 - Sender Management: `create`, `get`, `update`, `delete`, `list` senders
 - Template Management: `create`, `get`, `update`, `delete`, `list` templates
+- Sub-Account Management: `create`, `get`, `update`, `delete`, `list`, `suspend`, `unsuspend` sub-accounts
 
-### Reporting, Logs & Automation
+### Reporting, Logs, Automation & Enterprise
 - **Campaign Reports**: Detailed performance metrics, open/click rates, link tracking
 - **Campaign Logs**: Complete activity tracking for opens, clicks, bounces, unsubscribes
 - **Account Reports**: Performance overviews, growth metrics, time-based statistics
@@ -175,6 +186,7 @@ In Claude Desktop: `"Check my Cakemail API health status"`
 - **Export Reports**: Generate and download campaign reports in CSV/XLSX formats
 - **Automation**: Create and manage email automation workflows
 - **Transactional**: Send individual emails with template support
+- **Sub-Account Management**: Enterprise multi-tenant account operations and lifecycle management
 
 ## 💡 Usage Examples
 
@@ -191,6 +203,17 @@ In Claude Desktop: `"Check my Cakemail API health status"`
 ### Contact Management
 ```
 "Add a new contact with email sara@example.com and first name Sara to my main contact list"
+```
+
+### Sub-Account Management
+```
+"Create a new sub-account for client 'Acme Corp' with email admin@acme.com"
+
+"List all active sub-accounts and show their verification status"
+
+"Suspend the sub-account for client 'Beta Inc' temporarily"
+
+"Search for sub-accounts containing 'marketing' in their name"
 ```
 
 ### Reporting & Logs
@@ -255,6 +278,15 @@ DEBUG=mcp:* npm start
 ```
 
 ## 📝 Recent Changes
+
+### Version 1.7.0
+- ✅ Complete sub-account management for enterprise and agency use
+- ✅ Multi-tenant support with client isolation and brand separation
+- ✅ Advanced account filtering, searching, and lifecycle management
+- ✅ Account suspension/unsuspension and verification workflows
+- ✅ Hierarchical account management for large organizations
+- ✅ Debug tools for sub-account access and permissions
+- ✅ 14+ new tools for comprehensive account operations
 
 ### Version 1.6.0
 - ✅ Complete Logs API integration with 5 new tools

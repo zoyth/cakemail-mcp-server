@@ -5,6 +5,100 @@ All notable changes to the Cakemail MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2025-06-17
+
+### 🎯 Enterprise Sub-Account Management
+
+This version introduces **comprehensive sub-account management** capabilities, enabling enterprise and agency functionality for multi-tenant email marketing operations.
+
+### 🆕 Added
+
+#### **New SubAccountApi Class**
+- Complete sub-account lifecycle management (create, read, update, delete)
+- Advanced filtering, searching, and pagination for account lists
+- Account suspension/unsuspension for temporary access control
+- Email verification workflows with resend capabilities
+- Organization conversion for account type changes
+- Debug and troubleshooting utilities for access management
+
+#### **New MCP Tools (14 additions)**
+
+**Core Management:**
+- **`cakemail_list_sub_accounts`** - List all sub-accounts with advanced filtering
+- **`cakemail_create_sub_account`** - Create new sub-accounts with full profile data
+- **`cakemail_get_sub_account`** - Get detailed sub-account information
+- **`cakemail_update_sub_account`** - Update sub-account details and settings
+- **`cakemail_delete_sub_account`** - Permanently delete sub-accounts
+
+**Lifecycle Management:**
+- **`cakemail_suspend_sub_account`** - Temporarily disable accounts
+- **`cakemail_unsuspend_sub_account`** - Re-enable suspended accounts
+- **`cakemail_confirm_sub_account`** - Complete email verification process
+- **`cakemail_resend_verification_email`** - Resend verification emails
+
+**Advanced Operations:**
+- **`cakemail_convert_sub_account_to_organization`** - Convert accounts to organizations
+- **`cakemail_get_latest_sub_account`** - Get most recently created account
+- **`cakemail_search_sub_accounts_by_name`** - Search accounts by name
+- **`cakemail_get_sub_accounts_by_status`** - Filter accounts by status
+- **`cakemail_debug_sub_account_access`** - Debug access and permissions
+
+### 🏢 Enterprise Features
+
+#### **Multi-Tenant Support**
+- **Client separation**: Isolated accounts for different clients/departments
+- **Hierarchical management**: Parent accounts can manage sub-accounts
+- **Brand isolation**: Separate sender identities and configurations
+- **Access control**: Account-level permissions and restrictions
+
+#### **Advanced Filtering & Search**
+- **Status filtering**: Active, pending, suspended, inactive accounts
+- **Name searching**: Partial matching for account and company names
+- **Partner filtering**: Organize by partner account relationships
+- **Pagination**: Efficient handling of large account lists
+
+#### **Security & Validation**
+- **Email verification**: Required verification workflows for new accounts
+- **Password policies**: Minimum 8 characters with complexity requirements
+- **Input sanitization**: Protection against injection attacks
+- **Access isolation**: Sub-accounts cannot access each other's data
+
+### 💼 Use Cases
+
+#### **Digital Marketing Agencies**
+- **Client management**: Separate accounts for each client with isolated campaigns
+- **Team access**: Different team members access specific client accounts
+- **Billing separation**: Track usage and costs per client
+- **White-label operations**: Branded experiences for different clients
+
+#### **Large Corporations**
+- **Department segmentation**: Marketing, Sales, Support teams get separate accounts
+- **Regional operations**: Geographic divisions operate independently
+- **Subsidiary management**: Parent company manages multiple subsidiary accounts
+- **Compliance separation**: Different accounts for regulatory requirements
+
+### 🔄 API Coverage
+
+**100% coverage** of Cakemail sub-account management endpoints:
+- `GET /accounts` - List sub-accounts
+- `POST /accounts` - Create sub-account
+- `GET /accounts/{id}` - Get sub-account details
+- `PATCH /accounts/{id}` - Update sub-account
+- `DELETE /accounts/{id}` - Delete sub-account
+- `POST /accounts/{id}/suspend` - Suspend account
+- `POST /accounts/{id}/unsuspend` - Unsuspend account
+- `POST /accounts/{id}/confirm` - Confirm account
+- `POST /accounts/resend-verification-email` - Resend verification
+- `POST /accounts/{id}/convert-to-organization` - Convert to organization
+
+### 🔄 Backward Compatibility
+- **No breaking changes**: All existing tools continue to work unchanged
+- **Enhanced functionality**: New enterprise capabilities without affecting existing workflows
+- **Same configuration**: No changes to environment variables or setup required
+- **Seamless upgrade**: Drop-in replacement with immediate access to new functionality
+
+---
+
 ## [1.6.1] - 2025-06-16
 
 ### 🧹 Code Cleanup - Analytics API Removal
