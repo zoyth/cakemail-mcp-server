@@ -333,6 +333,149 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 required: [],
               },
             },
+            // Additional Campaign Operations
+            {
+              name: 'cakemail_render_campaign',
+              description: 'Render a campaign for preview (get campaign content with personalization)',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to render' },
+                  contact_id: { type: 'number', description: 'Optional: Contact ID for personalization' },
+                },
+                required: ['campaign_id'],
+              },
+            },
+            {
+              name: 'cakemail_send_test_email',
+              description: 'Send test email(s) for a campaign',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to test' },
+                  emails: { type: 'array', items: { type: 'string' }, description: 'List of email addresses to send test to' },
+                },
+                required: ['campaign_id', 'emails'],
+              },
+            },
+            {
+              name: 'cakemail_schedule_campaign',
+              description: 'Schedule a campaign for future delivery',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to schedule' },
+                  scheduled_for: { type: 'string', description: 'Optional: Schedule datetime (ISO format). If not provided, sends immediately' },
+                },
+                required: ['campaign_id'],
+              },
+            },
+            {
+              name: 'cakemail_unschedule_campaign',
+              description: 'Unschedule a previously scheduled campaign',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to unschedule' },
+                },
+                required: ['campaign_id'],
+              },
+            },
+            {
+              name: 'cakemail_reschedule_campaign',
+              description: 'Reschedule a campaign to a new datetime',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to reschedule' },
+                  scheduled_for: { type: 'string', description: 'New schedule datetime (ISO format)' },
+                },
+                required: ['campaign_id', 'scheduled_for'],
+              },
+            },
+            {
+              name: 'cakemail_suspend_campaign',
+              description: 'Suspend a running campaign (temporarily stop delivery)',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to suspend' },
+                },
+                required: ['campaign_id'],
+              },
+            },
+            {
+              name: 'cakemail_resume_campaign',
+              description: 'Resume a suspended campaign',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to resume' },
+                },
+                required: ['campaign_id'],
+              },
+            },
+            {
+              name: 'cakemail_cancel_campaign',
+              description: 'Cancel a campaign (permanently stop and cannot be resumed)',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to cancel' },
+                },
+                required: ['campaign_id'],
+              },
+            },
+            {
+              name: 'cakemail_archive_campaign',
+              description: 'Archive a campaign (remove from active list but keep data)',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to archive' },
+                },
+                required: ['campaign_id'],
+              },
+            },
+            {
+              name: 'cakemail_unarchive_campaign',
+              description: 'Unarchive a campaign (restore to active list)',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to unarchive' },
+                },
+                required: ['campaign_id'],
+              },
+            },
+            {
+              name: 'cakemail_get_campaign_revisions',
+              description: 'Get revision history for a campaign',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to get revisions for' },
+                  page: { type: 'number', description: 'Page number (default: 1)' },
+                  per_page: { type: 'number', description: 'Items per page (default: 50)' },
+                  with_count: { type: 'boolean', description: 'Include total count in response' },
+                },
+                required: ['campaign_id'],
+              },
+            },
+            {
+              name: 'cakemail_get_campaign_links',
+              description: 'Get all links in a campaign for tracking purposes',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  campaign_id: { type: 'string', description: 'Campaign ID to get links for' },
+                  page: { type: 'number', description: 'Page number (default: 1)' },
+                  per_page: { type: 'number', description: 'Items per page (default: 50)' },
+                  with_count: { type: 'boolean', description: 'Include total count in response' },
+                },
+                required: ['campaign_id'],
+              },
+            },
 
             // Sub-Account Management (Enterprise/Agency Features)
       {
@@ -1256,6 +1399,291 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                         : `   ❌ Error: ${test.error}\n`)
                     ).join('\n') +
                     `\n**Full Debug Info:**\n${JSON.stringify(debug, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      // Additional Campaign Operations
+      case 'cakemail_render_campaign': {
+        const { campaign_id, contact_id } = args as {
+          campaign_id: string;
+          contact_id?: number;
+        };
+        
+        const result = await api.renderCampaign(campaign_id, contact_id);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🎨 **Campaign Rendered Successfully**\n\n` +
+                    `✅ **Campaign ID:** ${campaign_id}\n` +
+                    `${contact_id ? `✅ **Contact ID:** ${contact_id}\n` : ''}` +
+                    `✅ **Render Status:** Complete\n\n` +
+                    `**Rendered Content:**\n${JSON.stringify(result, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_send_test_email': {
+        const { campaign_id, emails } = args as {
+          campaign_id: string;
+          emails: string[];
+        };
+        
+        // Validate email addresses
+        const invalidEmails = emails.filter(email => !validateEmail(email));
+        if (invalidEmails.length > 0) {
+          throw new Error(`Invalid email addresses: ${invalidEmails.join(', ')}`);
+        }
+        
+        const result = await api.sendTestEmail(campaign_id, { emails });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📧 **Test Email(s) Sent Successfully**\n\n` +
+                    `✅ **Campaign ID:** ${campaign_id}\n` +
+                    `✅ **Recipients:** ${emails.join(', ')}\n` +
+                    `✅ **Count:** ${emails.length} email(s)\n\n` +
+                    `The test email(s) have been sent to the specified addresses.\n\n` +
+                    `**Full Response:**\n${JSON.stringify(result, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_schedule_campaign': {
+        const { campaign_id, scheduled_for } = args as {
+          campaign_id: string;
+          scheduled_for?: string;
+        };
+        
+        const data = scheduled_for ? { scheduled_for } : undefined;
+        const result = await api.scheduleCampaign(campaign_id, data);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `⏰ **Campaign Scheduled Successfully**\n\n` +
+                    `✅ **Campaign ID:** ${campaign_id}\n` +
+                    `✅ **Scheduled For:** ${scheduled_for || 'Immediate delivery'}\n` +
+                    `✅ **Status:** Scheduled\n\n` +
+                    `${scheduled_for ? 'The campaign will be sent at the specified time.' : 'The campaign has been queued for immediate delivery.'}\n\n` +
+                    `**Full Response:**\n${JSON.stringify(result, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_unschedule_campaign': {
+        const { campaign_id } = args as { campaign_id: string };
+        const result = await api.unscheduleCampaign(campaign_id);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `⏸️ **Campaign Unscheduled Successfully**\n\n` +
+                    `✅ **Campaign ID:** ${campaign_id}\n` +
+                    `✅ **Status:** Unscheduled\n\n` +
+                    `The campaign has been removed from the delivery schedule.\n\n` +
+                    `**Full Response:**\n${JSON.stringify(result, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_reschedule_campaign': {
+        const { campaign_id, scheduled_for } = args as {
+          campaign_id: string;
+          scheduled_for: string;
+        };
+        
+        const result = await api.rescheduleCampaign(campaign_id, { scheduled_for });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🔄 **Campaign Rescheduled Successfully**\n\n` +
+                    `✅ **Campaign ID:** ${campaign_id}\n` +
+                    `✅ **New Schedule:** ${scheduled_for}\n` +
+                    `✅ **Status:** Rescheduled\n\n` +
+                    `The campaign delivery time has been updated.\n\n` +
+                    `**Full Response:**\n${JSON.stringify(result, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_suspend_campaign': {
+        const { campaign_id } = args as { campaign_id: string };
+        const result = await api.suspendCampaign(campaign_id);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `⏸️ **Campaign Suspended Successfully**\n\n` +
+                    `✅ **Campaign ID:** ${campaign_id}\n` +
+                    `✅ **Status:** Suspended\n\n` +
+                    `The campaign delivery has been temporarily stopped. Use resume to continue.\n\n` +
+                    `**Full Response:**\n${JSON.stringify(result, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_resume_campaign': {
+        const { campaign_id } = args as { campaign_id: string };
+        const result = await api.resumeCampaign(campaign_id);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `▶️ **Campaign Resumed Successfully**\n\n` +
+                    `✅ **Campaign ID:** ${campaign_id}\n` +
+                    `✅ **Status:** Active\n\n` +
+                    `The campaign delivery has been resumed and will continue.\n\n` +
+                    `**Full Response:**\n${JSON.stringify(result, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_cancel_campaign': {
+        const { campaign_id } = args as { campaign_id: string };
+        const result = await api.cancelCampaign(campaign_id);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `❌ **Campaign Cancelled Successfully**\n\n` +
+                    `✅ **Campaign ID:** ${campaign_id}\n` +
+                    `✅ **Status:** Cancelled\n\n` +
+                    `⚠️ **The campaign has been permanently cancelled and cannot be resumed.**\n\n` +
+                    `**Full Response:**\n${JSON.stringify(result, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_archive_campaign': {
+        const { campaign_id } = args as { campaign_id: string };
+        const result = await api.archiveCampaign(campaign_id);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📦 **Campaign Archived Successfully**\n\n` +
+                    `✅ **Campaign ID:** ${campaign_id}\n` +
+                    `✅ **Status:** Archived\n\n` +
+                    `The campaign has been moved to the archive but data is preserved.\n\n` +
+                    `**Full Response:**\n${JSON.stringify(result, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_unarchive_campaign': {
+        const { campaign_id } = args as { campaign_id: string };
+        const result = await api.unarchiveCampaign(campaign_id);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📤 **Campaign Unarchived Successfully**\n\n` +
+                    `✅ **Campaign ID:** ${campaign_id}\n` +
+                    `✅ **Status:** Active\n\n` +
+                    `The campaign has been restored from the archive.\n\n` +
+                    `**Full Response:**\n${JSON.stringify(result, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_campaign_revisions': {
+        const { campaign_id, page, per_page, with_count } = args as {
+          campaign_id: string;
+          page?: number;
+          per_page?: number;
+          with_count?: boolean;
+        };
+        
+        const result = await api.getCampaignRevisions(campaign_id, {
+          page: page || 1,
+          per_page: per_page || 50,
+          with_count: with_count !== false
+        });
+
+        const revisionCount = Array.isArray(result.data) ? result.data.length : 0;
+        const total = result.pagination?.count || revisionCount;
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📚 **Campaign Revisions (${total} total)**\n\n` +
+                    `**Campaign ID:** ${campaign_id}\n` +
+                    `**Showing:** ${revisionCount} revisions\n` +
+                    `**Page:** ${page || 1}\n\n` +
+                    (Array.isArray(result.data) && result.data.length > 0 
+                      ? result.data.slice(0, 10).map((revision: any, i: number) => 
+                          `${i + 1}. **Revision ${revision.id || 'N/A'}**\n` +
+                          `   📅 Created: ${revision.created_on || 'N/A'}\n` +
+                          `   👤 Author: ${revision.author || 'N/A'}\n` +
+                          `   📝 Changes: ${revision.changes || 'N/A'}`
+                        ).join('\n\n')
+                      : 'No revisions found.') +
+                    `\n\n**Full Response:**\n${JSON.stringify(result, null, 2)}`,
+            },
+          ],
+        };
+      }
+
+      case 'cakemail_get_campaign_links': {
+        const { campaign_id, page, per_page, with_count } = args as {
+          campaign_id: string;
+          page?: number;
+          per_page?: number;
+          with_count?: boolean;
+        };
+        
+        const result = await api.getCampaignLinks(campaign_id, {
+          page: page || 1,
+          per_page: per_page || 50,
+          with_count: with_count !== false
+        });
+
+        const linkCount = Array.isArray(result.data) ? result.data.length : 0;
+        const total = result.pagination?.count || linkCount;
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🔗 **Campaign Links (${total} total)**\n\n` +
+                    `**Campaign ID:** ${campaign_id}\n` +
+                    `**Showing:** ${linkCount} links\n` +
+                    `**Page:** ${page || 1}\n\n` +
+                    (Array.isArray(result.data) && result.data.length > 0 
+                      ? result.data.slice(0, 10).map((link: any, i: number) => 
+                          `${i + 1}. **${link.url || 'N/A'}**\n` +
+                          `   🆔 Link ID: ${link.id || 'N/A'}\n` +
+                          `   📊 Clicks: ${link.clicks || 0}\n` +
+                          `   🎯 Unique: ${link.unique_clicks || 0}`
+                        ).join('\n\n')
+                      : 'No links found.') +
+                    `\n\n**Full Response:**\n${JSON.stringify(result, null, 2)}`,
             },
           ],
         };

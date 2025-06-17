@@ -84,6 +84,55 @@ export class CakemailAPI extends BaseApiClient {
     return this.campaigns.deleteCampaign(id);
   }
 
+  // New campaign methods from API spec
+  async renderCampaign(id: string, contactId?: number) {
+    return this.campaigns.renderCampaign(id, contactId);
+  }
+
+  async sendTestEmail(id: string, data: { emails: string[] }) {
+    return this.campaigns.sendTestEmail(id, data);
+  }
+
+  async scheduleCampaign(id: string, data?: { scheduled_for?: string }) {
+    return this.campaigns.scheduleCampaign(id, data);
+  }
+
+  async unscheduleCampaign(id: string) {
+    return this.campaigns.unscheduleCampaign(id);
+  }
+
+  async rescheduleCampaign(id: string, data: { scheduled_for: string }) {
+    return this.campaigns.rescheduleCampaign(id, data);
+  }
+
+  async suspendCampaign(id: string) {
+    return this.campaigns.suspendCampaign(id);
+  }
+
+  async resumeCampaign(id: string) {
+    return this.campaigns.resumeCampaign(id);
+  }
+
+  async cancelCampaign(id: string) {
+    return this.campaigns.cancelCampaign(id);
+  }
+
+  async archiveCampaign(id: string) {
+    return this.campaigns.archiveCampaign(id);
+  }
+
+  async unarchiveCampaign(id: string) {
+    return this.campaigns.unarchiveCampaign(id);
+  }
+
+  async getCampaignRevisions(id: string, params?: any) {
+    return this.campaigns.getCampaignRevisions(id, params);
+  }
+
+  async getCampaignLinks(id: string, params?: any) {
+    return this.campaigns.getCampaignLinks(id, params);
+  }
+
   async debugCampaignAccess(campaignId?: string) {
     return this.campaigns.debugCampaignAccess(campaignId);
   }

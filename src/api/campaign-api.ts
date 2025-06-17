@@ -86,6 +86,11 @@ export class CampaignApi extends BaseApiClient {
     return this.makeRequest(`/campaigns${query}`);
   }
 
+  // Update sendCampaign to use the new scheduleCampaign method
+  async sendCampaign(id: string): Promise<{ success: true; status: number }> {
+    return this.scheduleCampaign(id);
+  }
+
   // FIXED: Enhanced getLatestCampaign with correct API usage
   async getLatestCampaign(status?: string): Promise<Campaign | null> {
     if (this.debugMode) {
@@ -234,16 +239,6 @@ export class CampaignApi extends BaseApiClient {
     });
   }
 
-  // Campaign scheduling and sending methods
-  async sendCampaign(id: string): Promise<{ success: true; status: number }> {
-    const accountId = await this.getCurrentAccountId();
-    const query = accountId ? `?account_id=${accountId}` : '';
-    
-    return this.makeRequest(`/campaigns/${id}/schedule${query}`, { 
-      method: 'POST' 
-    });
-  }
-
   async deleteCampaign(id: string): Promise<DeleteCampaignResponse> {
     const accountId = await this.getCurrentAccountId();
     const query = accountId ? `?account_id=${accountId}` : '';
@@ -251,6 +246,143 @@ export class CampaignApi extends BaseApiClient {
     return this.makeRequest(`/campaigns/${id}${query}`, { 
       method: 'DELETE' 
     });
+  }
+
+  // Campaign rendering (preview)
+  async renderCampaign(id: string, contactId?: number): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const params: any = {};
+    if (contactId) params.contact_id = contactId;
+    if (accountId) params.account_id = accountId;
+    
+    const query = Object.keys(params).length > 0 ? `?${new URLSearchParams(params)}` : '';
+    
+    return this.makeRequest(`/campaigns/${id}/render${query}`);
+  }
+
+  // Send test email
+  async sendTestEmail(id: string, data: { emails: string[] }): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const query = accountId ? `?account_id=${accountId}` : '';
+    
+    return this.makeRequest(`/campaigns/${id}/send-test${query}`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  // Campaign scheduling operations
+  async scheduleCampaign(id: string, data?: { scheduled_for?: string }): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const query = accountId ? `?account_id=${accountId}` : '';
+    
+    const requestOptions: any = {
+      method: 'POST'
+    };
+    
+    if (data) {
+      requestOptions.body = JSON.stringify(data);
+    }
+    
+    return this.makeRequest(`/campaigns/${id}/schedule${query}`, requestOptions);
+  }
+
+  async unscheduleCampaign(id: string): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const query = accountId ? `?account_id=${accountId}` : '';
+    
+    return this.makeRequest(`/campaigns/${id}/unschedule${query}`, {
+      method: 'POST'
+    });
+  }
+
+  async rescheduleCampaign(id: string, data: { scheduled_for: string }): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const query = accountId ? `?account_id=${accountId}` : '';
+    
+    return this.makeRequest(`/campaigns/${id}/reschedule${query}`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  // Campaign control operations
+  async suspendCampaign(id: string): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const query = accountId ? `?account_id=${accountId}` : '';
+    
+    return this.makeRequest(`/campaigns/${id}/suspend${query}`, {
+      method: 'POST'
+    });
+  }
+
+  async resumeCampaign(id: string): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const query = accountId ? `?account_id=${accountId}` : '';
+    
+    return this.makeRequest(`/campaigns/${id}/resume${query}`, {
+      method: 'POST'
+    });
+  }
+
+  async cancelCampaign(id: string): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const query = accountId ? `?account_id=${accountId}` : '';
+    
+    return this.makeRequest(`/campaigns/${id}/cancel${query}`, {
+      method: 'POST'
+    });
+  }
+
+  // Campaign archiving operations
+  async archiveCampaign(id: string): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const query = accountId ? `?account_id=${accountId}` : '';
+    
+    return this.makeRequest(`/campaigns/${id}/archive${query}`, {
+      method: 'POST'
+    });
+  }
+
+  async unarchiveCampaign(id: string): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const query = accountId ? `?account_id=${accountId}` : '';
+    
+    return this.makeRequest(`/campaigns/${id}/unarchive${query}`, {
+      method: 'POST'
+    });
+  }
+
+  // Campaign revisions
+  async getCampaignRevisions(id: string, params?: PaginationParams): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const apiParams: any = {
+      page: params?.page || 1,
+      per_page: params?.per_page || 50,
+      with_count: params?.with_count !== false
+    };
+    
+    if (accountId) apiParams.account_id = accountId;
+    
+    const query = `?${new URLSearchParams(apiParams)}`;
+    
+    return this.makeRequest(`/campaigns/${id}/revisions${query}`);
+  }
+
+  // Campaign links
+  async getCampaignLinks(id: string, params?: PaginationParams): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const apiParams: any = {
+      page: params?.page || 1,
+      per_page: params?.per_page || 50,
+      with_count: params?.with_count !== false
+    };
+    
+    if (accountId) apiParams.account_id = accountId;
+    
+    const query = `?${new URLSearchParams(apiParams)}`;
+    
+    return this.makeRequest(`/campaigns/${id}/links${query}`);
   }
 
   // Debug method to test different campaign access patterns
