@@ -215,25 +215,6 @@ export interface TransactionalEmailResponse extends EmailResponse {}
 
 
 
-// Automation specific responses
-export interface AutomationsResponse {
-  data: Automation[];
-  pagination?: {
-    count?: number;
-    page?: number;
-    per_page?: number;
-    total_pages?: number;
-  };
-}
-
-export interface AutomationResponse {
-  data: Automation;
-}
-
-export interface CreateAutomationResponse {
-  data: Automation;
-}
-
 // Account responses
 export interface AccountResponse {
   data: {
@@ -765,21 +746,4 @@ export interface TransactionalEmailData extends EmailData {}
 
 
 
-// Automation interfaces
-export interface Automation {
-  id: number;
-  name: string;
-  description?: string;
-  status?: 'active' | 'inactive' | 'draft';
-  trigger?: any;
-  actions?: any[];
-  created_on?: string;
-  updated_on?: string;
-}
 
-export interface CreateAutomationData {
-  name: string;
-  description?: string;
-  trigger: any;
-  actions: any[];
-}

@@ -8,7 +8,7 @@ import { SenderApi } from './api/sender-api.js';
 import { TemplateApi } from './api/template-api.js';
 import { EmailApi } from './api/email-api.js';
 
-import { AutomationApi } from './api/automation-api.js';
+
 import { AccountApi } from './api/account-api.js';
 import { SubAccountApi } from './api/sub-account-api.js';
 import { ReportsApi } from './api/reports-api.js';
@@ -21,7 +21,7 @@ export class CakemailAPI extends BaseApiClient {
   public templates: TemplateApi;
   public email: EmailApi;
 
-  public automations: AutomationApi;
+
   public account: AccountApi;
   public subAccounts: SubAccountApi;
   public reports: ReportsApi;
@@ -42,7 +42,7 @@ export class CakemailAPI extends BaseApiClient {
     this.templates = new TemplateApi(config);
     this.email = new EmailApi(config);
 
-    this.automations = new AutomationApi(config);
+
     this.account = new AccountApi(config);
     this.subAccounts = new SubAccountApi(config);
     this.reports = new ReportsApi(config);
@@ -256,27 +256,6 @@ export class CakemailAPI extends BaseApiClient {
 
 
 
-  // Automation methods
-  async getAutomations(params?: any) {
-    return this.automations.getAutomations(params);
-  }
-
-  async getAutomation(automationId: string) {
-    return this.automations.getAutomation(automationId);
-  }
-
-  async createAutomation(data: any) {
-    return this.automations.createAutomation(data);
-  }
-
-  async startAutomation(automationId: string) {
-    return this.automations.startAutomation(automationId);
-  }
-
-  async stopAutomation(automationId: string) {
-    return this.automations.stopAutomation(automationId);
-  }
-
   // Account methods
   async getSelfAccount() {
     return this.account.getSelfAccount();
@@ -389,7 +368,7 @@ export { SenderApi } from './api/sender-api.js';
 export { TemplateApi } from './api/template-api.js';
 export { EmailApi } from './api/email-api.js';
 
-export { AutomationApi } from './api/automation-api.js';
+
 export { AccountApi } from './api/account-api.js';
 export { SubAccountApi } from './api/sub-account-api.js';
 export { ReportsApi } from './api/reports-api.js';
