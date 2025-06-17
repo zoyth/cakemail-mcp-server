@@ -25,6 +25,13 @@ import {
   handleGetEmailLogsWithAnalysis,
   handleDebugEmailAccess
 } from './email.js';
+import {
+  handleGetCampaignLogs
+} from './logs.js';
+import {
+  handleGetCampaignStats,
+  handleGetCampaignLinksStats
+} from './reports.js';
 
 // Create the handler registry (phase 1 - core handlers only)
 export const handlerRegistry: HandlerRegistry = {
@@ -51,6 +58,13 @@ export const handlerRegistry: HandlerRegistry = {
   'cakemail_send_marketing_email': handleSendMarketingEmail,
   'cakemail_get_email_logs_with_analysis': handleGetEmailLogsWithAnalysis,
   'cakemail_debug_email_access': handleDebugEmailAccess,
+  
+  // Logs
+  'cakemail_get_campaign_logs': handleGetCampaignLogs,
+  
+  // Reports
+  'cakemail_get_campaign_stats': handleGetCampaignStats,
+  'cakemail_get_campaign_links_stats': handleGetCampaignLinksStats,
   
   // Note: Additional handlers will be added incrementally as they are fully implemented
 };

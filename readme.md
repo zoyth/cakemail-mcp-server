@@ -2,9 +2,9 @@
 
 An enterprise Model Context Protocol (MCP) server for integrating with the Cakemail API. This server provides comprehensive tools for email marketing campaigns, contact management, transactional emails, templates, automation, detailed reporting, and enterprise sub-account management through the Cakemail platform.
 
-## 🎯 Version 1.7.0 - Enterprise Sub-Account Management
+## 🎯 Version 1.7.1 - Advanced Event Sequence Analysis
 
-This version introduces **comprehensive sub-account management** capabilities, enabling enterprise and agency functionality for multi-tenant email marketing operations, along with complete logs functionality and advanced reporting features.
+This version introduces **advanced event sequence analysis** for campaign logs, providing deep insights into user journey tracking, timing analysis, and funnel optimization with enterprise-level email marketing intelligence.
 
 ## ✨ Features
 
@@ -69,8 +69,15 @@ This version introduces **comprehensive sub-account management** capabilities, e
 - ✅ Comprehensive performance summaries
 - ✅ Debug tools for reports API access
 
-### 📋 Detailed Logs & Activity Tracking
-- ✅ Campaign activity logs (opens, clicks, bounces, unsubscribes)
+### 📋 Advanced Logs & Event Sequence Analysis
+- ✅ **Campaign activity logs** with advanced event sequence analysis
+- ✅ **Email journey funnel tracking** (sent → delivered → opened → clicked)
+- ✅ **User journey analysis** and drop-off identification
+- ✅ **Timing analysis** (time-to-open, time-to-click, peak engagement hours)
+- ✅ **Engagement pattern recognition** (immediate vs delayed behavior)
+- ✅ **Conversion rate calculations** at each funnel stage
+- ✅ **Drop-off analysis** with primary bottleneck identification
+- ✅ **Intelligent insights** and stage-specific optimization recommendations
 - ✅ Workflow automation logs for email sequences
 - ✅ Workflow action logs for specific automation steps
 - ✅ Transactional email delivery logs and tracking
@@ -178,8 +185,14 @@ In Claude Desktop: `"Check my Cakemail API health status"`
 - Sub-Account Management: `create`, `get`, `update`, `delete`, `list`, `suspend`, `unsuspend` sub-accounts
 
 ### Reporting, Logs, Automation & Enterprise
-- **Campaign Reports**: Detailed performance metrics, open/click rates, link tracking
-- **Campaign Logs**: Complete activity tracking for opens, clicks, bounces, unsubscribes
+- **Campaign Analysis**: `cakemail_get_campaign_stats` - Comprehensive performance metrics with insights
+- **Link Intelligence**: `cakemail_get_campaign_links_stats` - Link-by-link performance analysis
+- **Event Sequence Analysis**: `cakemail_get_campaign_logs` - Advanced user journey tracking with:
+  - 🔄 **Email funnel analysis** (sent → delivered → opened → clicked)
+  - 👥 **User journey mapping** and drop-off identification  
+  - ⏰ **Timing intelligence** (time-to-open, peak engagement hours)
+  - 📉 **Drop-off analysis** with bottleneck identification
+  - 🎯 **Stage-specific optimization** recommendations
 - **Account Reports**: Performance overviews, growth metrics, time-based statistics
 - **Workflow Logs**: Automation sequence tracking and action-level logging
 - **Transactional Logs**: Individual email delivery tracking and status monitoring
@@ -220,11 +233,13 @@ In Claude Desktop: `"Check my Cakemail API health status"`
 ```
 "Show me the performance metrics for my latest campaign including open rates and click rates"
 
-"Get detailed campaign logs for campaign 12345 to see all opens and clicks"
+"Get detailed campaign logs for campaign 12345 with advanced sequence analysis to see the complete user journey"
 
 "Show me workflow logs for automation 456 to track email sequence performance"
 
 "Get transactional email logs for the last week filtered by delivered status"
+
+"Analyze campaign 789 logs to identify drop-off points and get optimization recommendations"
 
 "Create a campaign performance export for campaigns 123, 456, and 789 in Excel format"
 
@@ -278,6 +293,18 @@ DEBUG=mcp:* npm start
 ```
 
 ## 📝 Recent Changes
+
+### Version 1.7.1 - Advanced Event Sequence Analysis
+- ✅ **Advanced event sequence analysis** for campaign logs with enterprise-level intelligence
+- ✅ **Email journey funnel tracking** (sent → delivered → opened → clicked) with exact user progression
+- ✅ **User journey analysis** with complete/incomplete journey identification and drop-off mapping
+- ✅ **Timing analysis** including time-to-open, time-to-click, and peak engagement hour detection
+- ✅ **Engagement pattern recognition** (immediate vs delayed vs mixed patterns)
+- ✅ **Conversion rate calculations** at each funnel stage with precise percentages
+- ✅ **Drop-off analysis** with primary bottleneck identification and loss quantification
+- ✅ **Stage-specific optimization recommendations** based on funnel performance data
+- ✅ **Enhanced insights generation** with actionable marketing intelligence
+- ✅ **Rich visual formatting** with funnel visualization and performance indicators
 
 ### Version 1.7.0
 - ✅ Complete sub-account management for enterprise and agency use

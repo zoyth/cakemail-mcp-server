@@ -46,3 +46,16 @@ export function formatListResponse(items: any[], title: string, formatter: (item
     ],
   };
 }
+
+// Additional formatting utilities for logs and reports
+export function formatSectionHeader(title: string): string {
+  return `## ${title}`;
+}
+
+export function formatKeyValue(key: string, value: string): string {
+  return `**${key}:** ${value}`;
+}
+
+export function formatList(items: string[]): string {
+  return items.map(item => `• ${item}`).join('\n');
+}

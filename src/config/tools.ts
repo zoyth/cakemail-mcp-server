@@ -12,11 +12,11 @@ export const allTools = [
   ...senderTools,
   ...campaignTools,
   ...emailTools,
+  ...logTools,
+  ...reportTools,
   // Note: Other tools are placeholders and will be implemented incrementally
   // ...subAccountTools,
   // ...accountTools,
-  // ...reportTools,
-  // ...logTools
 ];
 
 export {

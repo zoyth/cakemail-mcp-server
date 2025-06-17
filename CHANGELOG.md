@@ -5,6 +5,129 @@ All notable changes to the Cakemail MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2025-06-17
+
+### 🎯 Advanced Event Sequence Analysis
+
+This version introduces **advanced event sequence analysis** for campaign logs, transforming basic log viewing into enterprise-level email marketing intelligence with deep insights into user journey tracking, timing analysis, and funnel optimization.
+
+### 🆕 Enhanced
+
+#### **Advanced Campaign Logs Analysis (`cakemail_get_campaign_logs`)**
+
+**🔄 Email Journey Funnel Tracking**
+- **Complete funnel visualization**: Tracks exact progression through sent → delivered → opened → clicked
+- **Unique user tracking**: Counts unique emails at each stage (not just event counts)
+- **Conversion rate calculations**: Precise percentages between each funnel stage
+- **Visual funnel display**: Clear progression with counts and percentages
+
+**👥 User Journey Analysis**
+- **Journey categorization**: Complete journey vs partial completion tracking
+- **Drop-off identification**: Exactly where users stop in the funnel
+- **Journey types tracked**:
+  - Complete journey (sent → delivered → opened → clicked)
+  - Opened but not clicked
+  - Delivered but not opened  
+  - Bounced immediately
+
+**⏰ Advanced Timing Analysis**
+- **Time-to-open tracking**: Average time from delivery to first open
+- **Time-to-click tracking**: Average time from opening to first click
+- **Peak engagement detection**: Hour of day with highest engagement
+- **Engagement pattern recognition**:
+  - **Immediate**: 70%+ open within 1 hour
+  - **Delayed**: 70%+ open after 1 hour
+  - **Mixed**: Balanced immediate/delayed behavior
+
+**📉 Drop-off Analysis**
+- **Stage-specific drop-off rates**: Percentage lost at delivery, opening, clicking
+- **Primary bottleneck identification**: Automatically identifies biggest loss point
+- **Conversion optimization**: Targeted recommendations for each drop-off stage
+
+**🎯 Key Conversion Metrics**
+- **Click-to-open rate**: Engagement quality among openers
+- **Delivery rate**: Successful delivery percentage
+- **Funnel efficiency**: Overall funnel performance scoring
+
+#### **Enhanced Insights & Recommendations**
+
+**💡 Intelligent Insights Generation**
+- **Funnel performance analysis**: Automatic assessment of each stage
+- **Timing behavior insights**: Understanding of user engagement patterns
+- **Journey completion analysis**: Success rate tracking and optimization
+- **Engagement depth assessment**: Quality vs quantity analysis
+
+**🎯 Stage-Specific Optimization Recommendations**
+- **Delivery stage**: Domain authentication, list cleaning, reputation monitoring
+- **Opening stage**: Subject line optimization, sender name, send timing
+- **Clicking stage**: CTA improvement, content relevance, design optimization
+- **Timing-based**: Follow-up sequences, optimal send times
+- **Journey-specific**: Content matching, expectation alignment
+
+#### **Rich Visual Output Enhancement**
+
+**New Display Sections Added:**
+1. **🔄 Email Journey Funnel** - Visual progression with emojis and percentages
+2. **👥 User Journey Analysis** - Complete vs incomplete journey tracking
+3. **⏰ Timing Analysis** - Time metrics and engagement patterns
+4. **📉 Drop-off Analysis** - Primary bottleneck identification
+5. **🎯 Key Conversion Metrics** - Critical performance indicators
+
+**Enhanced Formatting:**
+- **Performance indicators**: Visual emojis for quick assessment
+- **Percentage displays**: Clear conversion rates at each stage
+- **Time formatting**: Human-readable time metrics (hours/minutes)
+- **Pattern recognition**: Engagement behavior categorization
+
+### 📊 Technical Implementation
+
+#### **Advanced Sequence Processing**
+- **Email grouping**: Groups log events by email address/contact ID
+- **Temporal sequencing**: Orders events by timestamp for accurate journey mapping
+- **State tracking**: Tracks which funnel stage each email reached
+- **Timing calculations**: Measures precise time between key events
+- **Pattern analysis**: Analyzes engagement timing patterns across users
+
+#### **Journey Classification Algorithm**
+- **Funnel progression tracking**: Records unique advancement through each stage
+- **Time window analysis**: Categorizes engagement as immediate vs delayed
+- **Drop-off calculation**: Identifies loss percentages between stages
+- **Performance benchmarking**: Compares against optimization thresholds
+
+### 💼 Business Value
+
+#### **For Email Marketers**
+- **Bottleneck identification**: Precisely identify where campaigns lose effectiveness
+- **Timing optimization**: Discover optimal send times for your audience
+- **Content optimization**: Understand which elements drive engagement
+- **ROI improvement**: Focus optimization efforts on highest-impact areas
+
+#### **For Data Analysts**
+- **Funnel analysis**: Complete conversion funnel with precise metrics
+- **Behavioral segmentation**: Immediate vs delayed engagement patterns
+- **Performance benchmarking**: Stage-by-stage optimization opportunities
+- **Predictive insights**: Understanding of user engagement behaviors
+
+#### **For Campaign Managers**
+- **Campaign diagnosis**: Instant identification of campaign performance issues
+- **Optimization roadmap**: Clear next steps for campaign improvement
+- **Performance comparison**: Before/after analysis for optimization efforts
+- **Strategic planning**: Data-driven decision making for future campaigns
+
+### 🔄 Backward Compatibility
+- **No breaking changes**: All existing log functionality remains unchanged
+- **Enhanced responses**: Basic log analysis enhanced with sequence intelligence
+- **Same parameters**: No changes to function parameters or configuration
+- **Added value**: Users get advanced analytics without changing workflows
+
+### 🚀 Performance Impact
+- **Efficient processing**: Optimized algorithms for large log datasets
+- **Memory management**: Efficient grouping and analysis of log events
+- **Response formatting**: Rich output without performance degradation
+- **Scalable analysis**: Handles campaigns with millions of log events
+
+---
+
 ## [1.7.0] - 2025-06-17
 
 ### 🎯 Enterprise Sub-Account Management

@@ -32,7 +32,7 @@ export const mockSenders = {
       { 
         id: 'sender-001', 
         name: 'Marketing Team', 
-        email: 'marketing@testcompany.com',
+        email: 'f+marketing@cakemail.com',
         language: 'en_US',
         status: 'verified',
         created_at: '2024-01-15T10:00:00Z'
@@ -40,7 +40,7 @@ export const mockSenders = {
       { 
         id: 'sender-002', 
         name: 'Support Team', 
-        email: 'support@testcompany.com',
+        email: 'f+support@cakemail.com',
         language: 'en_US',
         status: 'pending',
         created_at: '2024-01-16T11:30:00Z'
@@ -56,7 +56,7 @@ export const mockSenders = {
   single: {
     id: 'sender-001',
     name: 'Marketing Team',
-    email: 'marketing@testcompany.com',
+    email: 'f+marketing@cakemail.com',
     language: 'en_US',
     status: 'verified',
     created_at: '2024-01-15T10:00:00Z',
@@ -65,7 +65,7 @@ export const mockSenders = {
   created: {
     id: 'sender-003',
     name: 'New Sender',
-    email: 'new@testcompany.com',
+    email: 'f+new@cakemail.com',
     language: 'en_US',
     status: 'pending',
     created_at: new Date().toISOString()
@@ -127,7 +127,7 @@ export const mockEmails = {
     sender: {
       id: 'sender-001',
       name: 'Marketing Team',
-      email: 'marketing@testcompany.com'
+      email: 'f+marketing@cakemail.com'
     }
   },
   logs: {
@@ -169,7 +169,7 @@ export const mockAccount = {
     data: {
       id: 12345,
       name: 'Test Company',
-      email: 'admin@testcompany.com',
+      email: 'f+admin@cakemail.com',
       status: 'active',
       plan: 'professional',
       created_at: '2023-06-01T00:00:00Z'
