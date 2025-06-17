@@ -12,7 +12,12 @@ import {
   handleDeleteSender 
 } from './senders.js';
 import { 
-  handleListCampaigns
+  handleListCampaigns,
+  handleCreateCampaign,
+  handleUpdateCampaign,
+  handleCreateBEETemplate,
+  handleCreateBEENewsletter,
+  handleValidateBEETemplate
 } from './campaigns.js';
 import {
   handleSendEmail,
@@ -45,8 +50,15 @@ export const handlerRegistry: HandlerRegistry = {
   'cakemail_update_sender': handleUpdateSender,
   'cakemail_delete_sender': handleDeleteSender,
   
-  // Campaigns (basic implementation)
+  // Campaigns (with BEE support)
   'cakemail_list_campaigns': handleListCampaigns,
+  'cakemail_create_campaign': handleCreateCampaign,
+  'cakemail_update_campaign': handleUpdateCampaign,
+  
+  // BEEeditor specific tools
+  'cakemail_create_bee_template': handleCreateBEETemplate,
+  'cakemail_create_bee_newsletter': handleCreateBEENewsletter,
+  'cakemail_validate_bee_template': handleValidateBEETemplate,
   
   // Email API v2
   'cakemail_send_email': handleSendEmail,

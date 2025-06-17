@@ -14,6 +14,9 @@ This version introduces **advanced event sequence analysis** for campaign logs, 
 - ✅ Send campaigns to contact lists
 - ✅ Campaign performance metrics (via Reports API)
 - ✅ Get latest campaign with one command
+- ✅ **BEEeditor integration** for visual email design
+- ✅ **JSON-based email templates** with drag-and-drop structure
+- ✅ **Newsletter template generation** with automated layout
 
 ### 👥 Contact Management
 - ✅ Create, update, and delete contacts with custom fields
@@ -174,8 +177,13 @@ In Claude Desktop: `"Check my Cakemail API health status"`
 - `cakemail_health_check` - Check API connection and authentication
 - `cakemail_get_latest_campaign` - Get your most recent campaign
 - `cakemail_get_campaigns` - List campaigns (latest first by default)
-- `cakemail_create_campaign` - Create new email campaigns
+- `cakemail_create_campaign` - Create new email campaigns (HTML or BEE format)
 - `cakemail_send_campaign` - Send campaigns to recipients
+
+### BEEeditor Tools
+- `cakemail_create_bee_template` - Create basic BEEeditor template structure
+- `cakemail_create_bee_newsletter` - Generate complete newsletter templates
+- `cakemail_validate_bee_template` - Validate BEE JSON templates
 
 ### Management Tools
 - Contact Management: `create`, `get`, `update`, `delete`, `list` contacts
@@ -211,6 +219,17 @@ In Claude Desktop: `"Check my Cakemail API health status"`
 ### Create and Send Campaign
 ```
 "Create a new email campaign called 'Holiday Sale 2024' with the subject 'Save 50% on Everything!' and send it to my newsletter list"
+```
+
+### BEEeditor Templates
+```
+"Create a BEE newsletter template with sections for product announcements and customer testimonials"
+
+"Generate a basic BEE template for welcome emails with our brand colors"
+
+"Validate my custom BEE template and show me the structure"
+
+"Create a campaign using BEE format with a professional newsletter layout"
 ```
 
 ### Contact Management
@@ -357,6 +376,7 @@ DEBUG=mcp:* npm start
 ## 📚 Support
 
 - **Cakemail API**: https://cakemail.dev
+- **BEEeditor Integration**: [docs/BEE_EDITOR_INTEGRATION.md](docs/BEE_EDITOR_INTEGRATION.md)
 - **MCP Protocol**: https://github.com/modelcontextprotocol
 - **Issues**: https://github.com/cakemail/cakemail-mcp-server/issues
 

@@ -44,14 +44,16 @@ export const campaignTools = [
   },
   {
     name: 'cakemail_create_campaign',
-    description: 'Create a new email campaign',
+    description: 'Create a new email campaign (supports both HTML and BEEeditor JSON formats)',
     inputSchema: {
       type: 'object',
       properties: {
         name: { type: 'string', description: 'Campaign name' },
         subject: { type: 'string', description: 'Email subject line' },
-        html_content: { type: 'string', description: 'HTML email content' },
-        text_content: { type: 'string', description: 'Plain text email content' },
+        html_content: { type: 'string', description: 'HTML email content (for HTML format)' },
+        text_content: { type: 'string', description: 'Plain text email content (for HTML format)' },
+        json_content: { type: 'object', description: 'BEEeditor JSON template (for BEE format)' },
+        content_type: { type: 'string', enum: ['html', 'bee', 'auto-detect'], description: 'Content format type (default: html)' },
         list_id: { type: 'string', description: 'List ID to send to' },
         sender_id: { type: 'string', description: 'Sender ID to use' },
         from_name: { type: 'string', description: 'From name (optional)' },
@@ -62,7 +64,7 @@ export const campaignTools = [
   },
   {
     name: 'cakemail_update_campaign',
-    description: 'Update an existing campaign',
+    description: 'Update an existing campaign (supports both HTML and BEEeditor JSON formats)',
     inputSchema: {
       type: 'object',
       properties: {
@@ -71,6 +73,7 @@ export const campaignTools = [
         subject: { type: 'string', description: 'Email subject line' },
         html_content: { type: 'string', description: 'HTML email content' },
         text_content: { type: 'string', description: 'Plain text email content' },
+        json_content: { type: 'object', description: 'BEEeditor JSON template' },
         from_name: { type: 'string', description: 'From name' },
         reply_to: { type: 'string', description: 'Reply-to email address' },
       },
@@ -251,6 +254,67 @@ export const campaignTools = [
         with_count: { type: 'boolean', description: 'Include total count in response' },
       },
       required: ['campaign_id'],
+    },
+  },
+  
+  // BEEeditor specific tools
+  {
+    name: 'cakemail_create_bee_template',
+    description: 'Create a basic BEEeditor template structure for newsletters',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Template title (default: Newsletter)' },
+        subject: { type: 'string', description: 'Email subject (default: Newsletter Subject)' },
+        preheader: { type: 'string', description: 'Email preheader text (optional)' },
+        backgroundColor: { type: 'string', description: 'Background color (default: #f5f5f5)' },
+        contentAreaBackgroundColor: { type: 'string', description: 'Content area background color (default: #ffffff)' },
+        width: { type: 'number', description: 'Template width in pixels (default: 600, min: 320, max: 1440)' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'cakemail_create_bee_newsletter',
+    description: 'Create a complete BEEeditor newsletter template with header, content sections, and footer',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Newsletter title (default: Newsletter)' },
+        subject: { type: 'string', description: 'Email subject (default: Newsletter Subject)' },
+        preheader: { type: 'string', description: 'Email preheader text (optional)' },
+        headerText: { type: 'string', description: 'Header text (defaults to title)' },
+        contentSections: { 
+          type: 'array', 
+          description: 'Content sections for the newsletter',
+          items: {
+            type: 'object',
+            properties: {
+              title: { type: 'string', description: 'Section title' },
+              content: { type: 'string', description: 'Section content text' },
+              imageUrl: { type: 'string', description: 'Optional image URL' },
+              buttonText: { type: 'string', description: 'Optional button text' },
+              buttonUrl: { type: 'string', description: 'Optional button URL' }
+            },
+            required: ['title', 'content']
+          }
+        },
+        footerText: { type: 'string', description: 'Footer text (default: Thank you for reading!)' },
+        backgroundColor: { type: 'string', description: 'Background color (default: #f5f5f5)' },
+        contentAreaBackgroundColor: { type: 'string', description: 'Content area background color (default: #ffffff)' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'cakemail_validate_bee_template',
+    description: 'Validate a BEEeditor JSON template against the schema',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        json_content: { type: 'object', description: 'BEEeditor JSON template to validate' },
+      },
+      required: ['json_content'],
     },
   },
 ];

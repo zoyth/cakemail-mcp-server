@@ -1,5 +1,11 @@
 import { CakemailAPI } from '../cakemail-api.js';
 import { handleCakemailError } from '../utils/errors.js';
+import {
+  createBasicBEETemplate as createBEETemplateUtil,
+  createNewsletterTemplate as createNewsletterTemplateUtil,
+  validateBEETemplate as validateBEETemplateUtil,
+  printBEETemplateStructure as printBEETemplateStructureUtil
+} from '../utils/bee-editor.js';
 
 // Define Campaign type locally to fix implicit any types
 interface Campaign {
@@ -72,7 +78,7 @@ export async function handleListCampaigns(args: any, api: CakemailAPI) {
   }
 }
 
-// Placeholder implementations for other campaign handlers
+// Enhanced campaign handlers with BEE support
 export async function handleGetLatestCampaigns(_args: any, _api: CakemailAPI) {
   try {
     return { content: [{ type: 'text', text: 'Not implemented yet' }] };
@@ -89,17 +95,194 @@ export async function handleGetCampaign(_args: any, _api: CakemailAPI) {
   }
 }
 
-export async function handleCreateCampaign(_args: any, _api: CakemailAPI) {
+export async function handleCreateCampaign(args: any, api: CakemailAPI) {
   try {
-    return { content: [{ type: 'text', text: 'Not implemented yet' }] };
+    const { 
+      name, 
+      subject, 
+      list_id, 
+      sender_id, 
+      from_name, 
+      reply_to,
+      html_content,
+      text_content,
+      json_content, // BEEeditor JSON format
+      content_type = 'html' // 'html' or 'bee' or 'auto-detect'
+    } = args;
+
+    // Validate required fields
+    if (!name || !subject || !list_id || !sender_id) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Required Fields**\n\nRequired: name, subject, list_id, sender_id'
+        }]
+      };
+    }
+
+    let campaignData: any = {
+      name,
+      subject,
+      list_id,
+      sender_id,
+      from_name,
+      reply_to
+    };
+
+    // Handle different content types
+    if (json_content || content_type === 'bee') {
+      // BEEeditor format
+      if (json_content) {
+        // Validate BEE template
+        const validation = validateBEETemplateUtil(json_content);
+        if (!validation.valid) {
+          return {
+            content: [{
+              type: 'text',
+              text: `❌ **Invalid BEE Template**\n\nErrors:\n${validation.errors.map(e => `• ${e}`).join('\n')}`
+            }]
+          };
+        }
+        
+        // For BEEeditor, we need to use the json field in content
+        campaignData.json_content = json_content;
+        
+        const result = await api.campaigns.createCampaign(campaignData);
+        
+        const templateStructure = printBEETemplateStructureUtil(json_content);
+        
+        return {
+          content: [{
+            type: 'text',
+            text: `✅ **BEE Campaign Created Successfully**\n\n` +
+                  `📧 **Campaign Details:**\n` +
+                  `• ID: ${result.data?.id}\n` +
+                  `• Name: ${name}\n` +
+                  `• Subject: ${subject}\n` +
+                  `• Format: BEEeditor JSON\n` +
+                  `• List ID: ${list_id}\n` +
+                  `• Sender ID: ${sender_id}\n\n` +
+                  `📋 **Template Structure:**\n\`\`\`\n${templateStructure}\`\`\`\n\n` +
+                  `**Full Response:**\n${JSON.stringify(result, null, 2)}`
+          }]
+        };
+      } else {
+        return {
+          content: [{
+            type: 'text',
+            text: '❌ **Missing JSON Content**\n\nWhen using BEE format, json_content is required.'
+          }]
+        };
+      }
+    } else {
+      // Traditional HTML/text format
+      campaignData.html_content = html_content;
+      campaignData.text_content = text_content;
+      
+      const result = await api.campaigns.createCampaign(campaignData);
+      
+      return {
+        content: [{
+          type: 'text',
+          text: `✅ **Campaign Created Successfully**\n\n` +
+                `📧 **Campaign Details:**\n` +
+                `• ID: ${result.data?.id}\n` +
+                `• Name: ${name}\n` +
+                `• Subject: ${subject}\n` +
+                `• Format: HTML${text_content ? '/Text' : ''}\n` +
+                `• List ID: ${list_id}\n` +
+                `• Sender ID: ${sender_id}\n\n` +
+                `**Full Response:**\n${JSON.stringify(result, null, 2)}`
+        }]
+      };
+    }
   } catch (error) {
     return handleCakemailError(error);
   }
 }
 
-export async function handleUpdateCampaign(_args: any, _api: CakemailAPI) {
+export async function handleUpdateCampaign(args: any, api: CakemailAPI) {
   try {
-    return { content: [{ type: 'text', text: 'Not implemented yet' }] };
+    const { 
+      campaign_id,
+      name, 
+      subject, 
+      from_name, 
+      reply_to,
+      html_content,
+      text_content,
+      json_content // BEEeditor JSON format
+    } = args;
+
+    // Validate required fields
+    if (!campaign_id) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Required Field**\n\nRequired: campaign_id'
+        }]
+      };
+    }
+
+    let updateData: any = {};
+    
+    // Only include fields that are provided
+    if (name !== undefined) updateData.name = name;
+    if (subject !== undefined) updateData.subject = subject;
+    if (from_name !== undefined) updateData.from_name = from_name;
+    if (reply_to !== undefined) updateData.reply_to = reply_to;
+    
+    // Handle content updates
+    if (json_content) {
+      // BEEeditor format update
+      const validation = validateBEETemplateUtil(json_content);
+      if (!validation.valid) {
+        return {
+          content: [{
+            type: 'text',
+            text: `❌ **Invalid BEE Template**\n\nErrors:\n${validation.errors.map(e => `• ${e}`).join('\n')}`
+          }]
+        };
+      }
+      updateData.json_content = json_content;
+    } else {
+      // Traditional HTML/text format update
+      if (html_content !== undefined) updateData.html_content = html_content;
+      if (text_content !== undefined) updateData.text_content = text_content;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **No Update Data**\n\nAt least one field must be provided for update.'
+        }]
+      };
+    }
+
+    const result = await api.campaigns.updateCampaign(campaign_id, updateData);
+    
+    let formatInfo = 'HTML';
+    let templateInfo = '';
+    
+    if (json_content) {
+      formatInfo = 'BEEeditor JSON';
+      templateInfo = `\n\n📋 **Updated Template Structure:**\n\`\`\`\n${printBEETemplateStructureUtil(json_content)}\`\`\``;
+    } else if (text_content) {
+      formatInfo = 'HTML/Text';
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: `✅ **Campaign Updated Successfully**\n\n` +
+              `📧 **Campaign Details:**\n` +
+              `• ID: ${campaign_id}\n` +
+              `• Format: ${formatInfo}\n` +
+              `• Fields Updated: ${Object.keys(updateData).join(', ')}\n${templateInfo}\n\n` +
+              `**Full Response:**\n${JSON.stringify(result, null, 2)}`
+      }]
+    };
   } catch (error) {
     return handleCakemailError(error);
   }
@@ -220,6 +403,139 @@ export async function handleGetCampaignRevisions(_args: any, _api: CakemailAPI) 
 export async function handleGetCampaignLinks(_args: any, _api: CakemailAPI) {
   try {
     return { content: [{ type: 'text', text: 'Not implemented yet' }] };
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+// BEEeditor specific handlers
+
+export async function handleCreateBEETemplate(args: any, _api: CakemailAPI) {
+  try {
+    const {
+      title = 'Newsletter',
+      subject = 'Newsletter Subject',
+      preheader = '',
+      backgroundColor = '#f5f5f5',
+      contentAreaBackgroundColor = '#ffffff',
+      width = 600
+    } = args;
+    
+    const template = createBEETemplateUtil({
+      title,
+      subject,
+      preheader,
+      backgroundColor,
+      contentAreaBackgroundColor,
+      width
+    });
+    
+    const validation = validateBEETemplateUtil(template);
+    const structure = printBEETemplateStructureUtil(template);
+    
+    return {
+      content: [{
+        type: 'text',
+        text: `✅ **BEE Template Created**\n\n` +
+              `📋 **Template Structure:**\n\`\`\`\n${structure}\`\`\`\n\n` +
+              `🔍 **Validation:** ${validation.valid ? 'Valid' : 'Invalid'}\n` +
+              (validation.valid ? '' : `Errors: ${validation.errors.join(', ')}\n`) +
+              `\n**JSON Template:**\n\`\`\`json\n${JSON.stringify(template, null, 2)}\`\`\``
+      }]
+    };
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+export async function handleCreateBEENewsletter(args: any, _api: CakemailAPI) {
+  try {
+    const {
+      title = 'Newsletter',
+      subject = 'Newsletter Subject',
+      preheader = '',
+      headerText,
+      contentSections = [],
+      footerText = 'Thank you for reading!',
+      backgroundColor = '#f5f5f5',
+      contentAreaBackgroundColor = '#ffffff'
+    } = args;
+    
+    // Default content sections if none provided
+    let sections = contentSections;
+    if (sections.length === 0) {
+      sections = [
+        {
+          title: 'Welcome to Our Newsletter',
+          content: 'Thank you for subscribing to our newsletter. We\'re excited to share our latest updates with you.',
+          buttonText: 'Read More',
+          buttonUrl: 'https://example.com/welcome'
+        },
+        {
+          title: 'Latest News',
+          content: 'Here are the latest developments from our team. We\'ve been working hard to bring you new features and improvements.',
+          imageUrl: 'https://via.placeholder.com/300x200/007BFF/ffffff?text=News'
+        }
+      ];
+    }
+    
+    const template = createNewsletterTemplateUtil({
+      title,
+      subject,
+      preheader,
+      headerText: headerText || title,
+      contentSections: sections,
+      footerText,
+      backgroundColor,
+      contentAreaBackgroundColor
+    });
+    
+    const validation = validateBEETemplateUtil(template);
+    const structure = printBEETemplateStructureUtil(template);
+    
+    return {
+      content: [{
+        type: 'text',
+        text: `✅ **BEE Newsletter Created**\n\n` +
+              `📋 **Template Structure:**\n\`\`\`\n${structure}\`\`\`\n\n` +
+              `🔍 **Validation:** ${validation.valid ? 'Valid' : 'Invalid'}\n` +
+              (validation.valid ? '' : `Errors: ${validation.errors.join(', ')}\n`) +
+              `📊 **Content Sections:** ${sections.length}\n\n` +
+              `**JSON Template:**\n\`\`\`json\n${JSON.stringify(template, null, 2)}\`\`\``
+      }]
+    };
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+export async function handleValidateBEETemplate(args: any, _api: CakemailAPI) {
+  try {
+    const { json_content } = args;
+    
+    if (!json_content) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing JSON Content**\n\nPlease provide json_content to validate.'
+        }]
+      };
+    }
+    
+    const validation = validateBEETemplateUtil(json_content);
+    const structure = printBEETemplateStructureUtil(json_content);
+    
+    return {
+      content: [{
+        type: 'text',
+        text: `🔍 **BEE Template Validation**\n\n` +
+              `**Status:** ${validation.valid ? '✅ Valid' : '❌ Invalid'}\n\n` +
+              (validation.valid ? 
+                `📋 **Template Structure:**\n\`\`\`\n${structure}\`\`\`` :
+                `**Errors:**\n${validation.errors.map(e => `• ${e}`).join('\n')}`
+              )
+      }]
+    };
   } catch (error) {
     return handleCakemailError(error);
   }
