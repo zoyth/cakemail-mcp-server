@@ -21,8 +21,13 @@
     "inspector": "npx @modelcontextprotocol/inspector build/index.js",
     "clean": "rm -rf build",
     "rebuild": "npm run clean && npm run build",
-    "test": "npm run build && npm run test:integration",
-    "test:integration": "node scripts/test-integration.js",
+    "test": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --config jest.config.js",
+    "test:watch": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --config jest.config.js --watch",
+    "test:coverage": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --config jest.config.js --coverage",
+    "test:integration": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --config jest.config.js --testPathPattern=integration",
+    "test:unit": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --config jest.config.js --testPathPattern='\\.(test|spec)\\.ts$' --testPathIgnorePatterns=integration",
+    "test:ci": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --config jest.config.js --coverage --ci --watchAll=false",
+    "test:legacy": "npm run build && node scripts/test-integration.js",
     "validate": "npm run build && npm run inspector"
   },
   "repository": {
@@ -41,6 +46,10 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.24",
+    "@types/jest": "^29.5.5",
+    "jest": "^29.7.0",
+    "jest-environment-node": "^29.7.0",
+    "ts-jest": "^29.1.1",
     "typescript": "^5.3.3"
   },
   "keywords": [

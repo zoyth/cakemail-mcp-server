@@ -39,6 +39,9 @@ coverage/
 # nyc test coverage
 .nyc_output
 
+# Jest cache
+.jest/
+
 # Dependency directories
 node_modules/
 jspm_packages/
@@ -84,6 +87,10 @@ temp/
 *.temp
 commit-message.txt
 chroma/
+
+# Test artifacts
+test-results/
+junit.xml
 
 # Archive directory for old documentation
 archive/
