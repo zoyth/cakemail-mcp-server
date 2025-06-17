@@ -2084,7 +2084,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           per_page?: number;
         };
 
-        const accounts = await api.getSubAccountsByStatus(status, { page, per_page });
+        // Validate status is one of the allowed values
+        const validStatuses = ['pending', 'active', 'suspended', 'inactive'] as const;
+        if (!validStatuses.includes(status as any)) {
+          throw new Error(`Invalid status '${status}'. Must be one of: ${validStatuses.join(', ')}`);
+        }
+
+        const accounts = await api.getSubAccountsByStatus(status as 'pending' | 'active' | 'suspended' | 'inactive', { page, per_page });
         const total = accounts.pagination?.count || 0;
 
         return {

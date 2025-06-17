@@ -726,6 +726,165 @@ export interface UpdateTemplateData {
   description?: string;
 }
 
+// Email API v2 Enhanced Types
+export type LogTypeV2 = 'all' | 'submitted' | 'queued' | 'delivered' | 'rejected' | 'error' | 'open' | 'click' | 'bounce' | 'spam' | 'unsubscribe' | 'global_unsubscribe';
+
+export type EmailStatus = 'submitted' | 'queued' | 'delivered' | 'rejected' | 'error' | 'open' | 'click' | 'bounce' | 'spam' | 'unsubscribe' | 'global_unsubscribe';
+
+export type IntervalEnum = 'hour' | 'day' | 'week' | 'month';
+
+/**
+ * Request schema for POST /v2/emails
+ * Matches the SubmitEmail schema from OpenAPI spec
+ */
+export interface SubmitEmailRequest {
+  to: string;
+  to_name?: string;
+  sender_id: string;
+  subject: string;
+  html_content?: string;
+  text_content?: string;
+  template_id?: string;
+  tags?: string[];
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Response schema for POST /v2/emails
+ * Matches the SubmitEmailResponse schema from OpenAPI spec
+ */
+export interface SubmitEmailResponse {
+  email: string;
+  object: string;
+  submitted: boolean;
+  data: {
+    id: string;
+    status: EmailStatus;
+    metadata?: any;
+  };
+}
+
+/**
+ * Response schema for GET /v2/emails/{email_id}
+ * Matches the GetEmailResponse schema from OpenAPI spec
+ */
+export interface GetEmailResponse {
+  data: {
+    id: string;
+    status: EmailStatus;
+    email: string;
+    to_name?: string;
+    sender_id?: string;
+    subject?: string;
+    submitted_on?: string;
+    delivered_on?: string;
+    opened_on?: string;
+    clicked_on?: string;
+    bounced_on?: string;
+    rejected_reason?: string;
+    error_message?: string;
+    metadata?: any;
+    [key: string]: any;
+  };
+}
+
+/**
+ * Enhanced Email API Log Entry
+ * Updated to match v2 API specification
+ */
+export interface EmailAPILogEntryV2 {
+  id: string;
+  email_id: string;
+  type: LogTypeV2;
+  time: number;
+  submitted_time?: number;
+  provider?: string;
+  metadata?: any;
+  additional_info?: any;
+  link_id?: string;
+  contact_id?: string;
+  email?: string;
+  [key: string]: any;
+}
+
+/**
+ * Enhanced Email API Logs Response
+ */
+export interface EmailAPILogsResponseV2 {
+  data: EmailAPILogEntryV2[];
+  pagination?: {
+    count?: number;
+    page?: number;
+    per_page?: number;
+    total_pages?: number;
+  };
+}
+
+/**
+ * Enhanced Email API Stats Entry
+ */
+export interface EmailAPIStatsEntryV2 {
+  time: number;
+  submitted?: number;
+  queued?: number;
+  delivered?: number;
+  rejected?: number;
+  error?: number;
+  open?: number;
+  click?: number;
+  bounce?: number;
+  spam?: number;
+  unsubscribe?: number;
+  global_unsubscribe?: number;
+  [key: string]: any;
+}
+
+/**
+ * Enhanced Email API Stats Response
+ */
+export interface EmailAPIStatsResponseV2 {
+  data: EmailAPIStatsEntryV2[];
+  interval?: IntervalEnum;
+  start_time?: number;
+  end_time?: number;
+}
+
+/**
+ * Filter condition for recursive filtering
+ */
+export interface FilterCondition {
+  operator: 'and' | 'or' | 'not' | 'is';
+  value: string | FilterCondition[];
+}
+
+/**
+ * Email log analysis result
+ */
+export interface EmailLogAnalysis {
+  totalEvents: number;
+  eventBreakdown: Record<string, number>;
+  deliveryRate: number;
+  engagementRate: number;
+  issueRate: number;
+  recommendations: string[];
+}
+
+/**
+ * Smart filter types for common use cases
+ */
+export type SmartFilterType = 'engagement' | 'critical_issues' | 'temporary_failures' | 'list_cleanup';
+
+/**
+ * Email API Error with additional context
+ */
+export interface EmailAPIErrorDetails {
+  code: string;
+  message: string;
+  field?: string;
+  value?: any;
+  suggestion?: string;
+}
+
 // Email API interfaces - Updated for v2 API (renamed from Transactional)
 export interface EmailData {
   to_email: string;
@@ -741,8 +900,22 @@ export interface EmailData {
   metadata?: Record<string, any>; // Additional data
 }
 
+// Update existing response types to match v2 API
+export interface EmailResponse extends SubmitEmailResponse {}
+export interface EmailStatusResponse extends GetEmailResponse {}
+
 // Legacy type alias for backward compatibility
+export interface TransactionalEmailResponse extends SubmitEmailResponse {}
 export interface TransactionalEmailData extends EmailData {}
+
+// Enhanced log response that extends existing
+export interface EmailAPILogsResponse extends EmailAPILogsResponseV2 {
+  // Keep existing structure for backward compatibility
+}
+
+export interface EmailAPIStatsResponse extends EmailAPIStatsResponseV2 {
+  // Keep existing structure for backward compatibility
+}
 
 
 

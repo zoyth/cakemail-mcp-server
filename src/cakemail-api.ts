@@ -322,7 +322,7 @@ export class CakemailAPI extends BaseApiClient {
     return this.subAccounts.searchSubAccountsByName(name, params);
   }
 
-  async getSubAccountsByStatus(status: string, params?: any) {
+  async getSubAccountsByStatus(status: 'pending' | 'active' | 'suspended' | 'inactive', params?: any) {
     return this.subAccounts.getSubAccountsByStatus(status, params);
   }
 

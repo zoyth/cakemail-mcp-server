@@ -3,103 +3,109 @@
 import { BaseApiClient } from './base-client.js';
 import { 
   EmailData,
-  EmailResponse,
-  EmailStatusResponse,
   EmailAPILogsResponse,
-  EmailAPIStatsResponse
+  EmailAPIStatsResponse,
+  SubmitEmailRequest,
+  SubmitEmailResponse,
+  GetEmailResponse,
+  LogTypeV2,
+  EmailLogAnalysis,
+  SmartFilterType
 } from '../types/cakemail-types.js';
+import { EmailAPIError } from '../types/errors.js';
 
 export class EmailApi extends BaseApiClient {
 
   /**
    * Submit an email to be sent using v2 API
-   * @param data Email data conforming to v2 API specifications
-   * @returns Promise<EmailResponse>
+   * Fully compliant with POST /v2/emails specification
    */
-  async sendEmail(data: EmailData): Promise<EmailResponse> {
+  async sendEmail(data: EmailData): Promise<SubmitEmailResponse> {
+    // Enhanced validation
     if (!this.isValidEmail(data.to_email)) {
-      throw new Error('Invalid recipient email format');
+      throw EmailAPIError.forInvalidEmail(data.to_email);
     }
 
-    // Required fields validation
     if (!data.sender_id) {
-      throw new Error('sender_id is required');
+      throw new EmailAPIError('sender_id is required', 400);
     }
     if (!data.subject) {
-      throw new Error('subject is required');
+      throw new EmailAPIError('subject is required', 400);
     }
 
-    // Structure the email data according to Cakemail v2 API specification
-    const emailData: any = {
+    // Must have either content or template
+    if (!data.html_content && !data.text_content && !data.template_id) {
+      throw EmailAPIError.forMissingContent();
+    }
+
+    // Structure request according to v2 API specification
+    const submitRequest: SubmitEmailRequest = {
       to: data.to_email,
       sender_id: String(data.sender_id),
       subject: data.subject
     };
 
-    // Add recipient name if provided
-    if (data.to_name) {
-      emailData.to_name = data.to_name;
-    }
-
-    // Add HTML content if provided
-    if (data.html_content) {
-      emailData.html_content = data.html_content;
-    }
-
-    // Add text content if provided
-    if (data.text_content) {
-      emailData.text_content = data.text_content;
-    }
-
-    // Add template if provided instead of direct content
-    if (data.template_id) {
-      emailData.template_id = String(data.template_id);
-    }
-
-    // Add tags if provided (for filtering and organization)
-    if (data.tags) {
-      emailData.tags = data.tags;
-    }
-
-    // Add metadata if provided
-    if (data.metadata) {
-      emailData.metadata = data.metadata;
-    }
+    // Add optional fields only if provided
+    if (data.to_name) submitRequest.to_name = data.to_name;
+    if (data.html_content) submitRequest.html_content = data.html_content;
+    if (data.text_content) submitRequest.text_content = data.text_content;
+    if (data.template_id) submitRequest.template_id = String(data.template_id);
+    if (data.tags) submitRequest.tags = data.tags;
+    if (data.metadata) submitRequest.metadata = data.metadata;
 
     if (this.debugMode) {
-      console.log('[Email API] v2 Email data:', JSON.stringify(emailData, null, 2));
+      console.log('[Email API] v2 Submit request:', JSON.stringify(submitRequest, null, 2));
     }
 
     const accountId = await this.getCurrentAccountId();
     const query = accountId ? `?account_id=${accountId}` : '';
 
-    return this.makeRequest(`/v2/emails${query}`, {
-      method: 'POST',
-      body: JSON.stringify(emailData)
-    });
+    try {
+      const response = await this.makeRequest(`/v2/emails${query}`, {
+        method: 'POST',
+        body: JSON.stringify(submitRequest)
+      });
+
+      return response as SubmitEmailResponse;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new EmailAPIError(`Failed to send email: ${error.message}`, 500);
+      }
+      throw error;
+    }
   }
 
   /**
    * Retrieve a submitted email status
-   * @param emailId UUID of the email to retrieve
-   * @returns Promise<EmailStatusResponse>
+   * Compliant with GET /v2/emails/{email_id} specification
    */
-  async getEmail(emailId: string): Promise<EmailStatusResponse> {
+  async getEmail(emailId: string): Promise<GetEmailResponse> {
     if (!emailId) {
-      throw new Error('email_id is required');
+      throw new EmailAPIError('email_id is required', 400);
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(emailId)) {
+      throw new EmailAPIError('email_id must be a valid UUID', 400);
     }
 
     const accountId = await this.getCurrentAccountId();
     const query = accountId ? `?account_id=${accountId}` : '';
     
-    return this.makeRequest(`/v2/emails/${emailId}${query}`);
+    try {
+      const response = await this.makeRequest(`/v2/emails/${emailId}${query}`);
+      return response as GetEmailResponse;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new EmailAPIError(`Failed to retrieve email ${emailId}: ${error.message}`, 500, emailId);
+      }
+      throw error;
+    }
   }
 
   /**
    * Render a submitted email (get HTML/text content)
-   * @param emailId UUID of the email to render
-   * @param options Render options
-   * @returns Promise<string> HTML content
    */
   async renderEmail(
     emailId: string, 
@@ -109,7 +115,13 @@ export class EmailApi extends BaseApiClient {
     } = {}
   ): Promise<string> {
     if (!emailId) {
-      throw new Error('email_id is required');
+      throw new EmailAPIError('email_id is required', 400);
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(emailId)) {
+      throw new EmailAPIError('email_id must be a valid UUID', 400);
     }
 
     const accountId = await this.getCurrentAccountId();
@@ -127,20 +139,26 @@ export class EmailApi extends BaseApiClient {
 
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
     
-    return this.makeRequest(`/v2/emails/${emailId}/render${query}`, {
-      headers: {
-        'Accept': 'text/html'
+    try {
+      return await this.makeRequest(`/v2/emails/${emailId}/render${query}`, {
+        headers: {
+          'Accept': 'text/html'
+        }
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new EmailAPIError(`Failed to render email ${emailId}: ${error.message}`, 500, emailId);
       }
-    });
+      throw error;
+    }
   }
 
   /**
    * Show Email API activity logs
-   * @param options Log filtering options
-   * @returns Promise<EmailAPILogsResponse>
+   * Compliant with GET /v2/logs/emails specification
    */
   async getEmailLogs(options: {
-    log_type?: 'all' | 'submitted' | 'queued' | 'delivered' | 'rejected' | 'error' | 'open' | 'click' | 'bounce' | 'spam' | 'unsubscribe' | 'global_unsubscribe';
+    log_type?: LogTypeV2;
     email_id?: string;
     iso_time?: boolean;
     page?: number;
@@ -161,42 +179,83 @@ export class EmailApi extends BaseApiClient {
       queryParams.append('log_type', options.log_type);
     }
     if (options.email_id) {
+      // Validate UUID format for email_id
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(options.email_id)) {
+        throw new EmailAPIError('email_id must be a valid UUID', 400);
+      }
       queryParams.append('email_id', options.email_id);
     }
     if (options.iso_time !== undefined) {
       queryParams.append('iso_time', String(options.iso_time));
     }
     if (options.page) {
+      if (options.page < 1) {
+        throw new EmailAPIError('page must be >= 1', 400);
+      }
       queryParams.append('page', String(options.page));
     }
     if (options.per_page) {
+      if (options.per_page < 1 || options.per_page > 100) {
+        throw new EmailAPIError('per_page must be between 1 and 100', 400);
+      }
       queryParams.append('per_page', String(options.per_page));
     }
     if (options.start_time) {
+      if (options.start_time < 1 || options.start_time > 2147483647) {
+        throw new EmailAPIError('start_time must be a valid Unix timestamp', 400);
+      }
       queryParams.append('start_time', String(options.start_time));
     }
     if (options.end_time) {
+      if (options.end_time < 1 || options.end_time > 2147483647) {
+        throw new EmailAPIError('end_time must be a valid Unix timestamp', 400);
+      }
       queryParams.append('end_time', String(options.end_time));
     }
     if (options.tags) {
+      // Validate JSON format
+      try {
+        JSON.parse(options.tags);
+      } catch {
+        throw new EmailAPIError('tags must be valid JSON', 400);
+      }
       queryParams.append('tags', options.tags);
     }
     if (options.providers) {
+      // Validate JSON format
+      try {
+        JSON.parse(options.providers);
+      } catch {
+        throw new EmailAPIError('providers must be valid JSON', 400);
+      }
       queryParams.append('providers', options.providers);
     }
     if (options.sort) {
+      const validSortFields = ['id', 'time', 'submitted_time', 'type', 'provider'];
+      const sortField = options.sort.replace(/^[-+]/, ''); // Remove direction prefix
+      if (!validSortFields.includes(sortField)) {
+        throw new EmailAPIError(`sort field must be one of: ${validSortFields.join(', ')}`, 400);
+      }
       queryParams.append('sort', options.sort);
     }
 
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
     
-    return this.makeRequest(`/v2/logs/emails${query}`);
+    try {
+      const response = await this.makeRequest(`/v2/logs/emails${query}`);
+      return response as EmailAPILogsResponse;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new EmailAPIError(`Failed to retrieve email logs: ${error.message}`, 500);
+      }
+      throw error;
+    }
   }
 
   /**
    * Show Email API statistics
-   * @param options Statistics filtering options
-   * @returns Promise<EmailAPIStatsResponse>
+   * Compliant with GET /v2/reports/emails specification
    */
   async getEmailStats(options: {
     interval?: 'hour' | 'day' | 'week' | 'month';
@@ -213,59 +272,121 @@ export class EmailApi extends BaseApiClient {
       queryParams.append('account_id', String(accountId));
     }
     if (options.interval) {
+      const validIntervals = ['hour', 'day', 'week', 'month'];
+      if (!validIntervals.includes(options.interval)) {
+        throw new EmailAPIError(`interval must be one of: ${validIntervals.join(', ')}`, 400);
+      }
       queryParams.append('interval', options.interval);
     }
     if (options.iso_time !== undefined) {
       queryParams.append('iso_time', String(options.iso_time));
     }
     if (options.start_time) {
+      if (options.start_time < 1 || options.start_time > 2147483647) {
+        throw new EmailAPIError('start_time must be a valid Unix timestamp', 400);
+      }
       queryParams.append('start_time', String(options.start_time));
     }
     if (options.end_time) {
+      if (options.end_time < 1 || options.end_time > 2147483647) {
+        throw new EmailAPIError('end_time must be a valid Unix timestamp', 400);
+      }
       queryParams.append('end_time', String(options.end_time));
     }
     if (options.providers) {
+      // Validate JSON format
+      try {
+        JSON.parse(options.providers);
+      } catch {
+        throw new EmailAPIError('providers must be valid JSON', 400);
+      }
       queryParams.append('providers', options.providers);
     }
     if (options.tags) {
+      // Validate JSON format
+      try {
+        JSON.parse(options.tags);
+      } catch {
+        throw new EmailAPIError('tags must be valid JSON', 400);
+      }
       queryParams.append('tags', options.tags);
     }
 
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
     
-    return this.makeRequest(`/v2/reports/emails${query}`);
+    try {
+      const response = await this.makeRequest(`/v2/reports/emails${query}`);
+      return response as EmailAPIStatsResponse;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new EmailAPIError(`Failed to retrieve email statistics: ${error.message}`, 500);
+      }
+      throw error;
+    }
   }
 
-  // Helper method to send transactional email (backward compatibility)
-  async sendTransactionalEmail(data: any): Promise<EmailResponse> {
+  /**
+   * Helper method to send transactional email (backward compatibility)
+   */
+  async sendTransactionalEmail(data: EmailData): Promise<SubmitEmailResponse> {
     return this.sendEmail({
       ...data,
       email_type: 'transactional'
     });
   }
 
-  // Helper method to send marketing email
-  async sendMarketingEmail(data: EmailData): Promise<EmailResponse> {
+  /**
+   * Helper method to send marketing email
+   */
+  async sendMarketingEmail(data: EmailData): Promise<SubmitEmailResponse> {
     return this.sendEmail({
       ...data,
       email_type: 'marketing'
     });
   }
 
-  // Helper method to get email status (alias for getEmail)
-  async getEmailStatus(emailId: string): Promise<EmailStatusResponse> {
+  /**
+   * Helper method to get email status (alias for getEmail)
+   */
+  async getEmailStatus(emailId: string): Promise<GetEmailResponse> {
     return this.getEmail(emailId);
   }
 
   /**
+   * Bulk email status retrieval
+   */
+  async getBulkEmailStatus(emailIds: string[]): Promise<GetEmailResponse[]> {
+    if (!emailIds || emailIds.length === 0) {
+      throw new EmailAPIError('emailIds array cannot be empty', 400);
+    }
+
+    if (emailIds.length > 100) {
+      throw new EmailAPIError('Cannot retrieve more than 100 emails at once', 400);
+    }
+
+    // Validate all UUIDs
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const invalidIds = emailIds.filter(id => !uuidRegex.test(id));
+    if (invalidIds.length > 0) {
+      throw new EmailAPIError(`Invalid UUID format for email IDs: ${invalidIds.join(', ')}`, 400);
+    }
+
+    const promises = emailIds.map(id => this.getEmail(id));
+    return Promise.all(promises);
+  }
+
+  /**
    * Create a filter for logs/stats using the recursive filter syntax
-   * @param conditions Array of conditions or nested filters
-   * @param operator Logical operator: 'and', 'or', 'not', 'is'
-   * @returns JSON string for use in API calls
+   * Enhanced with validation and helper patterns
    */
   createFilter(conditions: any[], operator: 'and' | 'or' | 'not' | 'is' = 'and'): string {
     if (!conditions || conditions.length === 0) {
-      throw new Error('Conditions are required for filter creation');
+      throw new EmailAPIError('Conditions are required for filter creation', 400);
+    }
+
+    const validOperators = ['and', 'or', 'not', 'is'];
+    if (!validOperators.includes(operator)) {
+      throw new EmailAPIError(`Operator must be one of: ${validOperators.join(', ')}`, 400);
     }
 
     let filter: any;
@@ -276,26 +397,141 @@ export class EmailApi extends BaseApiClient {
       filter = { [operator]: conditions };
     }
 
-    return JSON.stringify(filter);
+    try {
+      return JSON.stringify(filter);
+    } catch (error) {
+      throw new EmailAPIError('Failed to create valid JSON filter', 400);
+    }
   }
 
   /**
    * Helper to create simple tag filters
-   * @param tags Array of tag names to filter by
-   * @param operator Logical operator
-   * @returns JSON filter string
    */
   createTagFilter(tags: string[], operator: 'and' | 'or' = 'or'): string {
+    if (!tags || tags.length === 0) {
+      throw new EmailAPIError('Tags array cannot be empty', 400);
+    }
     return this.createFilter(tags, operator);
   }
 
   /**
    * Helper to create provider filters
-   * @param providers Array of provider names to filter by
-   * @param operator Logical operator
-   * @returns JSON filter string
    */
   createProviderFilter(providers: string[], operator: 'and' | 'or' = 'or'): string {
+    if (!providers || providers.length === 0) {
+      throw new EmailAPIError('Providers array cannot be empty', 400);
+    }
     return this.createFilter(providers, operator);
   }
+
+  /**
+   * Create smart filters for common use cases
+   */
+  createSmartFilter(filterType: SmartFilterType): string {
+    const smartFilters = {
+      engagement: ['click', 'open', 'view', 'forward', 'share'],
+      critical_issues: ['spam', 'bounce_hb', 'bounce_mb'],
+      temporary_failures: ['bounce_sb', 'bounce_df', 'bounce_fm', 'bounce_tr'],
+      list_cleanup: ['bounce_hb', 'spam', 'global_unsubscribe']
+    };
+
+    const eventTypes = smartFilters[filterType];
+    if (!eventTypes) {
+      throw new EmailAPIError(`Unknown smart filter type: ${filterType}`, 400);
+    }
+
+    const conditions = eventTypes.map(type => `type==${type}`);
+    return this.createFilter(conditions, 'or');
+  }
+
+  /**
+   * Analyze email logs with smart insights
+   */
+  analyzeEmailLogs(logs: EmailAPILogsResponse): EmailLogAnalysis {
+    const data = logs.data || [];
+    const totalEvents = data.length;
+
+    if (totalEvents === 0) {
+      return {
+        totalEvents: 0,
+        eventBreakdown: {},
+        deliveryRate: 0,
+        engagementRate: 0,
+        issueRate: 0,
+        recommendations: ['No events to analyze']
+      };
+    }
+
+    // Count events by type
+    const eventBreakdown: Record<string, number> = {};
+    data.forEach(log => {
+      const type = log.type || 'unknown';
+      eventBreakdown[type] = (eventBreakdown[type] || 0) + 1;
+    });
+
+    // Calculate rates
+    const delivered = eventBreakdown.delivered || 0;
+    const bounced = (eventBreakdown.bounce || 0) + (eventBreakdown.bounce_hb || 0) + (eventBreakdown.bounce_sb || 0);
+    const opened = eventBreakdown.open || 0;
+    const clicked = eventBreakdown.click || 0;
+    const spam = eventBreakdown.spam || 0;
+
+    const deliveryRate = delivered > 0 ? (delivered / (delivered + bounced)) * 100 : 0;
+    const engagementRate = delivered > 0 ? ((opened + clicked) / delivered) * 100 : 0;
+    const issueRate = totalEvents > 0 ? ((bounced + spam) / totalEvents) * 100 : 0;
+
+    // Generate recommendations
+    const recommendations: string[] = [];
+    if (deliveryRate < 95) {
+      recommendations.push('Low delivery rate detected. Consider list cleaning and sender reputation monitoring.');
+    }
+    if (engagementRate < 15) {
+      recommendations.push('Low engagement rate. Consider improving subject lines and content quality.');
+    }
+    if (issueRate > 5) {
+      recommendations.push('High issue rate detected. Review bounce handling and spam prevention measures.');
+    }
+    if (recommendations.length === 0) {
+      recommendations.push('Email performance looks healthy. Continue monitoring key metrics.');
+    }
+
+    return {
+      totalEvents,
+      eventBreakdown,
+      deliveryRate: Math.round(deliveryRate * 100) / 100,
+      engagementRate: Math.round(engagementRate * 100) / 100,
+      issueRate: Math.round(issueRate * 100) / 100,
+      recommendations
+    };
+  }
+
+  /**
+   * Get email logs with automatic analysis
+   */
+  async getEmailLogsWithAnalysis(options: Parameters<typeof this.getEmailLogs>[0] = {}): Promise<{
+    logs: EmailAPILogsResponse;
+    analysis: EmailLogAnalysis;
+  }> {
+    const logs = await this.getEmailLogs(options);
+    const analysis = this.analyzeEmailLogs(logs);
+    
+    return { logs, analysis };
+  }
+
+  /**
+   * Enhanced email validation
+   */
+  protected isValidEmail(email: string): boolean {
+    if (!email || typeof email !== 'string') {
+      return false;
+    }
+    
+    // More comprehensive email validation
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    
+    return emailRegex.test(email) && email.length <= 254; // RFC 5321 limit
+  }
 }
+
+// Re-export for convenience
+export { EmailAPIError } from '../types/errors.js';

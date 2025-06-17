@@ -1,6 +1,6 @@
 // Custom error classes for Cakemail API
 
-import { HTTPBadRequestError, HTTPValidationError, ValidationErrorDetail } from './cakemail-types.js';
+import { HTTPBadRequestError, HTTPValidationError, ValidationErrorDetail, EmailAPIErrorDetails } from './cakemail-types.js';
 import type { Response } from 'node-fetch';
 
 export class CakemailError extends Error {
@@ -105,6 +105,150 @@ export class CakemailNetworkError extends CakemailError {
     super(message, 0, originalError);
     this.name = 'CakemailNetworkError';
   }
+}
+
+/**
+ * Email API specific error class
+ * Extends the base CakemailError with email-specific context
+ */
+export class EmailAPIError extends CakemailError {
+  public readonly emailId: string | undefined;
+  public readonly errorCode: string | undefined;
+  public readonly errorDetails: EmailAPIErrorDetails[] | undefined;
+
+  constructor(
+    message: string, 
+    statusCode: number = 500, 
+    emailId?: string,
+    errorCode?: string,
+    errorDetails?: EmailAPIErrorDetails[]
+  ) {
+    super(message, statusCode);
+    this.name = 'EmailAPIError';
+    this.emailId = emailId;
+    this.errorCode = errorCode;
+    this.errorDetails = errorDetails;
+  }
+
+  /**
+   * Create an EmailAPIError from HTTP validation errors
+   */
+  static fromValidationError(validationError: any, statusCode: number = 422): EmailAPIError {
+    const details: EmailAPIErrorDetails[] = [];
+    let mainMessage = 'Validation failed';
+
+    if (validationError.detail && Array.isArray(validationError.detail)) {
+      validationError.detail.forEach((err: any) => {
+        const field = Array.isArray(err.loc) ? err.loc.join('.') : 'unknown';
+        details.push({
+          code: err.type || 'validation_error',
+          message: err.msg || 'Validation failed',
+          field,
+          value: err.input,
+          suggestion: generateFieldSuggestion(field, err.type)
+        });
+      });
+
+      mainMessage = `Validation failed for fields: ${details.map(d => d.field).join(', ')}`;
+    }
+
+    return new EmailAPIError(
+      mainMessage,
+      statusCode,
+      undefined,
+      'VALIDATION_ERROR',
+      details
+    );
+  }
+
+  /**
+   * Create an EmailAPIError for invalid email format
+   */
+  static forInvalidEmail(email: string): EmailAPIError {
+    return new EmailAPIError(
+      `Invalid email format: ${email}`,
+      400,
+      undefined,
+      'INVALID_EMAIL',
+      [{
+        code: 'INVALID_EMAIL',
+        message: 'Email address format is invalid',
+        field: 'to_email',
+        value: email,
+        suggestion: 'Ensure email follows RFC 5322 format (e.g., user@domain.com)'
+      }]
+    );
+  }
+
+  /**
+   * Create an EmailAPIError for missing content
+   */
+  static forMissingContent(): EmailAPIError {
+    return new EmailAPIError(
+      'Email content is required',
+      400,
+      undefined,
+      'MISSING_CONTENT',
+      [{
+        code: 'MISSING_CONTENT',
+        message: 'Either html_content, text_content, or template_id must be provided',
+        field: 'content',
+        suggestion: 'Provide html_content, text_content, or specify a template_id'
+      }]
+    );
+  }
+
+  /**
+   * Get a user-friendly error message
+   */
+  getUserFriendlyMessage(): string {
+    if (this.errorDetails && this.errorDetails.length > 0) {
+      const primaryError = this.errorDetails[0];
+      return `${primaryError.message}${primaryError.suggestion ? `. ${primaryError.suggestion}` : ''}`;
+    }
+    return this.message;
+  }
+
+  /**
+   * Get all error details formatted for display
+   */
+  getFormattedDetails(): string {
+    if (!this.errorDetails || this.errorDetails.length === 0) {
+      return this.message;
+    }
+
+    return this.errorDetails.map((detail, index) => {
+      const parts = [`${index + 1}. ${detail.message}`];
+      if (detail.field) parts.push(`Field: ${detail.field}`);
+      if (detail.value !== undefined) parts.push(`Value: ${detail.value}`);
+      if (detail.suggestion) parts.push(`Suggestion: ${detail.suggestion}`);
+      return parts.join('\n   ');
+    }).join('\n\n');
+  }
+}
+
+// Helper functions
+function generateFieldSuggestion(field: string, errorType?: string): string {
+  const suggestions: Record<string, string> = {
+    'to': 'Provide a valid email address in format: user@domain.com',
+    'to_email': 'Provide a valid email address in format: user@domain.com',
+    'sender_id': 'Use a verified sender ID from your account',
+    'subject': 'Subject cannot be empty and should be descriptive',
+    'html_content': 'Provide valid HTML content for the email body',
+    'text_content': 'Provide plain text content for the email body',
+    'template_id': 'Use a valid template ID from your account',
+    'tags': 'Tags should be an array of strings',
+    'metadata': 'Metadata should be a valid JSON object'
+  };
+
+  const typeSuggestions: Record<string, string> = {
+    'string_type': 'Value must be a string',
+    'missing': 'This field is required',
+    'value_error': 'Value format is invalid',
+    'type_error': 'Incorrect data type provided'
+  };
+
+  return suggestions[field] || typeSuggestions[errorType || ''] || 'Check the field value and format';
 }
 
 // Helper function to create appropriate error from response
