@@ -5,14 +5,10 @@ export const emailTools = [
     inputSchema: {
       type: 'object',
       properties: {
-        to_email: { 
+        email: { 
           type: 'string', 
           description: 'Recipient email address',
           format: 'email'
-        },
-        to_name: { 
-          type: 'string', 
-          description: 'Recipient name (optional)' 
         },
         sender_id: { 
           type: 'string', 
@@ -45,7 +41,7 @@ export const emailTools = [
           default: 'transactional'
         },
       },
-      required: ['to_email', 'sender_id', 'subject'],
+      required: ['email', 'sender_id', 'subject'],
     },
   },
   {
@@ -191,14 +187,10 @@ export const emailTools = [
     inputSchema: {
       type: 'object',
       properties: {
-        to_email: { 
+        email: { 
           type: 'string', 
           description: 'Recipient email address',
           format: 'email'
-        },
-        to_name: { 
-          type: 'string', 
-          description: 'Recipient name (optional)' 
         },
         sender_id: { 
           type: 'string', 
@@ -225,7 +217,7 @@ export const emailTools = [
           description: 'List ID for the email (optional)' 
         },
       },
-      required: ['to_email', 'sender_id', 'subject'],
+      required: ['email', 'sender_id', 'subject'],
     },
   },
   {
@@ -234,14 +226,10 @@ export const emailTools = [
     inputSchema: {
       type: 'object',
       properties: {
-        to_email: { 
+        email: { 
           type: 'string', 
           description: 'Recipient email address',
           format: 'email'
-        },
-        to_name: { 
-          type: 'string', 
-          description: 'Recipient name (optional)' 
         },
         sender_id: { 
           type: 'string', 
@@ -268,7 +256,7 @@ export const emailTools = [
           description: 'List ID for the email (optional)' 
         },
       },
-      required: ['to_email', 'sender_id', 'subject'],
+      required: ['email', 'sender_id', 'subject'],
     },
   },
   {

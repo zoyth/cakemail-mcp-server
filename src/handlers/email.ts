@@ -8,8 +8,7 @@ import { EmailAPIError } from '../types/errors.js';
 export async function handleSendEmail(args: any, api: CakemailAPI) {
   try {
     const {
-      to_email,
-      to_name,
+      email,
       sender_id,
       subject,
       html_content,
@@ -20,8 +19,8 @@ export async function handleSendEmail(args: any, api: CakemailAPI) {
     } = args;
 
     // Validate required fields
-    if (!to_email) {
-      throw new EmailAPIError('to_email is required', 400);
+    if (!email) {
+      throw new EmailAPIError('email is required', 400);
     }
     if (!sender_id) {
       throw new EmailAPIError('sender_id is required', 400);
@@ -37,10 +36,9 @@ export async function handleSendEmail(args: any, api: CakemailAPI) {
 
     // Build email data
     const emailData: any = {
-      email: to_email,
+      email: email,
       sender: {
-        id: sender_id,
-        ...(to_name && { name: to_name })
+        id: sender_id
       },
       content: {
         subject,
