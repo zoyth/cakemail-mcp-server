@@ -3,7 +3,6 @@
 import { BaseApiClient } from './base-client.js';
 import { 
   EmailData,
-  LegacyEmailData,
   EmailAPILogsResponse,
   EmailAPIStatsResponse,
   SubmitEmailRequest,
@@ -21,9 +20,8 @@ export class EmailApi extends BaseApiClient {
    * Submit an email to be sent using v2 API
    * Fully compliant with POST /v2/emails specification
    */
-  async sendEmail(data: EmailData | LegacyEmailData): Promise<SubmitEmailResponse> {
-    // Convert legacy format to new format if needed
-    const emailData = this.normalizeEmailData(data);
+  async sendEmail(data: EmailData): Promise<SubmitEmailResponse> {
+    const emailData = data;
     
     // Enhanced validation
     if (!this.isValidEmail(emailData.email)) {
@@ -91,42 +89,7 @@ export class EmailApi extends BaseApiClient {
     }
   }
 
-  /**
-   * Normalize email data - convert legacy format to new v2 format
-   */
-  private normalizeEmailData(data: EmailData | LegacyEmailData): EmailData {
-    // Check if this is already in the new format
-    if ('email' in data && 'sender' in data && 'content' in data) {
-      return data as EmailData;
-    }
 
-    // Convert from legacy format
-    const legacyData = data as LegacyEmailData;
-    
-    return {
-      email: legacyData.to_email,
-      sender: {
-        id: String(legacyData.sender_id),
-        ...(legacyData.to_name && { name: legacyData.to_name })
-      },
-      content: {
-        subject: legacyData.subject,
-        ...(legacyData.html_content && { html: legacyData.html_content }),
-        ...(legacyData.text_content && { text: legacyData.text_content }),
-        ...(legacyData.template_id && { template: { id: Number(legacyData.template_id) } }),
-        encoding: 'utf-8',
-        ...(legacyData.email_type && { type: legacyData.email_type })
-      },
-      ...(legacyData.list_id !== undefined && { list_id: Number(legacyData.list_id) }),
-      ...(legacyData.tags && { tags: legacyData.tags }),
-      // Set default tracking
-      tracking: {
-        opens: true,
-        clicks_html: true,
-        clicks_text: true
-      }
-    };
-  }
 
   /**
    * Retrieve a submitted email status
@@ -379,10 +342,10 @@ export class EmailApi extends BaseApiClient {
   }
 
   /**
-   * Helper method to send transactional email (backward compatibility)
+   * Helper method to send transactional email
    */
-  async sendTransactionalEmail(data: EmailData | LegacyEmailData): Promise<SubmitEmailResponse> {
-    const emailData = this.normalizeEmailData(data);
+  async sendTransactionalEmail(data: EmailData): Promise<SubmitEmailResponse> {
+    const emailData = { ...data };
     emailData.content.type = 'transactional';
     return this.sendEmail(emailData);
   }
@@ -390,24 +353,10 @@ export class EmailApi extends BaseApiClient {
   /**
    * Helper method to send marketing email
    */
-  async sendMarketingEmail(data: EmailData | LegacyEmailData): Promise<SubmitEmailResponse> {
-    const emailData = this.normalizeEmailData(data);
+  async sendMarketingEmail(data: EmailData): Promise<SubmitEmailResponse> {
+    const emailData = { ...data };
     emailData.content.type = 'marketing';
     return this.sendEmail(emailData);
-  }
-
-  /**
-   * Send email with the full v2 API structure (new method)
-   */
-  async sendEmailV2(data: EmailData): Promise<SubmitEmailResponse> {
-    return this.sendEmail(data);
-  }
-
-  /**
-   * Legacy method for backward compatibility
-   */
-  async sendLegacyEmail(data: LegacyEmailData): Promise<SubmitEmailResponse> {
-    return this.sendEmail(data);
   }
 
   /**

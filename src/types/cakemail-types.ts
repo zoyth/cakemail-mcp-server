@@ -210,10 +210,6 @@ export interface EmailAPIStatsResponse {
   end_time?: number;
 }
 
-// Legacy type alias for backward compatibility
-export interface TransactionalEmailResponse extends EmailResponse {}
-
-
 
 // Account responses
 export interface AccountResponse {
@@ -319,13 +315,13 @@ export interface CreateSubAccountData {
   name: string;
   email: string;
   password: string;
-  company?: string;
-  language?: string;
-  timezone?: string;
-  country?: string;
-  phone?: string;
-  website?: string;
-  description?: string;
+  company?: string | undefined;
+  language?: string | undefined;
+  timezone?: string | undefined;
+  country?: string | undefined;
+  phone?: string | undefined;
+  website?: string | undefined;
+  description?: string | undefined;
   [key: string]: any;
 }
 
@@ -344,7 +340,7 @@ export interface UpdateSubAccountData {
 
 export interface ConfirmSubAccountData {
   confirmation_code: string;
-  password?: string;
+  password?: string | undefined;
 }
 
 export interface ResendVerificationEmailData {
@@ -551,10 +547,10 @@ export interface ReportFilters {
 }
 
 export interface SubAccountFilters {
-  name?: string;
-  status?: 'pending' | 'active' | 'suspended' | 'inactive';
-  type?: 'organization' | 'individual';
-  partner_account_id?: number;
+  name?: string | undefined;
+  status?: 'pending' | 'active' | 'suspended' | 'inactive' | undefined;
+  type?: 'organization' | 'individual' | undefined;
+  partner_account_id?: number | undefined;
 }
 
 // Error response types from OpenAPI spec
@@ -573,14 +569,14 @@ export interface HTTPValidationError {
 }
 
 export interface PaginationParams {
-  page?: number;
-  per_page?: number;
-  with_count?: boolean;
+  page?: number | undefined;
+  per_page?: number | undefined;
+  with_count?: boolean | undefined;
 }
 
 export interface SortParams {
-  sort?: string;
-  order?: 'asc' | 'desc';
+  sort?: string | undefined;
+  order?: 'asc' | 'desc' | undefined;
 }
 
 // Campaign related interfaces
@@ -605,12 +601,12 @@ export interface Campaign {
 export interface CreateCampaignData {
   name: string;
   subject: string;
-  html_content: string;
-  text_content?: string;
+  html_content?: string | undefined;
+  text_content?: string | undefined;
   list_id: string | number;
   sender_id: string | number;
-  from_name?: string;
-  reply_to?: string;
+  from_name?: string | undefined;
+  reply_to?: string | undefined;
 }
 
 export interface UpdateCampaignData {
@@ -623,10 +619,10 @@ export interface UpdateCampaignData {
 }
 
 export interface CampaignFilters {
-  status?: string;
-  name?: string;
-  type?: string;
-  list_id?: string;
+  status?: string | undefined;
+  name?: string | undefined;
+  type?: string | undefined;
+  list_id?: string | undefined;
 }
 
 // Contact and List interfaces
@@ -957,36 +953,92 @@ export interface EmailData {
   }>;
 }
 
-// Legacy interface for backward compatibility
-export interface LegacyEmailData {
-  to_email: string;
-  to_name?: string;
-  sender_id: string | number;
-  subject: string;
-  html_content?: string;
-  text_content?: string;
-  template_id?: string | number;
-  list_id?: string | number; // Optional for v2 API
-  email_type?: 'transactional' | 'marketing'; // v2 API content type
-  tags?: string[]; // For filtering and organization
-  metadata?: Record<string, any>; // Additional data
-}
+
 
 // Update existing response types to match v2 API
 export interface EmailResponse extends SubmitEmailResponse {}
 export interface EmailStatusResponse extends GetEmailResponse {}
 
-// Legacy type alias for backward compatibility
-export interface TransactionalEmailResponse extends SubmitEmailResponse {}
-export interface TransactionalEmailData extends EmailData {}
+
 
 // Enhanced log response that extends existing
 export interface EmailAPILogsResponse extends EmailAPILogsResponseV2 {
-  // Keep existing structure for backward compatibility
+  // Unified structure for email logs
 }
 
 export interface EmailAPIStatsResponse extends EmailAPIStatsResponseV2 {
-  // Keep existing structure for backward compatibility
+  // Unified structure for email stats
+}
+
+// Specific method parameter interfaces for strict type checking
+export interface GetCampaignsParams extends PaginationParams, SortParams, CampaignFilters {
+  account_id?: number | undefined;
+}
+
+export interface ListSubAccountsParams {
+  partner_account_id?: number | undefined;
+  recursive?: boolean | undefined;
+  filters?: SubAccountFilters;
+  pagination?: PaginationParams;
+  sort?: SortParams;
+}
+
+export interface CreateSubAccountOptions {
+  partner_account_id?: number | undefined;
+  skip_verification?: boolean | undefined;
+}
+
+export interface WorkflowActionLogsParams {
+  account_id?: number | undefined;
+  page?: number | undefined;
+  per_page?: number | undefined;
+  with_count?: boolean | undefined;
+  start_time?: number | undefined;
+  end_time?: number | undefined;
+  filter?: string | undefined;
+}
+
+export interface WorkflowLogsParams {
+  account_id?: number | undefined;
+  page?: number | undefined;
+  per_page?: number | undefined;
+  with_count?: boolean | undefined;
+  sort?: string | undefined;
+  order?: 'asc' | 'desc' | undefined;
+  start_time?: number | undefined;
+  end_time?: number | undefined;
+  filter?: string | undefined;
+}
+
+export interface TransactionalEmailLogsParams {
+  log_type?: string | undefined;
+  account_id?: number | undefined;
+  page?: number | undefined;
+  per_page?: number | undefined;
+  with_count?: boolean | undefined;
+  sort?: string | undefined;
+  order?: 'asc' | 'desc' | undefined;
+  start_time?: number | undefined;
+  end_time?: number | undefined;
+  filter?: string | undefined;
+  email_id?: string | undefined;
+  sender_id?: string | undefined;
+  status?: string | undefined;
+}
+
+export interface ListLogsParams {
+  account_id?: number | undefined;
+  page?: number | undefined;
+  per_page?: number | undefined;
+  with_count?: boolean | undefined;
+  start_time?: number | undefined;
+  end_time?: number | undefined;
+  filter?: string | undefined;
+}
+
+export interface DebugLogsAccessParams {
+  campaign_id?: string | undefined;
+  workflow_id?: string | undefined;
 }
 
 

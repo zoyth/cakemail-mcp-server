@@ -663,14 +663,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
 
-      // Email API (updated naming and description)
+      // Email API
       {
         name: 'cakemail_send_email',
-        description: 'Send an email using Cakemail Email API (supports both transactional and marketing emails)',
+        description: 'Send an email using Cakemail Email API v2 (supports both transactional and marketing emails)',
         inputSchema: {
           type: 'object',
           properties: {
-            // v2 API Structure
             email: { type: 'string', description: 'Recipient email address' },
             sender: {
               type: 'object',
@@ -747,28 +746,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 required: ['filename', 'type', 'content']
               },
               description: 'Email attachments'
-            },
-            
-            // Legacy fields for backward compatibility
-            to_email: { type: 'string', description: '[LEGACY] Recipient email address (use email instead)' },
-            to_name: { type: 'string', description: '[LEGACY] Recipient name (use sender.name instead)' },
-            sender_id: { type: 'string', description: '[LEGACY] Sender ID (use sender.id instead)' },
-            subject: { type: 'string', description: '[LEGACY] Email subject (use content.subject instead)' },
-            html_content: { type: 'string', description: '[LEGACY] HTML content (use content.html instead)' },
-            text_content: { type: 'string', description: '[LEGACY] Text content (use content.text instead)' },
-            template_id: { type: 'string', description: '[LEGACY] Template ID (use content.template.id instead)' },
-            email_type: { type: 'string', enum: ['transactional', 'marketing'], description: '[LEGACY] Email type (use content.type instead)' },
-          },
-          anyOf: [
-            {
-              // v2 API format
-              required: ['email', 'sender', 'content'],
-            },
-            {
-              // Legacy format
-              required: ['to_email', 'sender_id', 'subject'],
             }
-          ],
+          },
+          required: ['email', 'sender', 'content']
         },
       },
 
@@ -1111,7 +1091,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       // Sender Management
       case 'cakemail_get_senders': {
-        const senders = await api.getSenders();
+        const senders = await api.senders.getSenders();
         return {
           content: [
             {
@@ -1133,7 +1113,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error('Invalid email format');
         }
         
-        const sender = await api.createSender({
+        const sender = await api.senders.createSender({
           name: senderName,
           email,
           language: language || 'en_US',
@@ -1150,7 +1130,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_get_sender': {
         const { sender_id } = args as { sender_id: string };
-        const sender = await api.getSender(sender_id);
+        const sender = await api.senders.getSender(sender_id);
         return {
           content: [
             {
@@ -1178,7 +1158,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (email) updateData.email = email;
         if (language) updateData.language = language;
         
-        const sender = await api.updateSender(sender_id, updateData);
+        const sender = await api.senders.updateSender(sender_id, updateData);
         return {
           content: [
             {
@@ -1191,7 +1171,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_delete_sender': {
         const { sender_id } = args as { sender_id: string };
-        await api.deleteSender(sender_id);
+        await api.senders.deleteSender(sender_id);
         return {
           content: [
             {
@@ -1219,17 +1199,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           account_id?: number;
         };
         
-        const campaigns = await api.getCampaigns({
+        const campaigns = await api.campaigns.getCampaigns({
           page: page || 1,
           per_page: per_page || 10,
-          status,
-          name,
-          type,
-          list_id,
+          ...(status && { status }),
+          ...(name && { name }),
+          ...(type && { type }),
+          ...(list_id && { list_id }),
           sort: sort || 'created_on',
-          order: order || 'desc',
+          order: (order as 'asc' | 'desc') || 'desc',
           with_count: with_count !== false,
-          account_id
+          ...(account_id !== undefined && { account_id })
         });
 
         const total = campaigns.pagination?.count || 0;
@@ -1276,12 +1256,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           status?: string;
         };
         
-        const campaigns = await api.getCampaigns({
+        const campaigns = await api.campaigns.getCampaigns({
           page: 1,
           per_page: Math.min(count || 10, 50),
           sort: 'created_on',
           order: 'desc',
-          status,
+          ...(status && { status }),
           with_count: true
         });
 
@@ -1317,7 +1297,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_get_campaign': {
         const { campaign_id } = args as { campaign_id: string };
-        const campaign = await api.getCampaign(campaign_id);
+        const campaign = await api.campaigns.getCampaign(campaign_id);
 
         return {
           content: [
@@ -1360,15 +1340,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error('Either html_content or text_content must be provided');
         }
         
-        const campaign = await api.createCampaign({
+        const campaign = await api.campaigns.createCampaign({
           name,
           subject,
-          html_content,
-          text_content,
+          ...(html_content && { html_content }),
+          ...(text_content && { text_content }),
           list_id,
           sender_id,
-          from_name,
-          reply_to
+          ...(from_name && { from_name }),
+          ...(reply_to && { reply_to })
         });
 
         return {
@@ -1411,7 +1391,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (from_name) updateData.from_name = from_name;
         if (reply_to) updateData.reply_to = reply_to;
         
-        const campaign = await api.updateCampaign(campaign_id, updateData);
+        const campaign = await api.campaigns.updateCampaign(campaign_id, updateData);
 
         return {
           content: [
@@ -1432,7 +1412,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_send_campaign': {
         const { campaign_id } = args as { campaign_id: string };
-        const result = await api.sendCampaign(campaign_id);
+        const result = await api.campaigns.sendCampaign(campaign_id);
 
         return {
           content: [
@@ -1451,7 +1431,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_delete_campaign': {
         const { campaign_id } = args as { campaign_id: string };
-        const result = await api.deleteCampaign(campaign_id);
+        const result = await api.campaigns.deleteCampaign(campaign_id);
 
         return {
           content: [
@@ -1469,7 +1449,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_debug_campaign_access': {
         const { campaign_id } = args as { campaign_id?: string };
-        const debug = await api.debugCampaignAccess(campaign_id);
+        const debug = await api.campaigns.debugCampaignAccess(campaign_id);
 
         return {
           content: [
@@ -1477,7 +1457,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               type: 'text',
               text: `🔍 **Campaign Access Debug**\n\n` +
                     `**Test Results:**\n\n` +
-                    debug.tests.map((test, i) => 
+                    debug.tests.map((test: any, i: number) => 
                       `${i + 1}. **${test.test}**\n` +
                       `   ${test.success ? '✅ Success' : '❌ Failed'}\n` +
                       (test.success 
@@ -1499,7 +1479,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           contact_id?: number;
         };
         
-        const result = await api.renderCampaign(campaign_id, contact_id);
+        const result = await api.campaigns.renderCampaign(campaign_id, contact_id);
 
         return {
           content: [
@@ -1527,7 +1507,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error(`Invalid email addresses: ${invalidEmails.join(', ')}`);
         }
         
-        const result = await api.sendTestEmail(campaign_id, { emails });
+        const result = await api.campaigns.sendTestEmail(campaign_id, { emails });
 
         return {
           content: [
@@ -1551,7 +1531,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
         
         const data = scheduled_for ? { scheduled_for } : undefined;
-        const result = await api.scheduleCampaign(campaign_id, data);
+        const result = await api.campaigns.scheduleCampaign(campaign_id, data);
 
         return {
           content: [
@@ -1570,7 +1550,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_unschedule_campaign': {
         const { campaign_id } = args as { campaign_id: string };
-        const result = await api.unscheduleCampaign(campaign_id);
+        const result = await api.campaigns.unscheduleCampaign(campaign_id);
 
         return {
           content: [
@@ -1592,7 +1572,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           scheduled_for: string;
         };
         
-        const result = await api.rescheduleCampaign(campaign_id, { scheduled_for });
+        const result = await api.campaigns.rescheduleCampaign(campaign_id, { scheduled_for });
 
         return {
           content: [
@@ -1611,7 +1591,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_suspend_campaign': {
         const { campaign_id } = args as { campaign_id: string };
-        const result = await api.suspendCampaign(campaign_id);
+        const result = await api.campaigns.suspendCampaign(campaign_id);
 
         return {
           content: [
@@ -1629,7 +1609,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_resume_campaign': {
         const { campaign_id } = args as { campaign_id: string };
-        const result = await api.resumeCampaign(campaign_id);
+        const result = await api.campaigns.resumeCampaign(campaign_id);
 
         return {
           content: [
@@ -1647,7 +1627,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_cancel_campaign': {
         const { campaign_id } = args as { campaign_id: string };
-        const result = await api.cancelCampaign(campaign_id);
+        const result = await api.campaigns.cancelCampaign(campaign_id);
 
         return {
           content: [
@@ -1665,7 +1645,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_archive_campaign': {
         const { campaign_id } = args as { campaign_id: string };
-        const result = await api.archiveCampaign(campaign_id);
+        const result = await api.campaigns.archiveCampaign(campaign_id);
 
         return {
           content: [
@@ -1683,7 +1663,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_unarchive_campaign': {
         const { campaign_id } = args as { campaign_id: string };
-        const result = await api.unarchiveCampaign(campaign_id);
+        const result = await api.campaigns.unarchiveCampaign(campaign_id);
 
         return {
           content: [
@@ -1707,7 +1687,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           with_count?: boolean;
         };
         
-        const result = await api.getCampaignRevisions(campaign_id, {
+        const result = await api.campaigns.getCampaignRevisions(campaign_id, {
           page: page || 1,
           per_page: per_page || 50,
           with_count: with_count !== false
@@ -1746,7 +1726,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           with_count?: boolean;
         };
         
-        const result = await api.getCampaignLinks(campaign_id, {
+        const result = await api.campaigns.getCampaignLinks(campaign_id, {
           page: page || 1,
           per_page: per_page || 50,
           with_count: with_count !== false
@@ -1788,11 +1768,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           partner_account_id?: number;
         };
 
-        const accounts = await api.listSubAccounts({
-          partner_account_id,
-          recursive,
-          filters: { status: status as any, name },
-          pagination: { page, per_page, with_count: true },
+        const accounts = await api.subAccounts.listSubAccounts({
+          ...(partner_account_id !== undefined && { partner_account_id }),
+          ...(recursive !== undefined && { recursive }),
+          filters: { 
+            ...(status && { status: status as any }),
+            ...(name && { name })
+          },
+          pagination: { 
+            ...(page !== undefined && { page }),
+            ...(per_page !== undefined && { per_page }),
+            with_count: true 
+          },
           sort: { sort: 'created_on', order: 'desc' }
         });
 
@@ -1858,19 +1845,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error('Password must be at least 8 characters long');
         }
 
-        const account = await api.createSubAccount({
+        const account = await api.subAccounts.createSubAccount({
           name,
           email,
           password,
-          company,
+          ...(company && { company }),
           language: language || 'en_US',
-          timezone,
-          country,
-          phone,
-          website,
-          description
+          ...(timezone && { timezone }),
+          ...(country && { country }),
+          ...(phone && { phone }),
+          ...(website && { website }),
+          ...(description && { description })
         }, {
-          partner_account_id,
+          ...(partner_account_id !== undefined && { partner_account_id }),
           skip_verification: skip_verification || false
         });
 
@@ -1894,7 +1881,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_get_sub_account': {
         const { account_id } = args as { account_id: string };
-        const account = await api.getSubAccount(account_id);
+        const account = await api.subAccounts.getSubAccount(account_id);
 
         return {
           content: [
@@ -1950,7 +1937,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (website) updateData.website = website;
         if (description) updateData.description = description;
 
-        const account = await api.updateSubAccount(account_id, updateData);
+        const account = await api.subAccounts.updateSubAccount(account_id, updateData);
 
         return {
           content: [
@@ -1971,7 +1958,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_delete_sub_account': {
         const { account_id } = args as { account_id: string };
-        const result = await api.deleteSubAccount(account_id);
+        const result = await api.subAccounts.deleteSubAccount(account_id);
 
         return {
           content: [
@@ -1989,7 +1976,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_suspend_sub_account': {
         const { account_id } = args as { account_id: string };
-        const result = await api.suspendSubAccount(account_id);
+        const result = await api.subAccounts.suspendSubAccount(account_id);
 
         return {
           content: [
@@ -2008,7 +1995,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_unsuspend_sub_account': {
         const { account_id } = args as { account_id: string };
-        const result = await api.unsuspendSubAccount(account_id);
+        const result = await api.subAccounts.unsuspendSubAccount(account_id);
 
         return {
           content: [
@@ -2032,9 +2019,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           password?: string;
         };
 
-        const result = await api.confirmSubAccount(account_id, {
+        const result = await api.subAccounts.confirmSubAccount(account_id, {
           confirmation_code,
-          password
+          ...(password && { password })
         });
 
         return {
@@ -2061,7 +2048,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error('Invalid email format');
         }
 
-        const result = await api.resendVerificationEmail({ email });
+        const result = await api.subAccounts.resendVerificationEmail({ email });
 
         return {
           content: [
@@ -2084,7 +2071,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           migrate_owner?: boolean;
         };
 
-        const result = await api.convertSubAccountToOrganization(account_id, {
+        const result = await api.subAccounts.convertSubAccountToOrganization(account_id, {
           migrate_owner: migrate_owner ?? true
         });
 
@@ -2106,7 +2093,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'cakemail_get_latest_sub_account': {
-        const account = await api.getLatestSubAccount();
+        const account = await api.subAccounts.getLatestSubAccount();
 
         if (!account) {
           return {
@@ -2143,7 +2130,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           per_page?: number;
         };
 
-        const accounts = await api.searchSubAccountsByName(name, { page, per_page });
+        const accounts = await api.subAccounts.searchSubAccountsByName(name, { 
+          ...(page !== undefined && { page }),
+          ...(per_page !== undefined && { per_page })
+        });
         const total = accounts.pagination?.count || 0;
 
         return {
@@ -2178,7 +2168,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error(`Invalid status '${status}'. Must be one of: ${validStatuses.join(', ')}`);
         }
 
-        const accounts = await api.getSubAccountsByStatus(status as 'pending' | 'active' | 'suspended' | 'inactive', { page, per_page });
+        const accounts = await api.subAccounts.getSubAccountsByStatus(status as 'pending' | 'active' | 'suspended' | 'inactive', { 
+          ...(page !== undefined && { page }),
+          ...(per_page !== undefined && { per_page })
+        });
         const total = accounts.pagination?.count || 0;
 
         return {
@@ -2201,7 +2194,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cakemail_debug_sub_account_access': {
         const { account_id } = args as { account_id?: string };
-        const debug = await api.debugSubAccountAccess(account_id);
+        const debug = await api.subAccounts.debugSubAccountAccess(account_id);
 
         return {
           content: [
@@ -2226,57 +2219,87 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      // Email API (updated to use new EmailApi)
+      // Email API
       case 'cakemail_send_email': {
         const { 
-          to_email, 
-          to_name, 
-          sender_id, 
-          subject, 
-          html_content, 
-          text_content, 
-          template_id, 
-          list_id, 
-          email_type 
+          email, 
+          sender,
+          content,
+          list_id,
+          contact_id,
+          tags,
+          tracking,
+          additional_headers,
+          attachment
         } = args as {
-          to_email: string;
-          to_name?: string;
-          sender_id: string;
-          subject: string;
-          html_content?: string;
-          text_content?: string;
-          template_id?: string;
-          list_id?: string;
-          email_type?: 'transactional' | 'marketing';
+          email: string;
+          sender: {
+            id: string;
+            name?: string;
+          };
+          content: {
+            subject: string;
+            html?: string;
+            text?: string;
+            template?: {
+              id: number;
+            };
+            encoding?: string;
+            custom_attributes?: Array<{
+              name: string;
+              value: string;
+            }>;
+            type?: 'marketing' | 'transactional';
+            markup?: Record<string, any>;
+          };
+          list_id?: number;
+          contact_id?: number;
+          tags?: string[];
+          tracking?: {
+            opens?: boolean;
+            clicks_html?: boolean;
+            clicks_text?: boolean;
+          };
+          additional_headers?: Array<{
+            name: string;
+            value: string;
+          }>;
+          attachment?: Array<{
+            filename: string;
+            type: string;
+            content: string;
+          }>;
         };
         
-        if (!validateEmail(to_email)) {
+        if (!validateEmail(email)) {
           throw new Error('Invalid recipient email format');
         }
         
-        const email = await api.sendEmail({
-          to_email,
-          to_name,
-          sender_id,
-          subject,
-          html_content,
-          text_content,
-          template_id,
-          list_id,
-          email_type: email_type || 'transactional',
-        });
+        const emailData = {
+          email,
+          sender,
+          content,
+          ...(list_id !== undefined && { list_id }),
+          ...(contact_id !== undefined && { contact_id }),
+          ...(tags && { tags }),
+          ...(tracking && { tracking }),
+          ...(additional_headers && { additional_headers }),
+          ...(attachment && { attachment })
+        };
+        
+        const response = await api.email.sendEmail(emailData);
         
         return {
           content: [
             {
               type: 'text',
-              text: `📧 **Email sent successfully via Email API!**\\n\\n` +
-                    `✅ **Email ID:** ${email.data?.id}\\n` +
-                    `✅ **Status:** ${email.data?.status}\\n` +
-                    `✅ **Type:** ${email_type || 'transactional'}\\n` +
-                    `✅ **Recipient:** ${to_email}\\n` +
-                    `✅ **Subject:** ${subject}\\n\\n` +
-                    `**Full Response:**\\n${JSON.stringify(email, null, 2)}`,
+              text: `📧 **Email sent successfully via Email API v2!**\\n\\n` +
+                    `✅ **Email ID:** ${response.data?.id}\\n` +
+                    `✅ **Status:** ${response.data?.status}\\n` +
+                    `✅ **Type:** ${content.type || 'default'}\\n` +
+                    `✅ **Recipient:** ${email}\\n` +
+                    `✅ **Subject:** ${content.subject}\\n\\n` +
+                    `**Full Response:**\\n${JSON.stringify(response, null, 2)}`,
             },
           ],
         };
@@ -2284,7 +2307,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       // Account Management
       case 'cakemail_get_self_account': {
-        const account = await api.getSelfAccount();
+        const account = await api.account.getSelfAccount();
         return {
           content: [
             {
@@ -2448,18 +2471,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           end_time?: number;
         };
 
-        const logs = await api.getCampaignLogs(campaign_id, {
-          account_id,
-          page,
-          per_page,
-          with_count,
-          sort,
-          order,
-          cursor,
-          filter,
-          type,
-          start_time,
-          end_time
+        const logs = await api.logs.getCampaignLogs(campaign_id, {
+          ...(account_id !== undefined && { account_id }),
+          ...(page !== undefined && { page }),
+          ...(per_page !== undefined && { per_page }),
+          ...(with_count !== undefined && { with_count }),
+          ...(sort && { sort }),
+          ...(order && { order }),
+          ...(cursor && { cursor }),
+          ...(filter && { filter }),
+          ...(type && { type }),
+          ...(start_time !== undefined && { start_time }),
+          ...(end_time !== undefined && { end_time })
         });
 
         // Enhanced analysis with event taxonomy
@@ -2525,14 +2548,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           end_time?: number;
         };
 
-        const logs = await api.getWorkflowActionLogs(workflow_id, action_id, {
-          account_id,
-          page,
-          per_page,
-          with_count,
-          filter,
-          start_time,
-          end_time
+        const logs = await api.logs.getWorkflowActionLogs(workflow_id, action_id, {
+          ...(account_id !== undefined && { account_id }),
+          ...(page !== undefined && { page }),
+          ...(per_page !== undefined && { per_page }),
+          ...(with_count !== undefined && { with_count }),
+          ...(filter && { filter }),
+          ...(start_time !== undefined && { start_time }),
+          ...(end_time !== undefined && { end_time })
         });
 
         const logCount = Array.isArray(logs.data) ? logs.data.length : 0;
@@ -2575,16 +2598,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           end_time?: number;
         };
 
-        const logs = await api.getWorkflowLogs(workflow_id, {
-          account_id,
-          page,
-          per_page,
-          with_count,
-          sort,
-          order,
-          filter,
-          start_time,
-          end_time
+        const logs = await api.logs.getWorkflowLogs(workflow_id, {
+          ...(account_id !== undefined && { account_id }),
+          ...(page !== undefined && { page }),
+          ...(per_page !== undefined && { per_page }),
+          ...(with_count !== undefined && { with_count }),
+          ...(sort && { sort }),
+          ...(order && { order }),
+          ...(filter && { filter }),
+          ...(start_time !== undefined && { start_time }),
+          ...(end_time !== undefined && { end_time })
         });
 
         const logCount = Array.isArray(logs.data) ? logs.data.length : 0;
@@ -2630,20 +2653,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           status?: string;
         };
 
-        const logs = await api.getTransactionalEmailLogs({
-          log_type,
-          account_id,
-          page,
-          per_page,
-          with_count,
-          sort,
-          order,
-          filter,
-          start_time,
-          end_time,
-          email_id,
-          sender_id,
-          status
+        const logs = await api.logs.getTransactionalEmailLogs({
+          ...(log_type && { log_type }),
+          ...(account_id !== undefined && { account_id }),
+          ...(page !== undefined && { page }),
+          ...(per_page !== undefined && { per_page }),
+          ...(with_count !== undefined && { with_count }),
+          ...(sort && { sort }),
+          ...(order && { order }),
+          ...(filter && { filter }),
+          ...(start_time !== undefined && { start_time }),
+          ...(end_time !== undefined && { end_time }),
+          ...(email_id && { email_id }),
+          ...(sender_id && { sender_id }),
+          ...(status && { status })
         });
 
         const logCount = Array.isArray(logs.data) ? logs.data.length : 0;
@@ -2686,14 +2709,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           end_time?: number;
         };
 
-        const logs = await api.getListLogs(list_id, {
-          account_id,
-          page,
-          per_page,
-          with_count,
-          filter,
-          start_time,
-          end_time
+        const logs = await api.logs.getListLogs(list_id, {
+          ...(account_id !== undefined && { account_id }),
+          ...(page !== undefined && { page }),
+          ...(per_page !== undefined && { per_page }),
+          ...(with_count !== undefined && { with_count }),
+          ...(filter && { filter }),
+          ...(start_time !== undefined && { start_time }),
+          ...(end_time !== undefined && { end_time })
         });
 
         const logCount = Array.isArray(logs.data) ? logs.data.length : 0;
@@ -2725,7 +2748,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           workflow_id?: string;
         };
 
-        const debug = await api.debugLogsAccess({ campaign_id, workflow_id });
+        const debug = await api.logs.debugLogsAccess({
+          ...(campaign_id && { campaign_id }),
+          ...(workflow_id && { workflow_id })
+        });
 
         return {
           content: [
