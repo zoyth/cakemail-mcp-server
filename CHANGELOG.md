@@ -5,6 +5,50 @@ All notable changes to the Cakemail MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2025-06-16
+
+### 🧹 Code Cleanup - Analytics API Removal
+
+This minor version removes the legacy Analytics API in favor of the comprehensive Reports API that was introduced in version 1.5.0.
+
+### 🗑️ Removed
+
+#### **Legacy Analytics API**
+- Removed `AnalyticsApi` class and all related functionality
+- Removed analytics-related types and interfaces
+- Removed analytics method proxies from main `CakemailAPI` class
+- All analytics files moved to archive for historical reference
+
+#### **Reason for Removal**
+The standalone Analytics API has been superseded by the Reports API which provides:
+- More comprehensive analytics data
+- Standardized reporting endpoints 
+- Export functionality (CSV/XLSX)
+- Better time-range filtering
+- Enhanced performance metrics
+- Consistent response formats
+
+### ✅ Migration Path
+
+**All analytics functionality is still available** through the Reports API introduced in v1.5.0:
+
+| Old Analytics Tool | New Reports Tool | Enhanced Features |
+|-------------------|------------------|-------------------|
+| `getCampaignAnalytics()` | `cakemail_get_campaign_stats` | ✅ Rates, better formatting |
+| `getAccountAnalytics()` | `cakemail_get_account_stats` | ✅ Time ranges, overview |
+| `getListAnalytics()` | `cakemail_get_list_stats` | ✅ Growth metrics |
+| `getTransactionalAnalytics()` | `cakemail_get_email_stats` | ✅ Time-based filtering |
+| N/A | `cakemail_get_campaign_links_stats` | 🆕 Link-by-link tracking |
+| N/A | `cakemail_get_campaign_performance_summary` | 🆕 Comprehensive summaries |
+
+### 🔄 Backward Compatibility
+- **No user-facing changes**: All analytics functionality available through Reports API
+- **No tool changes**: No analytics tools were exposed at the MCP level
+- **No configuration changes**: Same setup and environment variables
+- **Enhanced functionality**: Users get better analytics through Reports API
+
+---
+
 ## [1.6.0] - 2025-06-16
 
 ### 🎯 Complete Logs API Implementation

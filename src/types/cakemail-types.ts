@@ -138,7 +138,8 @@ export interface EmailResponse {
   submitted: boolean;
   data: {
     id: string;
-    status: string;
+    status: 'submitted' | 'queued' | 'delivered' | 'rejected' | 'error' | 'open' | 'click' | 'bounce' | 'spam' | 'unsubscribe' | 'global_unsubscribe';
+    metadata?: any;
   };
 }
 
@@ -146,36 +147,73 @@ export interface EmailResponse {
 export interface EmailStatusResponse {
   data: {
     id: string;
-    status: string;
+    status: 'submitted' | 'queued' | 'delivered' | 'rejected' | 'error' | 'open' | 'click' | 'bounce' | 'spam' | 'unsubscribe' | 'global_unsubscribe';
     email: string;
+    to_name?: string;
+    sender_id?: string;
+    subject?: string;
     submitted_on?: string;
     delivered_on?: string;
     opened_on?: string;
     clicked_on?: string;
     bounced_on?: string;
+    rejected_reason?: string;
+    error_message?: string;
+    metadata?: any;
     [key: string]: any;
   };
+}
+
+// Email API Logs Response
+export interface EmailAPILogEntry {
+  id: string;
+  email_id: string;
+  type: 'submitted' | 'queued' | 'delivered' | 'rejected' | 'error' | 'open' | 'click' | 'bounce' | 'spam' | 'unsubscribe' | 'global_unsubscribe';
+  time: number;
+  submitted_time?: number;
+  provider?: string;
+  metadata?: any;
+  [key: string]: any;
+}
+
+export interface EmailAPILogsResponse {
+  data: EmailAPILogEntry[];
+  pagination?: {
+    count?: number;
+    page?: number;
+    per_page?: number;
+    total_pages?: number;
+  };
+}
+
+// Email API Stats Response
+export interface EmailAPIStatsEntry {
+  time: number;
+  submitted?: number;
+  queued?: number;
+  delivered?: number;
+  rejected?: number;
+  error?: number;
+  open?: number;
+  click?: number;
+  bounce?: number;
+  spam?: number;
+  unsubscribe?: number;
+  global_unsubscribe?: number;
+  [key: string]: any;
+}
+
+export interface EmailAPIStatsResponse {
+  data: EmailAPIStatsEntry[];
+  interval?: 'hour' | 'day' | 'week' | 'month';
+  start_time?: number;
+  end_time?: number;
 }
 
 // Legacy type alias for backward compatibility
 export interface TransactionalEmailResponse extends EmailResponse {}
 
-// Analytics specific responses
-export interface CampaignAnalyticsResponse {
-  data: CampaignAnalytics;
-}
 
-export interface TransactionalAnalyticsResponse {
-  data: any; // API spec doesn't specify exact structure
-}
-
-export interface ListAnalyticsResponse {
-  data: any; // API spec doesn't specify exact structure
-}
-
-export interface AccountAnalyticsResponse {
-  data: any; // API spec doesn't specify exact structure
-}
 
 // Automation specific responses
 export interface AutomationsResponse {
@@ -716,30 +754,16 @@ export interface EmailData {
   html_content?: string;
   text_content?: string;
   template_id?: string | number;
-  list_id?: string | number; // Required for v2 API, but can be auto-resolved
+  list_id?: string | number; // Optional for v2 API
   email_type?: 'transactional' | 'marketing'; // v2 API content type
+  tags?: string[]; // For filtering and organization
+  metadata?: Record<string, any>; // Additional data
 }
 
 // Legacy type alias for backward compatibility
 export interface TransactionalEmailData extends EmailData {}
 
-// Analytics interfaces
-export interface CampaignAnalytics {
-  sent_count?: number;
-  delivered_count?: number;
-  bounce_count?: number;
-  open_count?: number;
-  unique_open_count?: number;
-  open_rate?: number;
-  click_count?: number;
-  unique_click_count?: number;
-  click_rate?: number;
-}
 
-export interface AnalyticsDateRange {
-  start_date?: string;
-  end_date?: string;
-}
 
 // Automation interfaces
 export interface Automation {

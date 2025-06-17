@@ -1,6 +1,6 @@
 # Cakemail MCP Server
 
-A comprehensive Model Context Protocol (MCP) server for integrating with the Cakemail API. This server provides tools for email marketing campaigns, contact management, transactional emails, templates, automation, analytics, and detailed reporting through the Cakemail platform.
+A comprehensive Model Context Protocol (MCP) server for integrating with the Cakemail API. This server provides tools for email marketing campaigns, contact management, transactional emails, templates, automation, and detailed reporting through the Cakemail platform.
 
 ## 🎯 Version 1.6.0 - Complete Logs API Implementation
 
@@ -12,26 +12,26 @@ This version adds **comprehensive logs functionality** with full integration of 
 - ✅ Create, update, and delete email campaigns
 - ✅ List campaigns with advanced filtering and pagination
 - ✅ Send campaigns to contact lists
-- ✅ Campaign analytics and performance metrics
+- ✅ Campaign performance metrics (via Reports API)
 - ✅ Get latest campaign with one command
 
 ### 👥 Contact Management
 - ✅ Create, update, and delete contacts with custom fields
 - ✅ List contacts with filtering by list ID
 - ✅ Advanced contact segmentation support
-- ✅ Contact analytics and engagement metrics
+- ✅ Contact engagement metrics (via Reports API)
 
 ### 📨 Transactional Email
 - ✅ Send individual transactional emails
 - ✅ Template support for consistent messaging
 - ✅ HTML and plain text content
-- ✅ Delivery analytics and tracking
+- ✅ Delivery tracking and analytics (via Reports API)
 
 ### 📋 List Management
 - ✅ Create, update, and delete contact lists
 - ✅ List management with pagination and sorting
 - ✅ Multi-language support
-- ✅ List performance analytics
+- ✅ List performance analytics (via Reports API)
 
 ### 👤 Sender Management
 - ✅ Create, update, and delete verified senders
@@ -48,7 +48,7 @@ This version adds **comprehensive logs functionality** with full integration of 
 - ✅ Trigger-based email automation
 - ✅ Start/stop automation controls
 
-### 📊 Advanced Analytics & Reporting
+### 📊 Advanced Reporting & Analytics
 - ✅ Campaign performance metrics (opens, clicks, bounces, rates)
 - ✅ Campaign link click tracking and statistics
 - ✅ Transactional email analytics with time ranges
@@ -166,10 +166,10 @@ In Claude Desktop: `"Check my Cakemail API health status"`
 - Sender Management: `create`, `get`, `update`, `delete`, `list` senders
 - Template Management: `create`, `get`, `update`, `delete`, `list` templates
 
-### Analytics, Reporting, Logs & Automation
-- **Campaign Analytics**: Detailed performance metrics, open/click rates, link tracking
+### Reporting, Logs & Automation
+- **Campaign Reports**: Detailed performance metrics, open/click rates, link tracking
 - **Campaign Logs**: Complete activity tracking for opens, clicks, bounces, unsubscribes
-- **Account Analytics**: Performance overviews, growth metrics, time-based statistics
+- **Account Reports**: Performance overviews, growth metrics, time-based statistics
 - **Workflow Logs**: Automation sequence tracking and action-level logging
 - **Transactional Logs**: Individual email delivery tracking and status monitoring
 - **Export Reports**: Generate and download campaign reports in CSV/XLSX formats
@@ -193,7 +193,7 @@ In Claude Desktop: `"Check my Cakemail API health status"`
 "Add a new contact with email sara@example.com and first name Sara to my main contact list"
 ```
 
-### Analytics, Reporting & Logs
+### Reporting & Logs
 ```
 "Show me the performance metrics for my latest campaign including open rates and click rates"
 

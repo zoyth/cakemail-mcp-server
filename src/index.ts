@@ -17,7 +17,7 @@ import {
 const server = new Server(
   {
     name: 'cakemail-mcp-server',
-    version: '1.6.0', // Bump version for Logs API implementation
+    version: '1.6.1', // Analytics API removal cleanup
   },
   {
     capabilities: {

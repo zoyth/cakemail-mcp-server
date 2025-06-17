@@ -7,7 +7,7 @@ import { ContactApi } from './api/contact-api.js';
 import { SenderApi } from './api/sender-api.js';
 import { TemplateApi } from './api/template-api.js';
 import { EmailApi } from './api/email-api.js';
-import { AnalyticsApi } from './api/analytics-api.js';
+
 import { AutomationApi } from './api/automation-api.js';
 import { AccountApi } from './api/account-api.js';
 import { SubAccountApi } from './api/sub-account-api.js';
@@ -20,7 +20,7 @@ export class CakemailAPI extends BaseApiClient {
   public senders: SenderApi;
   public templates: TemplateApi;
   public email: EmailApi;
-  public analytics: AnalyticsApi;
+
   public automations: AutomationApi;
   public account: AccountApi;
   public subAccounts: SubAccountApi;
@@ -41,7 +41,7 @@ export class CakemailAPI extends BaseApiClient {
     this.senders = new SenderApi(config);
     this.templates = new TemplateApi(config);
     this.email = new EmailApi(config);
-    this.analytics = new AnalyticsApi(config);
+
     this.automations = new AutomationApi(config);
     this.account = new AccountApi(config);
     this.subAccounts = new SubAccountApi(config);
@@ -234,26 +234,27 @@ export class CakemailAPI extends BaseApiClient {
     return this.email.sendMarketingEmail(data);
   }
 
+  async getEmail(emailId: string) {
+    return this.email.getEmail(emailId);
+  }
+
   async getEmailStatus(emailId: string) {
     return this.email.getEmailStatus(emailId);
   }
 
-  // Analytics methods
-  async getCampaignAnalytics(campaignId: string) {
-    return this.analytics.getCampaignAnalytics(campaignId);
+  async renderEmail(emailId: string, options?: any) {
+    return this.email.renderEmail(emailId, options);
   }
 
-  async getTransactionalAnalytics(params?: any) {
-    return this.analytics.getTransactionalAnalytics(params);
+  async getEmailLogs(params?: any) {
+    return this.email.getEmailLogs(params);
   }
 
-  async getListAnalytics(listId: string) {
-    return this.analytics.getListAnalytics(listId);
+  async getEmailStats(params?: any) {
+    return this.email.getEmailStats(params);
   }
 
-  async getAccountAnalytics(params?: any) {
-    return this.analytics.getAccountAnalytics(params);
-  }
+
 
   // Automation methods
   async getAutomations(params?: any) {
@@ -387,7 +388,7 @@ export { ContactApi } from './api/contact-api.js';
 export { SenderApi } from './api/sender-api.js';
 export { TemplateApi } from './api/template-api.js';
 export { EmailApi } from './api/email-api.js';
-export { AnalyticsApi } from './api/analytics-api.js';
+
 export { AutomationApi } from './api/automation-api.js';
 export { AccountApi } from './api/account-api.js';
 export { SubAccountApi } from './api/sub-account-api.js';
