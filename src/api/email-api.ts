@@ -1,16 +1,18 @@
 // Email API operations - v2 API for both transactional and marketing emails
 
 import { BaseApiClient } from './base-client.js';
-import { 
-  EmailData,
+import type { 
+  // Schema-based types - only import what's actually used
   EmailAPILogsResponse,
   EmailAPIStatsResponse,
+  EmailLogAnalysis,
+  SmartFilterType,
+  // Schema imports
   SubmitEmailRequest,
   SubmitEmailResponse,
-  GetEmailResponse,
-  LogTypeV2,
-  EmailLogAnalysis,
-  SmartFilterType
+  GetEmailResponse,  // Fixed: removed alias
+  EmailLogsParams,   // Now exists
+  EmailStatsParams   // Now exists
 } from '../types/cakemail-types.js';
 import { EmailAPIError } from '../types/errors.js';
 
@@ -20,7 +22,7 @@ export class EmailApi extends BaseApiClient {
    * Submit an email to be sent using v2 API
    * Fully compliant with POST /v2/emails specification
    */
-  async sendEmail(data: EmailData): Promise<SubmitEmailResponse> {
+  async sendEmail(data: SubmitEmailRequest): Promise<SubmitEmailResponse> {
     const emailData = data;
     
     // Enhanced validation
@@ -173,18 +175,7 @@ export class EmailApi extends BaseApiClient {
    * Show Email API activity logs
    * Compliant with GET /v2/logs/emails specification
    */
-  async getEmailLogs(options: {
-    log_type?: LogTypeV2;
-    email_id?: string;
-    iso_time?: boolean;
-    page?: number;
-    per_page?: number;
-    start_time?: number;
-    end_time?: number;
-    tags?: string; // JSON string for recursive filter
-    providers?: string; // JSON string for recursive filter
-    sort?: string;
-  } = {}): Promise<EmailAPILogsResponse> {
+  async getEmailLogs(options: EmailLogsParams = {}): Promise<EmailAPILogsResponse> {
     const accountId = await this.getCurrentAccountId();
     const queryParams = new URLSearchParams();
     
@@ -273,14 +264,7 @@ export class EmailApi extends BaseApiClient {
    * Show Email API statistics
    * Compliant with GET /v2/reports/emails specification
    */
-  async getEmailStats(options: {
-    interval?: 'hour' | 'day' | 'week' | 'month';
-    iso_time?: boolean;
-    start_time?: number;
-    end_time?: number;
-    providers?: string; // JSON string for recursive filter
-    tags?: string; // JSON string for recursive filter
-  } = {}): Promise<EmailAPIStatsResponse> {
+  async getEmailStats(options: EmailStatsParams = {}): Promise<EmailAPIStatsResponse> {
     const accountId = await this.getCurrentAccountId();
     const queryParams = new URLSearchParams();
     
@@ -344,7 +328,7 @@ export class EmailApi extends BaseApiClient {
   /**
    * Helper method to send transactional email
    */
-  async sendTransactionalEmail(data: EmailData): Promise<SubmitEmailResponse> {
+  async sendTransactionalEmail(data: SubmitEmailRequest): Promise<SubmitEmailResponse> {
     const emailData = { ...data };
     emailData.content.type = 'transactional';
     return this.sendEmail(emailData);
@@ -353,7 +337,7 @@ export class EmailApi extends BaseApiClient {
   /**
    * Helper method to send marketing email
    */
-  async sendMarketingEmail(data: EmailData): Promise<SubmitEmailResponse> {
+  async sendMarketingEmail(data: SubmitEmailRequest): Promise<SubmitEmailResponse> {
     const emailData = { ...data };
     emailData.content.type = 'marketing';
     return this.sendEmail(emailData);

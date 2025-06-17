@@ -1,6 +1,17 @@
 import { CakemailAPI } from '../cakemail-api.js';
 import { handleCakemailError } from '../utils/errors.js';
 
+// Define Campaign type locally to fix implicit any types
+interface Campaign {
+  id: number;
+  name: string;
+  subject?: string;
+  status?: string;
+  type?: string;
+  created_on?: string;
+  updated_on?: string;
+}
+
 export async function handleListCampaigns(args: any, api: CakemailAPI) {
   try {
     const { 
@@ -21,7 +32,7 @@ export async function handleListCampaigns(args: any, api: CakemailAPI) {
     });
 
     const total = campaigns.pagination?.count || 0;
-    const campaignList = campaigns.data?.slice(0, 20).map((campaign) => ({
+    const campaignList = campaigns.data?.slice(0, 20).map((campaign: Campaign) => ({
       id: campaign.id,
       name: campaign.name,
       subject: campaign.subject,
@@ -43,7 +54,7 @@ export async function handleListCampaigns(args: any, api: CakemailAPI) {
                 `• List ID: ${list_id || 'none'}\n` +
                 `• Sort: ${sort || 'created_on'} (${order || 'desc'})\n\n` +
                 `**Showing ${campaignList?.length || 0} campaigns:**\n\n` +
-                (campaignList?.map((camp, i) => 
+                (campaignList?.map((camp: any, i: number) => 
                   `${i + 1}. **${camp.name}** (${camp.id})\n` +
                   `   📋 Subject: ${camp.subject || 'N/A'}\n` +
                   `   🏷️ Status: ${camp.status || 'N/A'}\n` +

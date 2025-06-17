@@ -955,20 +955,15 @@ export interface EmailData {
 
 
 
-// Update existing response types to match v2 API
-export interface EmailResponse extends SubmitEmailResponse {}
-export interface EmailStatusResponse extends GetEmailResponse {}
+// Response type aliases (schema-based)
+export type EmailResponseType = SubmitEmailResponse;
+export type EmailStatusResponseType = GetEmailResponse;
 
 
 
-// Enhanced log response that extends existing
-export interface EmailAPILogsResponse extends EmailAPILogsResponseV2 {
-  // Unified structure for email logs
-}
-
-export interface EmailAPIStatsResponse extends EmailAPIStatsResponseV2 {
-  // Unified structure for email stats
-}
+// Unified log and stats responses
+export type EmailAPILogsResponseUnified = EmailAPILogsResponse;
+export type EmailAPIStatsResponseUnified = EmailStatsResponse;
 
 // Specific method parameter interfaces for strict type checking
 export interface GetCampaignsParams extends PaginationParams, SortParams, CampaignFilters {
@@ -1039,6 +1034,58 @@ export interface ListLogsParams {
 export interface DebugLogsAccessParams {
   campaign_id?: string | undefined;
   workflow_id?: string | undefined;
+}
+
+// Missing request types for Campaign API
+export interface CreateCampaignRequest {
+  name: string;
+  subject: string;
+  list_id: string | number;
+  sender_id: string | number;
+  html_content?: string;
+  text_content?: string;
+  from_name?: string;
+  reply_to?: string;
+}
+
+export interface UpdateCampaignRequest {
+  name?: string;
+  subject?: string;
+  html_content?: string;
+  text_content?: string;
+  from_name?: string;
+  reply_to?: string;
+}
+
+export interface ScheduleCampaignRequest {
+  scheduled_for?: string;
+}
+
+export interface SendTestEmailRequest {
+  emails: string[];
+}
+
+// Missing parameter types for Email API
+export interface EmailLogsParams {
+  email_id?: string;
+  start_time?: number;
+  end_time?: number;
+  log_type?: 'all' | 'submitted' | 'queued' | 'delivered' | 'rejected' | 'error' | 'open' | 'click' | 'bounce' | 'spam' | 'unsubscribe' | 'global_unsubscribe';
+  page?: number;
+  per_page?: number;
+  sort?: string;
+  iso_time?: boolean;
+  providers?: string;
+  tags?: string;
+}
+
+export interface EmailStatsParams {
+  start_time?: number;
+  end_time?: number;
+  interval?: IntervalEnum;
+  iso_time?: boolean;
+  providers?: string;
+  tags?: string;
 }
 
 

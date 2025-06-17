@@ -1,24 +1,27 @@
 // Campaign API operations with corrected parameter syntax
 
 import { BaseApiClient } from './base-client.js';
-import { 
-  Campaign, 
-  CreateCampaignData, 
-  UpdateCampaignData, 
-  CampaignFilters,
+import type { 
+  // Schema-based types - only import what exists and is used
   PaginationParams,
-  SortParams,
   CampaignsResponse,
   CampaignResponse,
   CreateCampaignResponse,
   PatchCampaignResponse,
-  DeleteCampaignResponse
+  DeleteCampaignResponse,
+  // Fixed schema types
+  GetCampaignsParams,        // was ListCampaignsParams
+  CreateCampaignRequest,     // now exists
+  UpdateCampaignRequest,     // now exists  
+  ScheduleCampaignRequest,   // now exists
+  SendTestEmailRequest       // now exists
 } from '../types/cakemail-types.js';
+import type { Components } from '../types/schema.js';
 
 export class CampaignApi extends BaseApiClient {
   
   // FIXED: Campaign API methods with correct parameter syntax
-  async getCampaigns(params?: PaginationParams & SortParams & CampaignFilters & { account_id?: number }): Promise<CampaignsResponse> {
+  async getCampaigns(params?: GetCampaignsParams & { account_id?: number }): Promise<CampaignsResponse> {
     let apiParams: any = {};
     let filters: string[] = [];
     
@@ -92,7 +95,7 @@ export class CampaignApi extends BaseApiClient {
   }
 
   // FIXED: Enhanced getLatestCampaign with correct API usage
-  async getLatestCampaign(status?: string): Promise<Campaign | null> {
+  async getLatestCampaign(status?: Components['schemas']['CampaignStatus']): Promise<Components['schemas']['CampaignFullResponse'] | null> {
     if (this.debugMode) {
       console.log(`[Campaign API] Getting latest campaign with status filter: ${status || 'none'}`);
     }
@@ -118,10 +121,10 @@ export class CampaignApi extends BaseApiClient {
       const result = await this.getCampaigns(params);
       
       if (result.data && Array.isArray(result.data) && result.data.length > 0) {
-        if (this.debugMode) {
-          console.log(`[Campaign API] Latest campaign found: ${result.data[0].id}`);
-        }
-        return result.data[0];
+      if (this.debugMode) {
+      console.log(`[Campaign API] Latest campaign found: ${result.data[0].id}`);
+      }
+      return result.data[0] as unknown as Components['schemas']['CampaignFullResponse'];
       }
     } catch (error: any) {
       if (this.debugMode) {
@@ -139,7 +142,7 @@ export class CampaignApi extends BaseApiClient {
           if (this.debugMode) {
             console.log(`[Campaign API] Latest campaign found (fallback): ${result.data[0].id}`);
           }
-          return result.data[0];
+          return result.data[0] as unknown as Components['schemas']['CampaignFullResponse'];
         }
       } catch (error: any) {
         if (this.debugMode) {
@@ -156,19 +159,19 @@ export class CampaignApi extends BaseApiClient {
   }
 
   // Enhanced getCampaignsWithDefaults for backward compatibility
-  async getCampaignsWithDefaults(params?: any): Promise<CampaignsResponse> {
+  async getCampaignsWithDefaults(params?: Partial<GetCampaignsParams>): Promise<CampaignsResponse> {
     // Apply smart defaults for better UX
-    const enhancedParams = {
+    const enhancedParams: GetCampaignsParams = {
       sort: 'created_on',
       order: 'desc',
       ...params
-    };
+    } as GetCampaignsParams;
     
     if (this.debugMode) {
       console.log(`[Campaign API] Getting campaigns with defaults:`, enhancedParams);
     }
     
-    return this.getCampaigns(enhancedParams);
+    return this.getCampaigns(enhancedParams as GetCampaignsParams & { account_id?: number });
   }
 
   // Individual campaign retrieval
@@ -181,7 +184,7 @@ export class CampaignApi extends BaseApiClient {
   }
 
   // FIXED: Campaign creation with correct data structure
-  async createCampaign(data: CreateCampaignData): Promise<CreateCampaignResponse> {
+  async createCampaign(data: CreateCampaignRequest): Promise<CreateCampaignResponse> {
     // Use flatter structure that matches API documentation
     const campaignData: Record<string, any> = {
       name: data.name,
@@ -212,7 +215,7 @@ export class CampaignApi extends BaseApiClient {
   }
 
   // FIXED: Campaign update with correct structure
-  async updateCampaign(id: string, data: UpdateCampaignData): Promise<PatchCampaignResponse> {
+  async updateCampaign(id: string, data: UpdateCampaignRequest): Promise<PatchCampaignResponse> {
     const updateData: Record<string, any> = {
       name: data.name,
       subject: data.subject,
@@ -261,7 +264,7 @@ export class CampaignApi extends BaseApiClient {
   }
 
   // Send test email
-  async sendTestEmail(id: string, data: { emails: string[] }): Promise<any> {
+  async sendTestEmail(id: string, data: SendTestEmailRequest): Promise<any> {
     const accountId = await this.getCurrentAccountId();
     const query = accountId ? `?account_id=${accountId}` : '';
     
@@ -272,7 +275,7 @@ export class CampaignApi extends BaseApiClient {
   }
 
   // Campaign scheduling operations
-  async scheduleCampaign(id: string, data?: { scheduled_for?: string }): Promise<any> {
+  async scheduleCampaign(id: string, data?: ScheduleCampaignRequest): Promise<any> {
     const accountId = await this.getCurrentAccountId();
     const query = accountId ? `?account_id=${accountId}` : '';
     
@@ -296,7 +299,7 @@ export class CampaignApi extends BaseApiClient {
     });
   }
 
-  async rescheduleCampaign(id: string, data: { scheduled_for: string }): Promise<any> {
+  async rescheduleCampaign(id: string, data: ScheduleCampaignRequest & { scheduled_for: string }): Promise<any> {
     const accountId = await this.getCurrentAccountId();
     const query = accountId ? `?account_id=${accountId}` : '';
     

@@ -49,11 +49,46 @@ export class CakemailAPI extends BaseApiClient {
 
 }
 
-// Export everything for convenience
-export * from './types/cakemail-types.js';
+// Export everything for convenience - using explicit exports to avoid conflicts
+export type {
+  // Core config types
+  CakemailConfig, CakemailToken, CakemailErrorResponse,
+  
+  // Campaign types  
+  Campaign, CreateCampaignData, UpdateCampaignData, CampaignFilters,
+  CampaignsResponse, CampaignResponse, CreateCampaignResponse,
+  PatchCampaignResponse, DeleteCampaignResponse,
+  
+  // Email types
+  EmailData, SubmitEmailRequest, SubmitEmailResponse, GetEmailResponse,
+  EmailAPILogsResponse, EmailAPIStatsResponse, EmailStatusResponse,
+  
+  // Contact types
+  Contact, ContactList, CreateContactData, UpdateContactData,
+  ContactsResponse, ContactResponse, CreateContactResponse,
+  
+  // Sender types
+  Sender, CreateSenderData, UpdateSenderData,
+  SendersResponse, SenderResponse, CreateSenderResponse,
+  
+  // Template types
+  Template, CreateTemplateData, UpdateTemplateData,
+  TemplatesResponse, TemplateResponse, CreateTemplateResponse,
+  
+  // Utility types
+  PaginationParams, SortParams, ApiResponse,
+  GetCampaignsParams, LogTypeV2, EmailStatus, IntervalEnum
+} from './types/cakemail-types.js';
+
+// Export schema types with namespace to avoid conflicts
+export type { Components, Paths } from './types/schema.js';
+
+// Export error and retry types
 export * from './types/errors.js';
 export * from './types/retry.js';
-export * from './types/event-taxonomy.js';
+
+// Export event types
+export type { EventType } from './types/event-taxonomy.js';
 export { BaseApiClient } from './api/base-client.js';
 export type { EnhancedCakemailConfig } from './api/base-client.js';
 export { CampaignApi } from './api/campaign-api.js';
