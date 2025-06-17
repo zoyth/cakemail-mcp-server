@@ -11,9 +11,9 @@ export const allTools = [
   ...healthTools,
   ...senderTools,
   ...campaignTools,
+  ...emailTools,
   // Note: Other tools are placeholders and will be implemented incrementally
   // ...subAccountTools,
-  // ...emailTools,
   // ...accountTools,
   // ...reportTools,
   // ...logTools

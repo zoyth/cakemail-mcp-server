@@ -100,8 +100,8 @@ export class EmailApi extends BaseApiClient {
       throw new EmailAPIError('email_id is required', 400);
     }
 
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    // Validate UUID format (v4 UUID)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(emailId)) {
       throw new EmailAPIError('email_id must be a valid UUID', 400);
     }
@@ -196,9 +196,9 @@ export class EmailApi extends BaseApiClient {
     }
     if (options.email_id) {
       // Validate UUID format for email_id
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(options.email_id)) {
-        throw new EmailAPIError('email_id must be a valid UUID', 400);
+        throw new EmailAPIError('email_id must be a valid UUID format', 400);
       }
       queryParams.append('email_id', options.email_id);
     }

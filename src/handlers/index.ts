@@ -14,6 +14,17 @@ import {
 import { 
   handleListCampaigns
 } from './campaigns.js';
+import {
+  handleSendEmail,
+  handleGetEmail,
+  handleRenderEmail,
+  handleGetEmailLogs,
+  handleGetEmailStats,
+  handleSendTransactionalEmail,
+  handleSendMarketingEmail,
+  handleGetEmailLogsWithAnalysis,
+  handleDebugEmailAccess
+} from './email.js';
 
 // Create the handler registry (phase 1 - core handlers only)
 export const handlerRegistry: HandlerRegistry = {
@@ -29,6 +40,17 @@ export const handlerRegistry: HandlerRegistry = {
   
   // Campaigns (basic implementation)
   'cakemail_list_campaigns': handleListCampaigns,
+  
+  // Email API v2
+  'cakemail_send_email': handleSendEmail,
+  'cakemail_get_email': handleGetEmail,
+  'cakemail_render_email': handleRenderEmail,
+  'cakemail_get_email_logs': handleGetEmailLogs,
+  'cakemail_get_email_stats': handleGetEmailStats,
+  'cakemail_send_transactional_email': handleSendTransactionalEmail,
+  'cakemail_send_marketing_email': handleSendMarketingEmail,
+  'cakemail_get_email_logs_with_analysis': handleGetEmailLogsWithAnalysis,
+  'cakemail_debug_email_access': handleDebugEmailAccess,
   
   // Note: Additional handlers will be added incrementally as they are fully implemented
 };
