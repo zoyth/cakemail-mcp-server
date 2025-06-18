@@ -6,6 +6,7 @@ import { emailTools } from './email-tools.js';
 import { accountTools } from './account-tools.js';
 import { reportTools } from './report-tools.js';
 import { logTools } from './log-tools.js';
+import { listTools } from './list-tools.js';
 
 export const allTools = [
   ...healthTools,
@@ -17,6 +18,8 @@ export const allTools = [
   ...accountTools,
   // Sub-account tools are now fully implemented
   ...subAccountTools,
+  // List management tools
+  ...listTools,
 ];
 
 export {
@@ -27,5 +30,6 @@ export {
   emailTools,
   accountTools,
   reportTools,
-  logTools
+  logTools,
+  listTools
 };

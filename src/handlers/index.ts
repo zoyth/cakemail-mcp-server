@@ -54,6 +54,15 @@ import {
   handleConvertSubAccountToOrganization,
   handleDebugSubAccountAccess
 } from './sub-accounts.js';
+import {
+  handleListLists,
+  handleCreateList,
+  handleGetList,
+  handleUpdateList,
+  handleDeleteList,
+  handleArchiveList,
+  handleGetListStats
+} from './lists.js';
 
 // Create the handler registry (phase 1 - core handlers only)
 export const handlerRegistry: HandlerRegistry = {
@@ -111,6 +120,15 @@ export const handlerRegistry: HandlerRegistry = {
   'cakemail_resend_sub_account_verification': handleResendVerificationEmail,
   'cakemail_convert_sub_account_to_organization': handleConvertSubAccountToOrganization,
   'cakemail_debug_sub_account_access': handleDebugSubAccountAccess,
+  
+  // List Management
+  'cakemail_list_lists': handleListLists,
+  'cakemail_create_list': handleCreateList,
+  'cakemail_get_list': handleGetList,
+  'cakemail_update_list': handleUpdateList,
+  'cakemail_delete_list': handleDeleteList,
+  'cakemail_archive_list': handleArchiveList,
+  'cakemail_get_list_stats': handleGetListStats,
   
   // Note: Additional handlers will be added incrementally as they are fully implemented
 };

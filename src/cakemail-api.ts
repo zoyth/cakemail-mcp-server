@@ -7,6 +7,7 @@ import { ContactApi } from './api/contact-api.js';
 import { SenderApi } from './api/sender-api.js';
 import { TemplateApi } from './api/template-api.js';
 import { EmailApi } from './api/email-api.js';
+import { ListApi } from './api/list-api.js';
 
 
 import { AccountApi } from './api/account-api.js';
@@ -20,6 +21,7 @@ export class CakemailAPI extends BaseApiClient {
   public senders: SenderApi;
   public templates: TemplateApi;
   public email: EmailApi;
+  public lists: ListApi;
 
 
   public account: AccountApi;
@@ -38,6 +40,7 @@ export class CakemailAPI extends BaseApiClient {
     this.senders = new SenderApi(config);
     this.templates = new TemplateApi(config);
     this.email = new EmailApi(config);
+    this.lists = new ListApi(config);
 
 
     this.account = new AccountApi(config);
@@ -96,6 +99,17 @@ export { ContactApi } from './api/contact-api.js';
 export { SenderApi } from './api/sender-api.js';
 export { TemplateApi } from './api/template-api.js';
 export { EmailApi } from './api/email-api.js';
+export { ListApi } from './api/list-api.js';
+export type {
+  ListData,
+  UpdateListData,
+  ListFilters,
+  ListsResponse,
+  ListResponse,
+  CreateListResponse,
+  ListStatsParams,
+  ListStatsResponse
+} from './api/list-api.js';
 
 
 export { AccountApi } from './api/account-api.js';
