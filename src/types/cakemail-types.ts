@@ -1069,11 +1069,12 @@ export interface DebugLogsAccessParams {
 // Missing request types for Campaign API
 export interface CreateCampaignRequest {
   name: string;
-  subject: string;
-  list_id: string | number;
-  sender_id: string | number;
+  subject?: string;
+  list_id?: string | number;
+  sender_id?: string | number;
   html_content?: string;
   text_content?: string;
+  json_content?: any; // For BEEeditor JSON format
   from_name?: string;
   reply_to?: string;
 }
@@ -1083,6 +1084,8 @@ export interface UpdateCampaignRequest {
   subject?: string;
   html_content?: string;
   text_content?: string;
+  json_content?: any; // For BEEeditor JSON format
+  sender_id?: string | number;
   from_name?: string;
   reply_to?: string;
 }

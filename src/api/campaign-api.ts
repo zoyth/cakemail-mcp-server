@@ -183,26 +183,58 @@ export class CampaignApi extends BaseApiClient {
     return this.makeRequest(`/campaigns/${id}${query}`);
   }
 
-  // FIXED: Campaign creation with correct data structure
+  // FIXED: Campaign creation with correct data structure per API spec
   async createCampaign(data: CreateCampaignRequest & { account_id?: number }): Promise<CreateCampaignResponse> {
-    // Use flatter structure that matches API documentation
-    const campaignData: Record<string, any> = {
-      name: data.name,
-      subject: data.subject,
-      html_content: data.html_content,
-      text_content: data.text_content,
-      list_id: parseInt(String(data.list_id)), // API expects integer
-      sender_id: parseInt(String(data.sender_id)), // API expects integer
-      from_name: data.from_name,
-      reply_to: data.reply_to
+    // Build campaign data according to API specification schema
+    const campaignData: any = {
+      name: data.name
     };
     
-    // Remove undefined fields to keep the request clean
-    Object.keys(campaignData).forEach(key => {
-      if (campaignData[key] === undefined) {
-        delete campaignData[key];
+    // Audience - required structure with list_id and optional segment_id
+    if (data.list_id) {
+      campaignData.audience = {
+        list_id: parseInt(String(data.list_id))
+      };
+    }
+    
+    // Sender - required structure with id and optional name
+    if (data.sender_id) {
+      campaignData.sender = {
+        id: String(data.sender_id)
+      };
+      if (data.from_name) {
+        campaignData.sender.name = data.from_name;
       }
-    });
+    }
+    
+    // Reply-to email (separate from sender)
+    if (data.reply_to) {
+      campaignData.reply_to_email = data.reply_to;
+    }
+    
+    // Content - structured according to CampaignContent schema
+    if (data.subject || data.html_content || data.text_content || (data as any).json_content) {
+      campaignData.content = {};
+      
+      if (data.subject) {
+        campaignData.content.subject = data.subject;
+      }
+      
+      if (data.html_content) {
+        campaignData.content.html = data.html_content;
+      }
+      
+      if (data.text_content) {
+        campaignData.content.text = data.text_content;
+      }
+      
+      if ((data as any).json_content) {
+        campaignData.content.json = (data as any).json_content;
+        campaignData.content.type = 'bee';
+      } else {
+        campaignData.content.type = 'html';
+      }
+    }
     
     // Use explicit account_id if provided, otherwise get current account ID
     const accountId = data.account_id || await this.getCurrentAccountId();
@@ -214,23 +246,57 @@ export class CampaignApi extends BaseApiClient {
     });
   }
 
-  // FIXED: Campaign update with correct structure
+  // FIXED: Campaign update with correct structure per API spec
   async updateCampaign(id: string, data: UpdateCampaignRequest & { account_id?: number }): Promise<PatchCampaignResponse> {
-    const updateData: Record<string, any> = {
-      name: data.name,
-      subject: data.subject,
-      html_content: data.html_content,
-      text_content: data.text_content,
-      from_name: data.from_name,
-      reply_to: data.reply_to
-    };
+    const updateData: any = {};
     
-    // Remove undefined fields
-    Object.keys(updateData).forEach(key => {
-      if (updateData[key] === undefined) {
-        delete updateData[key];
+    // Only include fields that are provided
+    if (data.name !== undefined) {
+      updateData.name = data.name;
+    }
+    
+    // Sender - structured object with id and optional name
+    if (data.sender_id !== undefined || data.from_name !== undefined) {
+      updateData.sender = {};
+      if (data.sender_id !== undefined) {
+        updateData.sender.id = String(data.sender_id);
       }
-    });
+      if (data.from_name !== undefined) {
+        updateData.sender.name = data.from_name;
+      }
+    }
+    
+    // Reply-to email
+    if (data.reply_to !== undefined) {
+      updateData.reply_to_email = data.reply_to;
+    }
+    
+    // Content - structured according to PatchCampaignContent schema
+    const contentFields = ['subject', 'html_content', 'text_content', 'json_content'] as const;
+    const hasContentUpdate = contentFields.some(field => (data as any)[field] !== undefined);
+    
+    if (hasContentUpdate) {
+      updateData.content = {};
+      
+      if (data.subject !== undefined) {
+        updateData.content.subject = data.subject;
+      }
+      
+      if (data.html_content !== undefined) {
+        updateData.content.html = data.html_content;
+      }
+      
+      if (data.text_content !== undefined) {
+        updateData.content.text = data.text_content;
+      }
+      
+      if ((data as any).json_content !== undefined) {
+        updateData.content.json = (data as any).json_content;
+        updateData.content.type = 'bee';
+      } else if (data.html_content !== undefined) {
+        updateData.content.type = 'html';
+      }
+    }
     
     // Use explicit account_id if provided, otherwise get current account ID
     const accountId = data.account_id || await this.getCurrentAccountId();

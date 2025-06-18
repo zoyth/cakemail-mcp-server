@@ -111,23 +111,36 @@ export async function handleCreateCampaign(args: any, api: CakemailAPI) {
       account_id // Agency/Enterprise account scoping
     } = args;
 
-    // Validate required fields
-    if (!name || !subject || !list_id || !sender_id) {
+    // Validate required fields per API spec - only name is required
+    if (!name) {
       return {
         content: [{
           type: 'text',
-          text: '❌ **Missing Required Fields**\n\nRequired: name, subject, list_id, sender_id'
+          text: '❌ **Missing Required Fields**\n\nRequired: name'
+        }]
+      };
+    }
+    
+    // Additional validation for practical campaign creation
+    if (!list_id || !sender_id) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Essential Fields**\n\nWhile only name is required by the API, you also need list_id and sender_id for a functional campaign'
         }]
       };
     }
 
     let campaignData: any = {
       name,
-      subject,
       list_id,
       sender_id,
       from_name,
       reply_to,
+      subject,
+      html_content,
+      text_content,
+      json_content,
       ...(account_id && { account_id })
     };
 
@@ -231,7 +244,6 @@ export async function handleUpdateCampaign(args: any, api: CakemailAPI) {
     
     // Only include fields that are provided
     if (name !== undefined) updateData.name = name;
-    if (subject !== undefined) updateData.subject = subject;
     if (from_name !== undefined) updateData.from_name = from_name;
     if (reply_to !== undefined) updateData.reply_to = reply_to;
     
@@ -248,11 +260,12 @@ export async function handleUpdateCampaign(args: any, api: CakemailAPI) {
         };
       }
       updateData.json_content = json_content;
-    } else {
-      // Traditional HTML/text format update
-      if (html_content !== undefined) updateData.html_content = html_content;
-      if (text_content !== undefined) updateData.text_content = text_content;
     }
+    
+    // Traditional HTML/text format update
+    if (subject !== undefined) updateData.subject = subject;
+    if (html_content !== undefined) updateData.html_content = html_content;
+    if (text_content !== undefined) updateData.text_content = text_content;
 
     if (Object.keys(updateData).length === 0) {
       return {
