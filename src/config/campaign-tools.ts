@@ -45,39 +45,134 @@ export const campaignTools = [
   },
   {
     name: 'cakemail_create_campaign',
-    description: 'Create a new email campaign (supports both HTML and BEEeditor JSON formats)',
+    description: 'Create a new email campaign (supports full API specification including templates, tracking, etc.)',
     inputSchema: {
       type: 'object',
       properties: {
         name: { type: 'string', description: 'Campaign name' },
-        subject: { type: 'string', description: 'Email subject line' },
-        html_content: { type: 'string', description: 'HTML email content (for HTML format)' },
-        text_content: { type: 'string', description: 'Plain text email content (for HTML format)' },
-        json_content: { type: 'object', description: 'BEEeditor JSON template (for BEE format)' },
-        content_type: { type: 'string', enum: ['html', 'bee', 'auto-detect'], description: 'Content format type (default: html)' },
-        list_id: { type: 'string', description: 'List ID to send to' },
-        sender_id: { type: 'string', description: 'Sender ID to use' },
-        from_name: { type: 'string', description: 'From name (optional)' },
-        reply_to: { type: 'string', description: 'Reply-to email address (optional)' },
+        audience: {
+          type: 'object',
+          properties: {
+            list_id: { type: 'number', description: 'List ID to send to' },
+            segment_id: { type: 'number', description: 'Optional segment ID within the list' }
+          },
+          description: 'Audience configuration with list and optional segment',
+          required: ['list_id']
+        },
+        tracking: {
+          type: 'object',
+          properties: {
+            opens: { type: 'boolean', description: 'Track email opens (default: true)' },
+            clicks_html: { type: 'boolean', description: 'Track HTML clicks (default: true)' },
+            clicks_text: { type: 'boolean', description: 'Track text clicks (default: true)' },
+            additional_params: { type: 'string', description: 'Additional tracking parameters' }
+          },
+          description: 'Tracking configuration'
+        },
+        sender: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Sender ID' },
+            name: { type: 'string', description: 'Sender name (optional)' }
+          },
+          description: 'Sender configuration',
+          required: ['id']
+        },
+        reply_to_email: { type: 'string', description: 'Reply-to email address (optional)' },
+        content: {
+          type: 'object',
+          properties: {
+            subject: { type: 'string', description: 'Email subject line' },
+            html: { type: 'string', description: 'HTML email content' },
+            text: { type: 'string', description: 'Plain text email content' },
+            json: { type: 'object', description: 'BEEeditor JSON template (for BEE format)' },
+            type: { type: 'string', enum: ['html', 'text', 'bee', 'custom'], description: 'Content format type (default: html)' },
+            encoding: { type: 'string', description: 'Content encoding (e.g., utf-8)' },
+            template: {
+              type: 'object',
+              properties: {
+                id: { type: 'number', description: 'Template ID' }
+              },
+              description: 'Template reference'
+            },
+            blueprint: {
+              type: 'object',
+              properties: {
+                id: { type: 'number', description: 'Blueprint ID' }
+              },
+              description: 'Blueprint reference'
+            },
+            default_unsubscribe_link: { type: 'boolean', description: 'Include default unsubscribe link' }
+          },
+          description: 'Content configuration'
+        },
         account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
-      required: ['name', 'subject', 'list_id', 'sender_id'],
+      required: ['name'],
     },
   },
   {
     name: 'cakemail_update_campaign',
-    description: 'Update an existing campaign (supports both HTML and BEEeditor JSON formats)',
+    description: 'Update an existing campaign (supports full API specification)',
     inputSchema: {
       type: 'object',
       properties: {
         campaign_id: { type: 'string', description: 'Campaign ID to update' },
         name: { type: 'string', description: 'Campaign name' },
-        subject: { type: 'string', description: 'Email subject line' },
-        html_content: { type: 'string', description: 'HTML email content' },
-        text_content: { type: 'string', description: 'Plain text email content' },
-        json_content: { type: 'object', description: 'BEEeditor JSON template' },
-        from_name: { type: 'string', description: 'From name' },
-        reply_to: { type: 'string', description: 'Reply-to email address' },
+        audience: {
+          type: 'object',
+          properties: {
+            list_id: { type: 'number', description: 'List ID to send to' },
+            segment_id: { type: 'number', description: 'Optional segment ID within the list' }
+          },
+          description: 'Audience configuration with list and optional segment'
+        },
+        tracking: {
+          type: 'object',
+          properties: {
+            opens: { type: 'boolean', description: 'Track email opens' },
+            clicks_html: { type: 'boolean', description: 'Track HTML clicks' },
+            clicks_text: { type: 'boolean', description: 'Track text clicks' },
+            additional_params: { type: 'string', description: 'Additional tracking parameters' }
+          },
+          description: 'Tracking configuration'
+        },
+        sender: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Sender ID' },
+            name: { type: 'string', description: 'Sender name (optional)' }
+          },
+          description: 'Sender configuration'
+        },
+        reply_to_email: { type: 'string', description: 'Reply-to email address' },
+        content: {
+          type: 'object',
+          properties: {
+            subject: { type: 'string', description: 'Email subject line' },
+            html: { type: 'string', description: 'HTML email content' },
+            text: { type: 'string', description: 'Plain text email content' },
+            json: { type: 'object', description: 'BEEeditor JSON template' },
+            type: { type: 'string', enum: ['html', 'text', 'bee', 'custom'], description: 'Content format type' },
+            encoding: { type: 'string', description: 'Content encoding' },
+            template: {
+              type: 'object',
+              properties: {
+                id: { type: 'number', description: 'Template ID' }
+              },
+              description: 'Template reference'
+            },
+            blueprint: {
+              type: 'object',
+              properties: {
+                id: { type: 'number', description: 'Blueprint ID' }
+              },
+              description: 'Blueprint reference'
+            },
+            default_unsubscribe_link: { type: 'boolean', description: 'Include default unsubscribe link' }
+          },
+          description: 'Content configuration'
+        },
         account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id'],

@@ -13,8 +13,25 @@ import {
 } from './senders.js';
 import { 
   handleListCampaigns,
+  handleGetLatestCampaigns,
+  handleGetCampaign,
   handleCreateCampaign,
   handleUpdateCampaign,
+  handleSendCampaign,
+  handleDeleteCampaign,
+  handleDebugCampaignAccess,
+  handleRenderCampaign,
+  handleSendTestEmail,
+  handleScheduleCampaign,
+  handleUnscheduleCampaign,
+  handleRescheduleCampaign,
+  handleSuspendCampaign,
+  handleResumeCampaign,
+  handleCancelCampaign,
+  handleArchiveCampaign,
+  handleUnarchiveCampaign,
+  handleGetCampaignRevisions,
+  handleGetCampaignLinks,
   handleCreateBEETemplate,
   handleCreateBEENewsletter,
   handleValidateBEETemplate
@@ -73,6 +90,18 @@ import {
   handleDuplicateTemplate,
   handleRenderTemplate
 } from './templates.js';
+import {
+  handleListContacts,
+  handleCreateContact,
+  handleGetContact,
+  handleUpdateContact,
+  handleDeleteContact,
+  handleUnsubscribeContact,
+  handleImportContacts,
+  handleTagContacts,
+  handleUntagContacts,
+  handleSearchContacts
+} from './contacts.js';
 
 // Create the handler registry (phase 1 - core handlers only)
 export const handlerRegistry: HandlerRegistry = {
@@ -88,8 +117,25 @@ export const handlerRegistry: HandlerRegistry = {
   
   // Campaigns (with BEE support)
   'cakemail_list_campaigns': handleListCampaigns,
+  'cakemail_get_latest_campaigns': handleGetLatestCampaigns,
+  'cakemail_get_campaign': handleGetCampaign,
   'cakemail_create_campaign': handleCreateCampaign,
   'cakemail_update_campaign': handleUpdateCampaign,
+  'cakemail_send_campaign': handleSendCampaign,
+  'cakemail_delete_campaign': handleDeleteCampaign,
+  'cakemail_debug_campaign_access': handleDebugCampaignAccess,
+  'cakemail_render_campaign': handleRenderCampaign,
+  'cakemail_send_test_email': handleSendTestEmail,
+  'cakemail_schedule_campaign': handleScheduleCampaign,
+  'cakemail_unschedule_campaign': handleUnscheduleCampaign,
+  'cakemail_reschedule_campaign': handleRescheduleCampaign,
+  'cakemail_suspend_campaign': handleSuspendCampaign,
+  'cakemail_resume_campaign': handleResumeCampaign,
+  'cakemail_cancel_campaign': handleCancelCampaign,
+  'cakemail_archive_campaign': handleArchiveCampaign,
+  'cakemail_unarchive_campaign': handleUnarchiveCampaign,
+  'cakemail_get_campaign_revisions': handleGetCampaignRevisions,
+  'cakemail_get_campaign_links': handleGetCampaignLinks,
   
   // BEEeditor specific tools
   'cakemail_create_bee_template': handleCreateBEETemplate,
@@ -149,6 +195,18 @@ export const handlerRegistry: HandlerRegistry = {
   'cakemail_delete_template': handleDeleteTemplate,
   'cakemail_duplicate_template': handleDuplicateTemplate,
   'cakemail_render_template': handleRenderTemplate,
+  
+  // Contact Management
+  'cakemail_list_contacts': handleListContacts,
+  'cakemail_create_contact': handleCreateContact,
+  'cakemail_get_contact': handleGetContact,
+  'cakemail_update_contact': handleUpdateContact,
+  'cakemail_delete_contact': handleDeleteContact,
+  'cakemail_unsubscribe_contact': handleUnsubscribeContact,
+  'cakemail_import_contacts': handleImportContacts,
+  'cakemail_tag_contacts': handleTagContacts,
+  'cakemail_untag_contacts': handleUntagContacts,
+  'cakemail_search_contacts': handleSearchContacts,
   
   // Note: Additional handlers will be added incrementally as they are fully implemented
 };

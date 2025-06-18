@@ -603,13 +603,16 @@ export interface Campaign {
 
 export interface CreateCampaignData {
   name: string;
-  subject: string;
+  subject?: string;
   html_content?: string | undefined;
   text_content?: string | undefined;
-  list_id: string | number;
-  sender_id: string | number;
+  json_content?: any; // For BEEeditor JSON format
+  list_id?: string | number;
+  sender_id?: string | number;
   from_name?: string | undefined;
   reply_to?: string | undefined;
+  template_id?: string | number;
+  content_type?: 'html' | 'text' | 'bee' | 'custom';
 }
 
 export interface UpdateCampaignData {
@@ -1066,28 +1069,58 @@ export interface DebugLogsAccessParams {
   workflow_id?: string | undefined;
 }
 
-// Missing request types for Campaign API
+// Campaign request types matching exact API specification
 export interface CreateCampaignRequest {
   name: string;
-  subject?: string;
+  // Audience fields
   list_id?: string | number;
+  segment_id?: string | number;
+  // Sender fields
   sender_id?: string | number;
+  from_name?: string;
+  reply_to?: string;
+  // Content fields
+  subject?: string;
   html_content?: string;
   text_content?: string;
   json_content?: any; // For BEEeditor JSON format
-  from_name?: string;
-  reply_to?: string;
+  template_id?: string | number;
+  blueprint_id?: string | number;
+  content_type?: 'html' | 'text' | 'bee' | 'custom';
+  encoding?: string;
+  default_unsubscribe_link?: boolean;
+  // Tracking fields
+  tracking?: {
+    opens?: boolean;
+    clicks_html?: boolean;
+    clicks_text?: boolean;
+    additional_params?: string;
+  };
 }
 
 export interface UpdateCampaignRequest {
   name?: string;
+  // Sender fields
+  sender_id?: string | number;
+  from_name?: string;
+  reply_to?: string;
+  // Content fields
   subject?: string;
   html_content?: string;
   text_content?: string;
   json_content?: any; // For BEEeditor JSON format
-  sender_id?: string | number;
-  from_name?: string;
-  reply_to?: string;
+  template_id?: string | number;
+  blueprint_id?: string | number;
+  content_type?: 'html' | 'text' | 'bee' | 'custom';
+  encoding?: string;
+  default_unsubscribe_link?: boolean;
+  // Tracking fields
+  tracking?: {
+    opens?: boolean;
+    clicks_html?: boolean;
+    clicks_text?: boolean;
+    additional_params?: string;
+  };
 }
 
 export interface ScheduleCampaignRequest {

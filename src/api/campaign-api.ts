@@ -175,27 +175,39 @@ export class CampaignApi extends BaseApiClient {
   }
 
   // Individual campaign retrieval
-  async getCampaign(id: string): Promise<CampaignResponse> {
-    // Add account_id for consistency if available
-    const accountId = await this.getCurrentAccountId();
+  async getCampaign(id: string, options?: { account_id?: number }): Promise<CampaignResponse> {
+    // Use provided account_id or get current account ID
+    const accountId = options?.account_id || await this.getCurrentAccountId();
     const query = accountId ? `?account_id=${accountId}` : '';
     
     return this.makeRequest(`/campaigns/${id}${query}`);
   }
 
-  // FIXED: Campaign creation with correct data structure per API spec
+  // FIXED: Campaign creation with exact API spec structure
   async createCampaign(data: CreateCampaignRequest & { account_id?: number }): Promise<CreateCampaignResponse> {
-    // Build campaign data according to API specification schema
+    // Build campaign data according to exact API specification
     const campaignData: any = {
       name: data.name
     };
     
-    // Audience - required structure with list_id and optional segment_id
+    // Audience - structure with list_id and optional segment_id
     if (data.list_id) {
       campaignData.audience = {
         list_id: parseInt(String(data.list_id))
       };
+      // Add segment_id if provided
+      if ((data as any).segment_id) {
+        campaignData.audience.segment_id = parseInt(String((data as any).segment_id));
+      }
     }
+    
+    // Tracking - with defaults matching API spec
+    campaignData.tracking = {
+      opens: true,
+      clicks_html: true,
+      clicks_text: true,
+      ...(data as any).tracking // Allow override of tracking settings
+    };
     
     // Sender - required structure with id and optional name
     if (data.sender_id) {
@@ -212,9 +224,13 @@ export class CampaignApi extends BaseApiClient {
       campaignData.reply_to_email = data.reply_to;
     }
     
-    // Content - structured according to CampaignContent schema
-    if (data.subject || data.html_content || data.text_content || (data as any).json_content) {
-      campaignData.content = {};
+    // Content - full structure according to CampaignContent schema
+    const hasContent = data.subject || data.html_content || data.text_content || (data as any).json_content || (data as any).template_id;
+    if (hasContent) {
+      campaignData.content = {
+        // Default type - can be overridden
+        type: 'html'
+      };
       
       if (data.subject) {
         campaignData.content.subject = data.subject;
@@ -228,11 +244,39 @@ export class CampaignApi extends BaseApiClient {
         campaignData.content.text = data.text_content;
       }
       
+      // JSON content for BEE editor
       if ((data as any).json_content) {
         campaignData.content.json = (data as any).json_content;
         campaignData.content.type = 'bee';
-      } else {
-        campaignData.content.type = 'html';
+      }
+      
+      // Template reference
+      if ((data as any).template_id) {
+        campaignData.content.template = {
+          id: parseInt(String((data as any).template_id))
+        };
+      }
+      
+      // Blueprint reference
+      if ((data as any).blueprint_id) {
+        campaignData.content.blueprint = {
+          id: parseInt(String((data as any).blueprint_id))
+        };
+      }
+      
+      // Content type - allow override from input
+      if ((data as any).content_type) {
+        campaignData.content.type = (data as any).content_type;
+      }
+      
+      // Encoding
+      if ((data as any).encoding) {
+        campaignData.content.encoding = (data as any).encoding;
+      }
+      
+      // Default unsubscribe link
+      if ((data as any).default_unsubscribe_link !== undefined) {
+        campaignData.content.default_unsubscribe_link = (data as any).default_unsubscribe_link;
       }
     }
     
@@ -246,7 +290,7 @@ export class CampaignApi extends BaseApiClient {
     });
   }
 
-  // FIXED: Campaign update with correct structure per API spec
+  // FIXED: Campaign update with exact API spec structure
   async updateCampaign(id: string, data: UpdateCampaignRequest & { account_id?: number }): Promise<PatchCampaignResponse> {
     const updateData: any = {};
     
@@ -271,8 +315,13 @@ export class CampaignApi extends BaseApiClient {
       updateData.reply_to_email = data.reply_to;
     }
     
+    // Tracking - structured object if provided
+    if (data.tracking !== undefined) {
+      updateData.tracking = data.tracking;
+    }
+    
     // Content - structured according to PatchCampaignContent schema
-    const contentFields = ['subject', 'html_content', 'text_content', 'json_content'] as const;
+    const contentFields = ['subject', 'html_content', 'text_content', 'json_content', 'template_id', 'blueprint_id', 'content_type', 'encoding', 'default_unsubscribe_link'] as const;
     const hasContentUpdate = contentFields.some(field => (data as any)[field] !== undefined);
     
     if (hasContentUpdate) {
@@ -290,11 +339,41 @@ export class CampaignApi extends BaseApiClient {
         updateData.content.text = data.text_content;
       }
       
+      // JSON content for BEE editor
       if ((data as any).json_content !== undefined) {
         updateData.content.json = (data as any).json_content;
         updateData.content.type = 'bee';
-      } else if (data.html_content !== undefined) {
+      }
+      
+      // Template reference
+      if ((data as any).template_id !== undefined) {
+        updateData.content.template = {
+          id: parseInt(String((data as any).template_id))
+        };
+      }
+      
+      // Blueprint reference
+      if ((data as any).blueprint_id !== undefined) {
+        updateData.content.blueprint = {
+          id: parseInt(String((data as any).blueprint_id))
+        };
+      }
+      
+      // Content type
+      if ((data as any).content_type !== undefined) {
+        updateData.content.type = (data as any).content_type;
+      } else if (data.html_content !== undefined && !(data as any).json_content) {
         updateData.content.type = 'html';
+      }
+      
+      // Encoding
+      if ((data as any).encoding !== undefined) {
+        updateData.content.encoding = (data as any).encoding;
+      }
+      
+      // Default unsubscribe link
+      if ((data as any).default_unsubscribe_link !== undefined) {
+        updateData.content.default_unsubscribe_link = (data as any).default_unsubscribe_link;
       }
     }
     
@@ -318,10 +397,10 @@ export class CampaignApi extends BaseApiClient {
   }
 
   // Campaign rendering (preview)
-  async renderCampaign(id: string, contactId?: number): Promise<any> {
-    const accountId = await this.getCurrentAccountId();
+  async renderCampaign(id: string, options?: { contact_id?: number; account_id?: number }): Promise<any> {
+    const accountId = options?.account_id || await this.getCurrentAccountId();
     const params: any = {};
-    if (contactId) params.contact_id = contactId;
+    if (options?.contact_id) params.contact_id = options.contact_id;
     if (accountId) params.account_id = accountId;
     
     const query = Object.keys(params).length > 0 ? `?${new URLSearchParams(params)}` : '';

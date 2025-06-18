@@ -8,6 +8,7 @@ import { reportTools } from './report-tools.js';
 import { logTools } from './log-tools.js';
 import { listTools } from './list-tools.js';
 import { templateTools } from './template-tools.js';
+import { contactTools } from './contact-tools.js';
 
 export const allTools = [
   ...healthTools,
@@ -23,6 +24,8 @@ export const allTools = [
   ...listTools,
   // Template management tools
   ...templateTools,
+  // Contact management tools
+  ...contactTools,
 ];
 
 export {
@@ -35,5 +38,6 @@ export {
   reportTools,
   logTools,
   listTools,
-  templateTools
+  templateTools,
+  contactTools
 };
