@@ -74,7 +74,41 @@ export async function handleListSubAccounts(args: any, api: CakemailAPI) {
     }));
 
     return {
-      content: [
+      content: [{
+        type: 'text',
+        text: `📊 **Sub-Accounts Export Generated Successfully**\n\n` +
+              `**Export Details:**\n` +
+              `• Format: ${format.toUpperCase()}\n` +
+              `• Filename: ${exportFilename}.${format}\n` +
+              `• Total Accounts: ${enhancedAccounts.length}\n` +
+              `• File Size: ${fileSizeKB} KB\n` +
+              `• Generated: ${new Date().toLocaleString()}\n\n` +
+              `**Export Options:**\n` +
+              `• Include Usage Stats: ${include_usage_stats ? 'Yes' : 'No'}\n` +
+              `• Include Contact Counts: ${include_contact_counts ? 'Yes' : 'No'}\n` +
+              `• Include Owner Details: ${include_owner_details ? 'Yes' : 'No'}\n` +
+              `• Status Filter: ${status_filter || 'None'}\n` +
+              `• Recursive: ${recursive ? 'Yes' : 'No'}\n` +
+              `• Partner Account ID: ${partner_account_id || 'None'}\n\n` +
+              `**Sample Data (First Account):**\n` +
+              `• ID: ${enhancedAccounts[0].id}\n` +
+              `• Name: ${enhancedAccounts[0].name}\n` +
+              `• Status: ${enhancedAccounts[0].status}\n` +
+              `• Owner: ${enhancedAccounts[0].owner_name || 'N/A'} (${enhancedAccounts[0].owner_email || 'N/A'})\n\n` +
+              `**📁 Export Content Preview (First 500 characters):**\n` +
+              `\`\`\`${format}\n${exportContent.substring(0, 500)}${exportContent.length > 500 ? '...' : ''}\n\`\`\`\n\n` +
+              `**💾 To save the complete export file:**\n` +
+              `1. Copy the content above\n` +
+              `2. Save as \`${exportFilename}.${format}\`\n` +
+              `3. Use appropriate software to open (Excel for CSV, text editor for JSON)\n\n` +
+              `**🔗 Full Export Content:**\n` +
+              `\`\`\`${format}\n${exportContent}\n\`\`\``
+      }]
+    };
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+} [
         {
           type: 'text',
           text: `🏢 **Sub-Accounts (${total} total)**\n\n` +
@@ -711,242 +745,6 @@ export async function handleDebugSubAccountAccess(args: any, api: CakemailAPI) {
               ) +
               (result.error ? `\n**Error:** ${result.error}` : '') +
               `\n\n**Full Debug Response:**\n${JSON.stringify(result, null, 2)}`
-      }]
-    };
-  } catch (error) {
-    return handleCakemailError(error);
-  }
-}
-
-// Export sub-accounts data to CSV or JSON format
-export async function handleExportSubAccounts(args: any, api: CakemailAPI) {
-  try {
-    const {
-      format = 'csv',
-      include_usage_stats = true,
-      include_contact_counts = true,
-      include_owner_details = true,
-      status_filter,
-      recursive = false,
-      partner_account_id,
-      filename
-    } = args;
-
-    // Validate format
-    if (!['csv', 'json'].includes(format)) {
-      return {
-        content: [{
-          type: 'text',
-          text: '❌ **Invalid Format**\n\nSupported formats: csv, json'
-        }]
-      };
-    }
-
-    // Fetch all sub-accounts with comprehensive data
-    const listParams: any = {
-      recursive: recursive,
-      pagination: {
-        page: 1,
-        per_page: 100, // Get larger batches
-        with_count: true
-      },
-      sort: {
-        sort: 'created_on',
-        order: 'asc' // Oldest first for consistent ordering
-      }
-    };
-
-    // Apply filters if provided
-    if (status_filter || partner_account_id) {
-      listParams.filters = {};
-      if (status_filter) listParams.filters.status = status_filter;
-      if (partner_account_id !== undefined) listParams.partner_account_id = partner_account_id;
-    }
-
-    // Collect all sub-accounts across all pages
-    let allSubAccounts: SubAccount[] = [];
-    let currentPage = 1;
-    let totalPages = 1;
-    let totalCount = 0;
-
-    do {
-      listParams.pagination.page = currentPage;
-      const response = await api.subAccounts.listSubAccounts(listParams);
-      
-      if (response.data && response.data.length > 0) {
-        allSubAccounts = allSubAccounts.concat(response.data);
-      }
-      
-      if (response.pagination) {
-        totalCount = response.pagination.count || 0;
-        const perPage = response.pagination.per_page || 100;
-        totalPages = Math.ceil(totalCount / perPage);
-      }
-      
-      currentPage++;
-    } while (currentPage <= totalPages && totalPages > 1);
-
-    if (allSubAccounts.length === 0) {
-      return {
-        content: [{
-          type: 'text',
-          text: '📭 **No Sub-Accounts Found**\n\nNo sub-accounts match the specified criteria for export.'
-        }]
-      };
-    }
-
-    // Process each sub-account to gather comprehensive information
-    const exportData = await Promise.all(
-      allSubAccounts.map(async (account) => {
-        const baseData: any = {
-          id: account.id,
-          name: account.name || '',
-          status: account.status || '',
-          lineage: account.lineage || '',
-          is_partner: account.partner || false,
-          created_on: account.created_on || '',
-          expires_on: account.expires_on || ''
-        };
-
-        // Include owner details if requested
-        if (include_owner_details && account.account_owner) {
-          baseData.owner_name = account.account_owner.name || '';
-          baseData.owner_email = account.account_owner.email || '';
-        }
-
-        // Include usage statistics if requested
-        if (include_usage_stats && account.usage_limits) {
-          baseData.emails_per_month = account.usage_limits.per_month || 0;
-          baseData.emails_per_campaign = account.usage_limits.per_campaign || 0;
-          baseData.emails_remaining = account.usage_limits.remaining || 0;
-          baseData.maximum_contacts = account.usage_limits.maximum_contacts || 0;
-          baseData.lists_limit = account.usage_limits.lists || 0;
-          baseData.users_limit = account.usage_limits.users || 0;
-          baseData.use_automations = account.usage_limits.use_automations || false;
-          baseData.use_ab_testing = account.usage_limits.use_ab_split || false;
-          baseData.use_contact_export = account.usage_limits.use_contact_export || false;
-          baseData.use_email_api = account.usage_limits.use_email_api || false;
-        }
-
-        // Try to get additional stats if requested (may fail for some accounts)
-        if (include_contact_counts) {
-          try {
-            // This would require access to lists API for each account
-            // For now, we'll add placeholder fields that could be populated
-            baseData.total_contacts = 'N/A';
-            baseData.active_contacts = 'N/A';
-            baseData.total_lists = 'N/A';
-          } catch {
-            baseData.total_contacts = 'Error';
-            baseData.active_contacts = 'Error';
-            baseData.total_lists = 'Error';
-          }
-        }
-
-        return baseData;
-      })
-    );
-
-    // Generate filename if not provided
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-    const exportFilename = filename || `sub-accounts-export-${timestamp}`;
-
-    let exportContent: string;
-    let fileExtension: string;
-
-    if (format === 'json') {
-      exportContent = JSON.stringify({
-        export_info: {
-          generated_at: new Date().toISOString(),
-          total_accounts: exportData.length,
-          filters: {
-            status_filter: status_filter || null,
-            partner_account_id: partner_account_id || null,
-            recursive: recursive
-          },
-          includes: {
-            usage_stats: include_usage_stats,
-            contact_counts: include_contact_counts,
-            owner_details: include_owner_details
-          }
-        },
-        accounts: exportData
-      }, null, 2);
-      fileExtension = 'json';
-    } else {
-      // Generate CSV
-      if (exportData.length === 0) {
-        exportContent = 'No data to export';
-      } else {
-        // Get all unique keys from all records for comprehensive headers
-        const allKeys = new Set<string>();
-        exportData.forEach(record => {
-          Object.keys(record).forEach(key => allKeys.add(key));
-        });
-        const headers = Array.from(allKeys).sort();
-
-        // Create CSV header
-        const csvHeaders = headers.map(header => `"${header}"`).join(',');
-        
-        // Create CSV rows
-        const csvRows = exportData.map(record => {
-          return headers.map(header => {
-            const value = record[header];
-            if (value === null || value === undefined) {
-              return '""';
-            }
-            // Escape quotes and wrap in quotes
-            return `"${String(value).replace(/"/g, '""')}"`;
-          }).join(',');
-        });
-
-        exportContent = [csvHeaders, ...csvRows].join('\n');
-      }
-      fileExtension = 'csv';
-    }
-
-    // Calculate export statistics
-    const stats = {
-      totalAccounts: exportData.length,
-      byStatus: {} as Record<string, number>,
-      partnerAccounts: exportData.filter(acc => acc.is_partner).length,
-      withUsageStats: exportData.filter(acc => acc.emails_per_month !== undefined).length
-    };
-
-    // Count by status
-    exportData.forEach(acc => {
-      const status = acc.status || 'unknown';
-      stats.byStatus[status] = (stats.byStatus[status] || 0) + 1;
-    });
-
-    return {
-      content: [{
-        type: 'text',
-        text: `📊 **Sub-Accounts Export Completed**\n\n` +
-              `**Export Details:**\n` +
-              `• Format: ${format.toUpperCase()}\n` +
-              `• Filename: ${exportFilename}.${fileExtension}\n` +
-              `• Total Accounts: ${stats.totalAccounts}\n` +
-              `• Partner Accounts: ${stats.partnerAccounts}\n` +
-              `• Generated: ${new Date().toISOString()}\n\n` +
-              `**Account Status Breakdown:**\n` +
-              Object.entries(stats.byStatus).map(([status, count]) => 
-                `• ${status}: ${count} accounts`
-              ).join('\n') +
-              `\n\n**Export Options:**\n` +
-              `• Usage Stats: ${include_usage_stats ? '✅' : '❌'}\n` +
-              `• Contact Counts: ${include_contact_counts ? '✅' : '❌'}\n` +
-              `• Owner Details: ${include_owner_details ? '✅' : '❌'}\n` +
-              `• Recursive: ${recursive ? '✅' : '❌'}\n` +
-              (status_filter ? `• Status Filter: ${status_filter}\n` : '') +
-              (partner_account_id ? `• Partner Account ID: ${partner_account_id}\n` : '') +
-              `\n**Export Preview (first 3 records):**\n\`\`\`\n` +
-              (format === 'json' ? 
-                JSON.stringify(exportData.slice(0, 3), null, 2) :
-                exportContent.split('\n').slice(0, 4).join('\n')
-              ) + 
-              `\n\`\`\`\n\n` +
-              `**Full Export Data:**\n\`\`\`${format}\n${exportContent}\n\`\`\``
       }]
     };
   } catch (error) {

@@ -52,7 +52,8 @@ import {
   handleVerifySubAccountEmail,
   handleResendVerificationEmail,
   handleConvertSubAccountToOrganization,
-  handleDebugSubAccountAccess
+  handleDebugSubAccountAccess,
+  handleExportSubAccounts
 } from './sub-accounts.js';
 import {
   handleListLists,
@@ -129,6 +130,7 @@ export const handlerRegistry: HandlerRegistry = {
   'cakemail_resend_sub_account_verification': handleResendVerificationEmail,
   'cakemail_convert_sub_account_to_organization': handleConvertSubAccountToOrganization,
   'cakemail_debug_sub_account_access': handleDebugSubAccountAccess,
+  'cakemail_export_sub_accounts': handleExportSubAccounts,
   
   // List Management
   'cakemail_list_lists': handleListLists,

@@ -483,4 +483,127 @@ export class SubAccountApi extends BaseApiClient {
       };
     }
   }
+
+  /**
+   * Export sub-accounts data with comprehensive information
+   * This is a convenience method that aggregates all sub-account data
+   * for export purposes (CSV, JSON, etc.)
+   */
+  async exportSubAccountsData(params?: {
+    status_filter?: 'pending' | 'active' | 'suspended' | 'inactive';
+    recursive?: boolean;
+    partner_account_id?: number;
+    include_usage_stats?: boolean;
+    include_owner_details?: boolean;
+  }): Promise<{
+    accounts: any[];
+    export_info: {
+      generated_at: string;
+      total_accounts: number;
+      filters: any;
+      export_options: any;
+    };
+  }> {
+    // Set up parameters for comprehensive data collection
+    const listParams: Parameters<typeof this.listSubAccounts>[0] = {
+      recursive: params?.recursive || false,
+      pagination: {
+        page: 1,
+        per_page: 100,
+        with_count: true
+      },
+      sort: {
+        sort: 'created_on',
+        order: 'asc'
+      }
+    };
+
+    // Apply filters
+    if (params?.status_filter || params?.partner_account_id) {
+      listParams.filters = {};
+      if (params?.status_filter) {
+        listParams.filters.status = params.status_filter;
+      }
+      if (params?.partner_account_id !== undefined) {
+        listParams.partner_account_id = params.partner_account_id;
+      }
+    }
+
+    // Collect all sub-accounts across multiple pages
+    let allAccounts: any[] = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    let totalCount = 0;
+
+    do {
+      listParams.pagination!.page = currentPage;
+      const response = await this.listSubAccounts(listParams);
+      
+      if (response.data && response.data.length > 0) {
+        allAccounts = allAccounts.concat(response.data);
+      }
+      
+      if (response.pagination) {
+        totalCount = response.pagination.count || 0;
+        const perPage = response.pagination.per_page || 100;
+        totalPages = Math.ceil(totalCount / perPage);
+      }
+      
+      currentPage++;
+    } while (currentPage <= totalPages && totalPages > 1);
+
+    // Process accounts for export
+    const processedAccounts = allAccounts.map(account => {
+      const exportAccount: any = {
+        id: account.id,
+        name: account.name || '',
+        status: account.status || '',
+        lineage: account.lineage || '',
+        is_partner: account.partner || false,
+        created_on: account.created_on || '',
+        expires_on: account.expires_on || ''
+      };
+
+      // Include owner details if requested
+      if (params?.include_owner_details !== false && account.account_owner) {
+        exportAccount.owner_name = account.account_owner.name || '';
+        exportAccount.owner_email = account.account_owner.email || '';
+      }
+
+      // Include usage statistics if requested
+      if (params?.include_usage_stats !== false && account.usage_limits) {
+        exportAccount.emails_per_month = account.usage_limits.per_month || 0;
+        exportAccount.emails_per_campaign = account.usage_limits.per_campaign || 0;
+        exportAccount.emails_remaining = account.usage_limits.remaining || 0;
+        exportAccount.maximum_contacts = account.usage_limits.maximum_contacts || 0;
+        exportAccount.lists_limit = account.usage_limits.lists || 0;
+        exportAccount.users_limit = account.usage_limits.users || 0;
+        exportAccount.use_automations = account.usage_limits.use_automations || false;
+        exportAccount.use_ab_testing = account.usage_limits.use_ab_split || false;
+        exportAccount.use_contact_export = account.usage_limits.use_contact_export || false;
+        exportAccount.use_email_api = account.usage_limits.use_email_api || false;
+        exportAccount.use_html_editor = account.usage_limits.use_html_editor || false;
+        exportAccount.use_tags = account.usage_limits.use_tags || false;
+      }
+
+      return exportAccount;
+    });
+
+    return {
+      accounts: processedAccounts,
+      export_info: {
+        generated_at: new Date().toISOString(),
+        total_accounts: processedAccounts.length,
+        filters: {
+          status_filter: params?.status_filter || null,
+          partner_account_id: params?.partner_account_id || null,
+          recursive: params?.recursive || false
+        },
+        export_options: {
+          include_usage_stats: params?.include_usage_stats !== false,
+          include_owner_details: params?.include_owner_details !== false
+        }
+      }
+    };
+  }
 }

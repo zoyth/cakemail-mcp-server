@@ -149,4 +149,22 @@ export const subAccountTools = [
       required: [],
     },
   },
+  {
+    name: 'cakemail_export_sub_accounts',
+    description: 'Export all sub-accounts data to CSV format with comprehensive information',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        format: { type: 'string', enum: ['csv', 'json'], default: 'csv', description: 'Export format (csv or json)' },
+        include_usage_stats: { type: 'boolean', default: true, description: 'Include usage statistics (emails sent, remaining, etc.)' },
+        include_contact_counts: { type: 'boolean', default: true, description: 'Include contact counts and list statistics' },
+        include_owner_details: { type: 'boolean', default: true, description: 'Include detailed owner information' },
+        status_filter: { type: 'string', enum: ['pending', 'active', 'suspended', 'inactive'], description: 'Filter by account status' },
+        recursive: { type: 'boolean', default: false, description: 'Include sub-accounts of sub-accounts' },
+        partner_account_id: { type: 'number', description: 'Filter by partner account ID' },
+        filename: { type: 'string', description: 'Custom filename for the export (without extension)' },
+      },
+      required: [],
+    },
+  },
 ];
