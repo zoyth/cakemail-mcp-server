@@ -184,7 +184,7 @@ export class CampaignApi extends BaseApiClient {
   }
 
   // FIXED: Campaign creation with correct data structure
-  async createCampaign(data: CreateCampaignRequest): Promise<CreateCampaignResponse> {
+  async createCampaign(data: CreateCampaignRequest & { account_id?: number }): Promise<CreateCampaignResponse> {
     // Use flatter structure that matches API documentation
     const campaignData: Record<string, any> = {
       name: data.name,
@@ -204,8 +204,8 @@ export class CampaignApi extends BaseApiClient {
       }
     });
     
-    // Add account_id if available
-    const accountId = await this.getCurrentAccountId();
+    // Use explicit account_id if provided, otherwise get current account ID
+    const accountId = data.account_id || await this.getCurrentAccountId();
     const query = accountId ? `?account_id=${accountId}` : '';
     
     return this.makeRequest(`/campaigns${query}`, {
@@ -215,7 +215,7 @@ export class CampaignApi extends BaseApiClient {
   }
 
   // FIXED: Campaign update with correct structure
-  async updateCampaign(id: string, data: UpdateCampaignRequest): Promise<PatchCampaignResponse> {
+  async updateCampaign(id: string, data: UpdateCampaignRequest & { account_id?: number }): Promise<PatchCampaignResponse> {
     const updateData: Record<string, any> = {
       name: data.name,
       subject: data.subject,
@@ -232,8 +232,8 @@ export class CampaignApi extends BaseApiClient {
       }
     });
     
-    // Add account_id if available
-    const accountId = await this.getCurrentAccountId();
+    // Use explicit account_id if provided, otherwise get current account ID
+    const accountId = data.account_id || await this.getCurrentAccountId();
     const query = accountId ? `?account_id=${accountId}` : '';
     
     return this.makeRequest(`/campaigns/${id}${query}`, {

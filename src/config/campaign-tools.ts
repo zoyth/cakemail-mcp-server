@@ -38,6 +38,7 @@ export const campaignTools = [
       type: 'object',
       properties: {
         campaign_id: { type: 'string', description: 'Campaign ID to retrieve' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id'],
     },
@@ -58,6 +59,7 @@ export const campaignTools = [
         sender_id: { type: 'string', description: 'Sender ID to use' },
         from_name: { type: 'string', description: 'From name (optional)' },
         reply_to: { type: 'string', description: 'Reply-to email address (optional)' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['name', 'subject', 'list_id', 'sender_id'],
     },
@@ -76,6 +78,7 @@ export const campaignTools = [
         json_content: { type: 'object', description: 'BEEeditor JSON template' },
         from_name: { type: 'string', description: 'From name' },
         reply_to: { type: 'string', description: 'Reply-to email address' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id'],
     },
@@ -87,6 +90,7 @@ export const campaignTools = [
       type: 'object',
       properties: {
         campaign_id: { type: 'string', description: 'Campaign ID to send' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id'],
     },
@@ -98,6 +102,7 @@ export const campaignTools = [
       type: 'object',
       properties: {
         campaign_id: { type: 'string', description: 'Campaign ID to delete' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id'],
     },
@@ -109,6 +114,7 @@ export const campaignTools = [
       type: 'object',
       properties: {
         campaign_id: { type: 'string', description: 'Optional: specific campaign ID to test access' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: [],
     },
@@ -122,6 +128,7 @@ export const campaignTools = [
       properties: {
         campaign_id: { type: 'string', description: 'Campaign ID to render' },
         contact_id: { type: 'number', description: 'Optional: Contact ID for personalization' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id'],
     },
@@ -134,6 +141,7 @@ export const campaignTools = [
       properties: {
         campaign_id: { type: 'string', description: 'Campaign ID to test' },
         emails: { type: 'array', items: { type: 'string' }, description: 'List of email addresses to send test to' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id', 'emails'],
     },
@@ -146,6 +154,7 @@ export const campaignTools = [
       properties: {
         campaign_id: { type: 'string', description: 'Campaign ID to schedule' },
         scheduled_for: { type: 'string', description: 'Optional: Schedule datetime (ISO format). If not provided, sends immediately' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id'],
     },
@@ -157,6 +166,7 @@ export const campaignTools = [
       type: 'object',
       properties: {
         campaign_id: { type: 'string', description: 'Campaign ID to unschedule' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id'],
     },
@@ -169,6 +179,7 @@ export const campaignTools = [
       properties: {
         campaign_id: { type: 'string', description: 'Campaign ID to reschedule' },
         scheduled_for: { type: 'string', description: 'New schedule datetime (ISO format)' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id', 'scheduled_for'],
     },
@@ -180,6 +191,7 @@ export const campaignTools = [
       type: 'object',
       properties: {
         campaign_id: { type: 'string', description: 'Campaign ID to suspend' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id'],
     },
@@ -191,6 +203,7 @@ export const campaignTools = [
       type: 'object',
       properties: {
         campaign_id: { type: 'string', description: 'Campaign ID to resume' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id'],
     },
@@ -202,6 +215,7 @@ export const campaignTools = [
       type: 'object',
       properties: {
         campaign_id: { type: 'string', description: 'Campaign ID to cancel' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id'],
     },
@@ -213,6 +227,7 @@ export const campaignTools = [
       type: 'object',
       properties: {
         campaign_id: { type: 'string', description: 'Campaign ID to archive' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id'],
     },
@@ -224,6 +239,7 @@ export const campaignTools = [
       type: 'object',
       properties: {
         campaign_id: { type: 'string', description: 'Campaign ID to unarchive' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id'],
     },
@@ -238,6 +254,7 @@ export const campaignTools = [
         page: { type: 'number', description: 'Page number (default: 1)' },
         per_page: { type: 'number', description: 'Items per page (default: 50)' },
         with_count: { type: 'boolean', description: 'Include total count in response' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id'],
     },
@@ -252,6 +269,7 @@ export const campaignTools = [
         page: { type: 'number', description: 'Page number (default: 1)' },
         per_page: { type: 'number', description: 'Items per page (default: 50)' },
         with_count: { type: 'boolean', description: 'Include total count in response' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
       },
       required: ['campaign_id'],
     },

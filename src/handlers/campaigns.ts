@@ -107,7 +107,8 @@ export async function handleCreateCampaign(args: any, api: CakemailAPI) {
       html_content,
       text_content,
       json_content, // BEEeditor JSON format
-      content_type = 'html' // 'html' or 'bee' or 'auto-detect'
+      content_type = 'html', // 'html' or 'bee' or 'auto-detect'
+      account_id // Agency/Enterprise account scoping
     } = args;
 
     // Validate required fields
@@ -126,7 +127,8 @@ export async function handleCreateCampaign(args: any, api: CakemailAPI) {
       list_id,
       sender_id,
       from_name,
-      reply_to
+      reply_to,
+      ...(account_id && { account_id })
     };
 
     // Handle different content types
@@ -211,7 +213,8 @@ export async function handleUpdateCampaign(args: any, api: CakemailAPI) {
       reply_to,
       html_content,
       text_content,
-      json_content // BEEeditor JSON format
+      json_content, // BEEeditor JSON format
+      account_id // Agency/Enterprise account scoping
     } = args;
 
     // Validate required fields
@@ -260,7 +263,7 @@ export async function handleUpdateCampaign(args: any, api: CakemailAPI) {
       };
     }
 
-    const result = await api.campaigns.updateCampaign(campaign_id, updateData);
+    const result = await api.campaigns.updateCampaign(campaign_id, { ...updateData, ...(account_id && { account_id }) });
     
     let formatInfo = 'HTML';
     let templateInfo = '';
