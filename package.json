@@ -1,7 +1,7 @@
 {
   "name": "cakemail-mcp-server",
-  "version": "1.9.0",
-  "description": "Enterprise MCP server for Cakemail API integration with Claude AI - includes comprehensive list management, sub-account management, BEEeditor visual email design, and advanced analytics",
+  "version": "1.10.0",
+  "description": "Enterprise MCP server for Cakemail API integration with Claude AI - includes comprehensive template management, list management, sub-account management, BEEeditor visual email design, and advanced analytics",
   "type": "module",
   "main": "./build/index.js",
   "bin": {
@@ -75,7 +75,10 @@
     "json-templates",
     "list-management",
     "contact-lists",
-    "performance-analytics"
+    "performance-analytics",
+    "template-management",
+    "email-templates",
+    "content-structure"
   ],
   "engines": {
     "node": ">=18.0.0"

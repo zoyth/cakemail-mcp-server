@@ -1,12 +1,31 @@
 # Cakemail MCP Server
 
-An enterprise Model Context Protocol (MCP) server for integrating with the Cakemail API. This server provides comprehensive tools for email marketing campaigns, transactional emails, detailed reporting, advanced BEEeditor visual email design, and complete list management through the Cakemail platform.
+An enterprise Model Context Protocol (MCP) server for integrating with the Cakemail API. This server provides comprehensive tools for email marketing campaigns, transactional emails, detailed reporting, advanced BEEeditor visual email design, template management, and complete list management through the Cakemail platform.
 
-## 🎯 Version 1.9.0 - Complete List Management Integration
+## 🎯 Version 1.10.0 - Complete Template Management
 
-This version introduces **comprehensive list management functionality**, providing complete lifecycle management for contact lists including creation, updating, archiving, and performance analytics.
+This version introduces **comprehensive template management functionality**, providing complete lifecycle management for email templates including creation, updating, duplication, and advanced filtering capabilities with support for modern OpenAPI content structures.
 
 ## ✨ Currently Implemented Features
+
+### 🎨 Template Management (7 tools)
+- ✅ Create, update, and delete email templates with modern content structure
+- ✅ List templates with advanced filtering, sorting, and pagination
+- ✅ Get individual template details and metadata
+- ✅ Duplicate templates with smart naming and tag preservation
+- ✅ Render templates for HTML preview and testing
+- ✅ **OpenAPI-compliant content structure** (html, text, bee, custom)
+- ✅ **Backward compatibility** with legacy template formats
+- ✅ **Multi-account support** for enterprise environments
+- ✅ **Advanced filtering** by tags, name, ownership status
+- ✅ **Template search** by name, tags, or ownership
+
+### 👥 Contact Management
+
+- ✅ Create, update, and delete contacts with custom fields
+- ✅ List contacts with filtering by list ID
+- ✅ Advanced contact segmentation support
+- ✅  Contact engagement metrics
 
 ### 📧 Campaign Management (21 tools)
 - ✅ Create, update, and delete email campaigns
@@ -91,28 +110,7 @@ This version introduces **comprehensive list management functionality**, providi
 - ✅ Request queuing and concurrency control
 - ✅ Comprehensive error handling
 
-**Total Implemented: 80+ tools across 10 feature categories**
-
-## 🔄 Planned Features (Coming Soon)
-
-### 👥 Contact Management
-- 🔄 Create, update, and delete contacts with custom fields
-- 🔄 List contacts with filtering by list ID
-- 🔄 Advanced contact segmentation support
-- 🔄 Contact engagement metrics
-
-### 🤖 Automation Workflows
-- 🔄 Create and manage automation sequences
-- 🔄 Trigger-based email automation
-- 🔄 Start/stop automation controls
-- 🔄 Workflow performance tracking
-
-### 🎨 Template Management
-- 🔄 Create, update, and delete email templates
-- 🔄 Template library management
-- 🔄 Template usage in campaigns
-
-**Planned: 8+ additional tools** (API endpoints available, implementation needed)
+**Total Implemented: 87+ tools across 11 feature categories**
 
 ## 🚀 Quick Start
 
@@ -126,7 +124,7 @@ This version introduces **comprehensive list management functionality**, providi
 
 1. **Clone the repository:**
 ```bash
-git clone https://github.com/zoyth/cakemail-mcp-server.git
+git clone https://github.com/cakemail/cakemail-mcp-server.git
 cd cakemail-mcp-server
 ```
 
@@ -189,66 +187,6 @@ npm run inspector
 ### Health Check
 In Claude Desktop: `"Check my Cakemail API health status"`
 
-## 🛠 Available Tools
-
-### Essential Tools
-- `cakemail_health_check` - Check API connection and authentication
-- `cakemail_get_latest_campaigns` - Get your most recent campaigns
-- `cakemail_list_campaigns` - List campaigns (latest first by default)
-- `cakemail_create_campaign` - Create new email campaigns (HTML or BEE format)
-- `cakemail_send_campaign` - Send campaigns to recipients
-
-### List Management
-- `cakemail_list_lists` - List all contact lists with filtering and pagination
-- `cakemail_create_list` - Create new contact lists with full configuration
-- `cakemail_get_list` - Get detailed list information and statistics
-- `cakemail_update_list` - Update list settings and configurations
-- `cakemail_delete_list` - Permanently delete contact lists
-- `cakemail_archive_list` - Archive lists while preserving data
-- `cakemail_get_list_stats` - Get comprehensive performance analytics
-
-### Sub-Account Management
-- Sub-Account CRUD: `create`, `get`, `update`, `delete`, `list` sub-accounts
-- Account Control: `suspend`, `unsuspend`, `confirm`, `convert_to_organization`
-- Account Discovery: `search_by_name`, `get_by_status`, `get_latest`
-- Debug Tools: `debug_sub_account_access`, `resend_verification_email`
-
-### Account Tools
-- `cakemail_get_self_account` - Get current account details
-- `cakemail_get_retry_config` - View retry configuration and API settings
-
-### BEEeditor Tools
-- `cakemail_create_bee_template` - Create basic BEEeditor template structure
-- `cakemail_create_bee_newsletter` - Generate complete newsletter templates
-- `cakemail_validate_bee_template` - Validate BEE JSON templates
-
-### Campaign Management
-- Campaign CRUD: `create`, `get`, `update`, `delete`, `list` campaigns
-- Campaign Control: `send`, `schedule`, `suspend`, `resume`, `cancel`
-- Campaign Analysis: `render`, `send_test_email`, `get_revisions`, `get_links`
-
-### Email & Sender Management
-- Transactional Emails: `send_email`, `send_transactional_email`, `send_marketing_email`
-- Email Tracking: `get_email`, `render_email`, `get_email_logs`, `get_email_stats`
-- Sender Management: `create`, `get`, `update`, `delete`, `list` senders
-
-### Reporting & Analytics
-- **Campaign Analysis**: `cakemail_get_campaign_stats` - Comprehensive performance metrics
-- **Link Intelligence**: `cakemail_get_campaign_links_stats` - Link-by-link performance analysis
-- **Export Management**: `create`, `list`, `get`, `download`, `delete` campaign report exports
-- **Event Sequence Analysis**: `cakemail_get_campaign_logs` - Advanced user journey tracking with:
-  - 🔄 **Email funnel analysis** (sent → delivered → opened → clicked)
-  - 👥 **User journey mapping** and drop-off identification  
-  - ⏰ **Timing intelligence** (time-to-open, peak engagement hours)
-  - 📉 **Drop-off analysis** with bottleneck identification
-  - 🎯 **Stage-specific optimization** recommendations
-
-### Logs & Event Tracking
-- **Campaign Logs**: `cakemail_get_campaign_logs` - Advanced sequence analysis
-- **Workflow Logs**: `cakemail_get_workflow_logs`, `cakemail_get_workflow_action_logs`
-- **Email Logs**: `cakemail_get_transactional_email_logs`, `cakemail_get_list_logs`
-- **Debug Tools**: `cakemail_debug_logs_access`
-
 ## 💡 Usage Examples
 
 ### Quick Campaign Check
@@ -285,6 +223,25 @@ In Claude Desktop: `"Check my Cakemail API health status"`
 "Archive the old product launch list but keep the data"
 
 "Update the sender information for my customer list"
+```
+
+### Template Operations
+```
+"List all my email templates sorted by creation date"
+
+"Create a new template called 'Welcome Email' with modern content structure"
+
+"Get the details of template ID 123 including its content and metadata"
+
+"Update my newsletter template with new HTML content and add marketing tags"
+
+"Duplicate the welcome email template as 'Welcome Email - French'"
+
+"Show me a preview of template 456 by rendering it to HTML"
+
+"Delete the old product launch template that's no longer needed"
+
+"Find all templates tagged with 'newsletter' that I own"
 ```
 
 ### Create and Send Campaign
@@ -377,41 +334,6 @@ npm run clean && npm run rebuild
 ```bash
 DEBUG=mcp:* npm start
 ```
-
-## 📝 Recent Changes
-
-### Version 1.9.0 - Complete List Management (Current)
-- ✅ **Comprehensive list management** with full CRUD operations
-- ✅ **List performance analytics** with growth and engagement metrics
-- ✅ **Advanced filtering and pagination** for list collections
-- ✅ **Multi-language and webhook support** for list configuration
-- ✅ **Account scoping** for enterprise and agency environments
-- ✅ **Archive functionality** for non-destructive list management
-
-### Version 1.8.0 - BEEeditor Integration & Account Tools
-- ✅ **BEEeditor visual email design** with JSON template support
-- ✅ **Newsletter template generation** with automated sections
-- ✅ **Template validation** and schema compliance checking
-- ✅ **Enhanced campaign creation** with BEE format support
-- ✅ **Account management tools** - Get account details and retry configuration
-
-### Version 1.7.0 - Enterprise Sub-Account Management
-- ✅ **Complete sub-account management** with 14 tools for enterprise operations
-- ✅ **Multi-tenant support** for agencies and large corporations
-- ✅ **Account lifecycle management** including suspension and organization conversion
-- ✅ **Advanced filtering and search** capabilities for account discovery
-
-### Version 1.6.0 - Complete Logs API & Reporting
-- ✅ **Comprehensive logs functionality** with 6 tools for event tracking
-- ✅ **Complete reporting and analytics** with 12 tools for performance insights
-- ✅ **Export functionality** for campaign reports in CSV/XLSX formats
-- ✅ **Advanced event sequence analysis** with user journey tracking
-
-### Version 1.2.0 - Production Ready
-- ✅ Enhanced UX with latest-first default sorting
-- ✅ Production-ready retry and rate limiting
-- ✅ Comprehensive error handling
-- ✅ OAuth 2.0 authentication improvements
 
 ## 🔐 Security
 

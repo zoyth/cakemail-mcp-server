@@ -5,6 +5,234 @@ All notable changes to the Cakemail MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2025-06-17
+
+### 🎯 Complete Template Management Implementation
+
+This version introduces **comprehensive template management functionality**, providing complete lifecycle management for email templates including creation, updating, duplication, and advanced filtering capabilities with support for modern OpenAPI content structures.
+
+### 🆕 Added
+
+#### **New TemplateApi Class**
+- Complete template lifecycle management (create, read, update, delete, duplicate)
+- Advanced filtering, sorting, and pagination for template collections
+- Template rendering for HTML preview and testing
+- OpenAPI-compliant content structure with backward compatibility
+- Multi-account support for enterprise environments
+- Smart template duplication with automatic naming and tag preservation
+
+#### **New MCP Tools (7 additions)**
+
+**Core Template Management:**
+- **`cakemail_list_templates`** - List all email templates with advanced filtering and pagination
+- **`cakemail_create_template`** - Create new email templates with modern content structure
+- **`cakemail_get_template`** - Get detailed template information and metadata
+- **`cakemail_update_template`** - Update template content, metadata, and tags
+- **`cakemail_delete_template`** - Permanently delete email templates
+- **`cakemail_duplicate_template`** - Create copies of existing templates with smart naming
+- **`cakemail_render_template`** - Generate HTML previews of templates
+
+#### **Modern Content Structure Support**
+
+**OpenAPI-Compliant Content Object:**
+```typescript
+{
+  name: "My Template",
+  description: "Template description",
+  content: {
+    type: "html", // html, text, bee, custom
+    subject: "Email Subject",
+    html: "<html>...</html>",
+    text: "Plain text version",
+    json: {} // For advanced templates
+  },
+  tags: ["newsletter", "marketing"]
+}
+```
+
+**Content Type Support:**
+- **HTML templates**: Rich HTML content with embedded CSS
+- **Text templates**: Plain text email content
+- **BEE templates**: BEEeditor JSON structures for visual design
+- **Custom templates**: Advanced template types with JSON content
+
+**Backward Compatibility:**
+- Legacy `html_content`, `text_content`, `subject` fields still supported
+- Automatic migration between old and new content structures
+- Seamless upgrade path for existing templates
+
+#### **Advanced Template Features**
+
+**Template Organization:**
+- **Tag-based categorization**: Organize templates with multiple tags
+- **Ownership filtering**: Filter by user-owned vs shared templates
+- **Search capabilities**: Find templates by name, tags, or content
+- **Template library management**: Comprehensive template collection handling
+
+**Smart Template Operations:**
+- **Intelligent duplication**: Automatic naming with "Copy of..." prefix
+- **Tag preservation**: Duplicate templates inherit original tags
+- **Custom naming**: Override default duplicate names and descriptions
+- **Content validation**: Ensure template structure compliance
+
+**Template Preview & Testing:**
+- **HTML rendering**: Generate preview HTML from template content
+- **Template validation**: Verify content structure and completeness
+- **Preview generation**: Safe template rendering without personalization
+- **Content inspection**: Detailed template structure analysis
+
+### 🏢 Enterprise & Multi-Account Features
+
+#### **Account Scoping**
+- **Multi-tenant support**: Templates scoped to specific accounts
+- **Enterprise isolation**: Separate template libraries per account
+- **Permission management**: Account-level access control for templates
+- **Agency support**: Client-specific template collections
+
+#### **Advanced Filtering & Organization**
+- **Status filtering**: Filter by template ownership and sharing status
+- **Name searching**: Partial matching for template names
+- **Tag filtering**: Find templates by specific tags or tag combinations
+- **Date-based filtering**: Templates created or updated within timeframes
+- **Performance sorting**: Order by creation date, update date, or name
+- **Pagination support**: Handle large template collections efficiently
+
+#### **Template Sharing & Collaboration**
+- **Ownership tracking**: Clear indication of template ownership
+- **Shared template access**: Access to templates shared across accounts
+- **Visibility controls**: Determine which templates are visible to users
+- **Template discovery**: Find and use shared template resources
+
+### 💼 Common Use Cases
+
+#### **Template Library Management**
+```javascript
+// Create branded template library
+const welcomeTemplate = await cakemail_create_template({
+  name: 'Welcome Email - Brand A',
+  description: 'Standard welcome email for new subscribers',
+  content: {
+    type: 'html',
+    subject: 'Welcome to {{company_name}}!',
+    html: '<html><body><h1>Welcome!</h1><p>{{personalization}}</p></body></html>',
+    text: 'Welcome to {{company_name}}! {{personalization}}'
+  },
+  tags: ['welcome', 'onboarding', 'brand-a']
+});
+
+// Organize templates by campaign type
+const templates = await cakemail_list_templates({
+  filter: 'tag==newsletter',
+  sort: '-updated_on',
+  per_page: 20
+});
+```
+
+#### **Template Duplication for Variants**
+```javascript
+// Create localized versions
+const frenchTemplate = await cakemail_duplicate_template({
+  template_id: 123,
+  new_name: 'Welcome Email - French',
+  new_description: 'French version of welcome email'
+});
+
+// Create seasonal variants
+const holidayTemplate = await cakemail_duplicate_template({
+  template_id: 456,
+  new_name: 'Newsletter - Holiday Edition'
+});
+```
+
+#### **Template Preview & Testing**
+```javascript
+// Preview template before using in campaign
+const preview = await cakemail_render_template({
+  template_id: 789
+});
+
+// Get template details for campaign planning
+const template = await cakemail_get_template({
+  template_id: 789
+});
+```
+
+### 📈 Template Analytics & Insights
+
+#### **Template Usage Tracking**
+- **Usage frequency**: Track how often templates are used in campaigns
+- **Performance correlation**: Connect template usage to campaign success
+- **Template optimization**: Identify top-performing template structures
+- **Content analysis**: Understand effective template patterns
+
+#### **Template Management Insights**
+- **Library size tracking**: Monitor template collection growth
+- **Tag usage analysis**: Understand template categorization patterns
+- **Sharing patterns**: Track template collaboration and reuse
+- **Template lifecycle**: Creation, update, and deletion patterns
+
+### 🔧 Technical Implementation
+
+#### **API Integration**
+- **Complete coverage**: All Cakemail `/templates/` endpoints implemented
+- **Type safety**: Full TypeScript interfaces for all operations
+- **Error handling**: Comprehensive validation and error reporting
+- **Response formatting**: Rich, user-friendly output with structure
+- **Parameter validation**: Input checking before API calls
+
+#### **Content Structure Management**
+- **Flexible content handling**: Support for multiple content formats
+- **Schema validation**: Ensure content structure compliance
+- **Migration utilities**: Convert between legacy and modern formats
+- **Content preprocessing**: Prepare content for API submission
+
+#### **Performance Optimization**
+- **Efficient filtering**: Optimized template list queries
+- **Smart caching**: Reduce unnecessary API calls
+- **Batch operations**: Efficient handling of multiple templates
+- **Response optimization**: Structured data for better performance
+
+### 📚 Documentation & Examples
+
+#### **Comprehensive Documentation**
+- **Complete API reference**: All functions with parameters and examples
+- **Use case scenarios**: Real-world implementation examples
+- **Best practices**: Recommended patterns for template management
+- **Error handling**: Common issues and solutions
+- **Integration guides**: Agency and enterprise setup instructions
+
+#### **Ready-to-Use Examples**
+- **Basic template creation**: Simple template setup with minimal configuration
+- **Enterprise setup**: Multi-account template management with sharing
+- **Template library organization**: Tag-based categorization and search
+- **Template duplication workflows**: Creating template variants and localizations
+- **Bulk operations**: Managing multiple templates efficiently
+
+### 🔄 API Endpoints Reference
+
+The template management tools map to these Cakemail API endpoints:
+- `GET /templates` - List all email templates
+- `POST /templates` - Create new email template
+- `GET /templates/{template_id}` - Get specific template details
+- `PATCH /templates/{template_id}` - Update template content and metadata
+- `DELETE /templates/{template_id}` - Delete email template
+- `GET /templates/{template_id}/render` - Render template for preview
+
+### 🔄 Backward Compatibility
+- **No breaking changes**: All existing tools continue to work unchanged
+- **Enhanced campaign tools**: Better template integration for campaign creation
+- **Same configuration**: No changes to environment variables or setup
+- **Seamless upgrade**: Drop-in replacement with immediate access to new functionality
+- **Type safety**: Enhanced TypeScript definitions for better development experience
+
+### 📦 Package Updates
+- **Version**: Updated to 1.10.0
+- **Description**: Enhanced to highlight template management capabilities
+- **Keywords**: Added template-management, email-templates, content-structure
+- **Dependencies**: No new dependencies required
+
+---
+
 ## [1.9.0] - 2025-06-17
 
 ### 🎯 Comprehensive List Management Integration
