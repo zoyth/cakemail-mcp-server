@@ -14,9 +14,9 @@ export const allTools = [
   ...emailTools,
   ...logTools,
   ...reportTools,
-  // Note: Other tools are placeholders and will be implemented incrementally
-  // ...subAccountTools,
-  // ...accountTools,
+  ...accountTools,
+  // Sub-account tools are now fully implemented
+  ...subAccountTools,
 ];
 
 export {

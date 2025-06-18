@@ -1,14 +1,14 @@
 # Cakemail MCP Server
 
-An enterprise Model Context Protocol (MCP) server for integrating with the Cakemail API. This server provides comprehensive tools for email marketing campaigns, contact management, transactional emails, templates, automation, detailed reporting, and enterprise sub-account management through the Cakemail platform.
+An enterprise Model Context Protocol (MCP) server for integrating with the Cakemail API. This server provides comprehensive tools for email marketing campaigns, transactional emails, detailed reporting, and advanced BEEeditor visual email design through the Cakemail platform.
 
-## 🎯 Version 1.7.1 - Advanced Event Sequence Analysis
+## 🎯 Version 1.8.0 - BEEeditor Visual Email Design Integration
 
-This version introduces **advanced event sequence analysis** for campaign logs, providing deep insights into user journey tracking, timing analysis, and funnel optimization with enterprise-level email marketing intelligence.
+This version introduces **comprehensive BEEeditor integration**, transforming the server into a powerful visual email design platform with JSON-based template creation, validation, and newsletter generation capabilities.
 
-## ✨ Features
+## ✨ Currently Implemented Features
 
-### 📧 Campaign Management
+### 📧 Campaign Management (21 tools)
 - ✅ Create, update, and delete email campaigns
 - ✅ List campaigns with advanced filtering and pagination
 - ✅ Send campaigns to contact lists
@@ -17,84 +17,92 @@ This version introduces **advanced event sequence analysis** for campaign logs, 
 - ✅ **BEEeditor integration** for visual email design
 - ✅ **JSON-based email templates** with drag-and-drop structure
 - ✅ **Newsletter template generation** with automated layout
+- ✅ Campaign scheduling, suspension, and lifecycle management
+- ✅ Campaign testing, preview, and revision history
+- ✅ Campaign archiving and link tracking
 
-### 👥 Contact Management
-- ✅ Create, update, and delete contacts with custom fields
-- ✅ List contacts with filtering by list ID
-- ✅ Advanced contact segmentation support
-- ✅ Contact engagement metrics (via Reports API)
+### 📨 Transactional Email (10 tools)
+- ✅ Send individual transactional and marketing emails
+- ✅ Email status tracking and delivery monitoring
+- ✅ HTML and plain text content support
+- ✅ Email rendering and preview capabilities
+- ✅ Comprehensive email activity logs with filtering
+- ✅ Email statistics with time-based analytics
+- ✅ Advanced email logs with performance analysis
+- ✅ Debug tools for email API testing
 
-### 📨 Transactional Email
-- ✅ Send individual transactional emails
-- ✅ Template support for consistent messaging
-- ✅ HTML and plain text content
-- ✅ Delivery tracking and analytics (via Reports API)
-
-### 📋 List Management
-- ✅ Create, update, and delete contact lists
-- ✅ List management with pagination and sorting
-- ✅ Multi-language support
-- ✅ List performance analytics (via Reports API)
-
-### 👤 Sender Management
+### 👤 Sender Management (5 tools)
 - ✅ Create, update, and delete verified senders
 - ✅ List all senders with verification status
-- ✅ Sender authentication support
+- ✅ Complete sender authentication support
 
-### 🎨 Template Management
-- ✅ Create, update, and delete email templates
-- ✅ Template library management
-- ✅ Use templates in campaigns and transactional emails
-
-### 🤖 Automation Workflows
-- ✅ Create and manage automation sequences
-- ✅ Trigger-based email automation
-- ✅ Start/stop automation controls
-
-### 🏢 Enterprise Sub-Account Management
-- ✅ Create, update, and delete sub-accounts with full profile data
-- ✅ Advanced filtering, searching, and pagination for account lists
-- ✅ Account suspension/unsuspension for temporary access control
-- ✅ Email verification workflows with resend capabilities
-- ✅ Organization conversion for account type changes
-- ✅ Multi-tenant support for agencies and large corporations
-- ✅ Hierarchical account management and brand isolation
-- ✅ Debug and troubleshooting utilities for access management
-
-### 📊 Advanced Reporting & Analytics
+### 📊 Reporting & Analytics (3 tools)
 - ✅ Campaign performance metrics (opens, clicks, bounces, rates)
 - ✅ Campaign link click tracking and statistics
-- ✅ Transactional email analytics with time ranges
-- ✅ Contact list growth and engagement analytics
-- ✅ Account-wide performance insights and overviews
-- ✅ Campaign reports export (CSV/XLSX) with download
-- ✅ Suppressed emails export functionality
-- ✅ Comprehensive performance summaries
-- ✅ Debug tools for reports API access
+- ✅ **Advanced event sequence analysis** with user journey tracking
+- ✅ **Email funnel analysis** (sent → delivered → opened → clicked)
+- ✅ **Drop-off analysis** with bottleneck identification
+- ✅ **Optimization recommendations** based on performance data
 
-### 📋 Advanced Logs & Event Sequence Analysis
-- ✅ **Campaign activity logs** with advanced event sequence analysis
-- ✅ **Email journey funnel tracking** (sent → delivered → opened → clicked)
-- ✅ **User journey analysis** and drop-off identification
-- ✅ **Timing analysis** (time-to-open, time-to-click, peak engagement hours)
-- ✅ **Engagement pattern recognition** (immediate vs delayed behavior)
-- ✅ **Conversion rate calculations** at each funnel stage
-- ✅ **Drop-off analysis** with primary bottleneck identification
-- ✅ **Intelligent insights** and stage-specific optimization recommendations
-- ✅ Workflow automation logs for email sequences
-- ✅ Workflow action logs for specific automation steps
-- ✅ Transactional email delivery logs and tracking
-- ✅ Time-based log filtering with Unix timestamps
-- ✅ Pagination and sorting for large log datasets
-- ✅ Log type filtering (opens, clicks, bounces, etc.)
-- ✅ Debug tools for logs API access and testing
+### 🎨 BEEeditor Visual Design (3 tools)
+- ✅ Create basic BEEeditor template structures
+- ✅ Generate complete newsletter templates with sections
+- ✅ Validate BEE JSON templates against schema
+- ✅ Drag-and-drop email design capabilities
 
-### 🏥 Production Features
+### 🏢 Account Management (2 tools)
+- ✅ Get current account details and information
+- ✅ View retry configuration and API settings
+- ✅ Account health monitoring and diagnostics
+
+### 🏥 Production Infrastructure
+- ✅ Health monitoring and API connection validation
+- ✅ OAuth 2.0 authentication with automatic token refresh
 - ✅ Retry logic with exponential backoff
 - ✅ Rate limiting and circuit breaker protection
 - ✅ Request queuing and concurrency control
 - ✅ Comprehensive error handling
-- ✅ Health monitoring and diagnostics
+
+**Total Implemented: 44 tools across 7 feature categories**
+
+## 🔄 Planned Features (Coming Soon)
+
+### 👥 Contact Management
+- 🔄 Create, update, and delete contacts with custom fields
+- 🔄 List contacts with filtering by list ID
+- 🔄 Advanced contact segmentation support
+- 🔄 Contact engagement metrics
+
+### 📋 List Management
+- 🔄 Create, update, and delete contact lists
+- 🔄 List management with pagination and sorting
+- 🔄 Multi-language support
+- 🔄 List performance analytics
+
+### 🤖 Automation Workflows
+- 🔄 Create and manage automation sequences
+- 🔄 Trigger-based email automation
+- 🔄 Start/stop automation controls
+- 🔄 Workflow performance tracking
+
+### 🎨 Template Management
+- 🔄 Create, update, and delete email templates
+- 🔄 Template library management
+- 🔄 Template usage in campaigns
+
+### 🏢 Enterprise Sub-Account Management
+- 🔄 Create, update, and delete sub-accounts
+- 🔄 Multi-tenant support for agencies
+- 🔄 Account suspension/unsuspension
+- 🔄 Organization conversion
+
+### 📊 Enhanced Reporting
+- 🔄 Account-wide performance insights
+- 🔄 Campaign reports export (CSV/XLSX)
+- 🔄 Contact list growth analytics
+- 🔄 Suppressed emails export
+
+**Planned: 20+ additional tools** (API endpoints available, implementation needed)
 
 ## 🚀 Quick Start
 
@@ -171,29 +179,36 @@ npm run inspector
 ### Health Check
 In Claude Desktop: `"Check my Cakemail API health status"`
 
-## 🛠 Key Tools
+## 🛠 Available Tools
 
 ### Essential Tools
 - `cakemail_health_check` - Check API connection and authentication
-- `cakemail_get_latest_campaign` - Get your most recent campaign
-- `cakemail_get_campaigns` - List campaigns (latest first by default)
+- `cakemail_get_latest_campaigns` - Get your most recent campaigns
+- `cakemail_list_campaigns` - List campaigns (latest first by default)
 - `cakemail_create_campaign` - Create new email campaigns (HTML or BEE format)
 - `cakemail_send_campaign` - Send campaigns to recipients
+
+### Account Tools
+- `cakemail_get_self_account` - Get current account details
+- `cakemail_get_retry_config` - View retry configuration and API settings
 
 ### BEEeditor Tools
 - `cakemail_create_bee_template` - Create basic BEEeditor template structure
 - `cakemail_create_bee_newsletter` - Generate complete newsletter templates
 - `cakemail_validate_bee_template` - Validate BEE JSON templates
 
-### Management Tools
-- Contact Management: `create`, `get`, `update`, `delete`, `list` contacts
-- List Management: `create`, `get`, `update`, `delete`, `list` contact lists
-- Sender Management: `create`, `get`, `update`, `delete`, `list` senders
-- Template Management: `create`, `get`, `update`, `delete`, `list` templates
-- Sub-Account Management: `create`, `get`, `update`, `delete`, `list`, `suspend`, `unsuspend` sub-accounts
+### Campaign Management
+- Campaign CRUD: `create`, `get`, `update`, `delete`, `list` campaigns
+- Campaign Control: `send`, `schedule`, `suspend`, `resume`, `cancel`
+- Campaign Analysis: `render`, `send_test_email`, `get_revisions`, `get_links`
 
-### Reporting, Logs, Automation & Enterprise
-- **Campaign Analysis**: `cakemail_get_campaign_stats` - Comprehensive performance metrics with insights
+### Email & Sender Management
+- Transactional Emails: `send_email`, `send_transactional_email`, `send_marketing_email`
+- Email Tracking: `get_email`, `render_email`, `get_email_logs`, `get_email_stats`
+- Sender Management: `create`, `get`, `update`, `delete`, `list` senders
+
+### Reporting & Analytics
+- **Campaign Analysis**: `cakemail_get_campaign_stats` - Comprehensive performance metrics
 - **Link Intelligence**: `cakemail_get_campaign_links_stats` - Link-by-link performance analysis
 - **Event Sequence Analysis**: `cakemail_get_campaign_logs` - Advanced user journey tracking with:
   - 🔄 **Email funnel analysis** (sent → delivered → opened → clicked)
@@ -201,19 +216,19 @@ In Claude Desktop: `"Check my Cakemail API health status"`
   - ⏰ **Timing intelligence** (time-to-open, peak engagement hours)
   - 📉 **Drop-off analysis** with bottleneck identification
   - 🎯 **Stage-specific optimization** recommendations
-- **Account Reports**: Performance overviews, growth metrics, time-based statistics
-- **Workflow Logs**: Automation sequence tracking and action-level logging
-- **Transactional Logs**: Individual email delivery tracking and status monitoring
-- **Export Reports**: Generate and download campaign reports in CSV/XLSX formats
-- **Automation**: Create and manage email automation workflows
-- **Transactional**: Send individual emails with template support
-- **Sub-Account Management**: Enterprise multi-tenant account operations and lifecycle management
 
 ## 💡 Usage Examples
 
 ### Quick Campaign Check
 ```
-"Show me my latest campaign with analytics"
+"Show me my latest campaigns with analytics"
+```
+
+### Account Information
+```
+"Show me my account details"
+
+"What's my current retry configuration?"
 ```
 
 ### Create and Send Campaign
@@ -232,37 +247,18 @@ In Claude Desktop: `"Check my Cakemail API health status"`
 "Create a campaign using BEE format with a professional newsletter layout"
 ```
 
-### Contact Management
+### Transactional Emails
 ```
-"Add a new contact with email sara@example.com and first name Sara to my main contact list"
-```
-
-### Sub-Account Management
-```
-"Create a new sub-account for client 'Acme Corp' with email admin@acme.com"
-
-"List all active sub-accounts and show their verification status"
-
-"Suspend the sub-account for client 'Beta Inc' temporarily"
-
-"Search for sub-accounts containing 'marketing' in their name"
+"Send a transactional welcome email to sara@example.com with our onboarding template"
 ```
 
-### Reporting & Logs
+### Advanced Analytics
 ```
 "Show me the performance metrics for my latest campaign including open rates and click rates"
 
 "Get detailed campaign logs for campaign 12345 with advanced sequence analysis to see the complete user journey"
 
-"Show me workflow logs for automation 456 to track email sequence performance"
-
-"Get transactional email logs for the last week filtered by delivered status"
-
 "Analyze campaign 789 logs to identify drop-off points and get optimization recommendations"
-
-"Create a campaign performance export for campaigns 123, 456, and 789 in Excel format"
-
-"Debug my logs API access to test campaign and workflow log endpoints"
 ```
 
 ## 🔧 Advanced Configuration
@@ -313,57 +309,31 @@ DEBUG=mcp:* npm start
 
 ## 📝 Recent Changes
 
+### Version 1.8.0 - BEEeditor Integration & Account Tools (Current)
+- ✅ **BEEeditor visual email design** with JSON template support
+- ✅ **Newsletter template generation** with automated sections
+- ✅ **Template validation** and schema compliance checking
+- ✅ **Enhanced campaign creation** with BEE format support
+- ✅ **Account management tools** - Get account details and retry configuration
+
 ### Version 1.7.1 - Advanced Event Sequence Analysis
 - ✅ **Advanced event sequence analysis** for campaign logs with enterprise-level intelligence
-- ✅ **Email journey funnel tracking** (sent → delivered → opened → clicked) with exact user progression
-- ✅ **User journey analysis** with complete/incomplete journey identification and drop-off mapping
-- ✅ **Timing analysis** including time-to-open, time-to-click, and peak engagement hour detection
-- ✅ **Engagement pattern recognition** (immediate vs delayed vs mixed patterns)
-- ✅ **Conversion rate calculations** at each funnel stage with precise percentages
-- ✅ **Drop-off analysis** with primary bottleneck identification and loss quantification
-- ✅ **Stage-specific optimization recommendations** based on funnel performance data
-- ✅ **Enhanced insights generation** with actionable marketing intelligence
-- ✅ **Rich visual formatting** with funnel visualization and performance indicators
+- ✅ **Email journey funnel tracking** with exact user progression
+- ✅ **User journey analysis** with complete/incomplete journey identification
+- ✅ **Timing analysis** including time-to-open and peak engagement detection
+- ✅ **Optimization recommendations** based on funnel performance data
 
-### Version 1.7.0
-- ✅ Complete sub-account management for enterprise and agency use
-- ✅ Multi-tenant support with client isolation and brand separation
-- ✅ Advanced account filtering, searching, and lifecycle management
-- ✅ Account suspension/unsuspension and verification workflows
-- ✅ Hierarchical account management for large organizations
-- ✅ Debug tools for sub-account access and permissions
-- ✅ 14+ new tools for comprehensive account operations
+### Version 1.7.0 - Enhanced Analytics
+- ✅ Complete campaign performance reporting
+- ✅ Link click tracking and analysis
+- ✅ Email delivery monitoring and statistics
+- ✅ Advanced logging with filtering capabilities
 
-### Version 1.6.0
-- ✅ Complete Logs API integration with 5 new tools
-- ✅ Campaign activity logs with detailed tracking
-- ✅ Workflow automation logs and action-level tracking
-- ✅ Transactional email delivery logs and monitoring
-- ✅ Time-based log filtering with pagination support
-- ✅ Debug functionality for logs API testing
-- ✅ Full integration with existing analytics and reporting
-
-### Version 1.5.0
-- ✅ Complete Reports API integration with 12+ new tools
-- ✅ Campaign performance statistics and analytics
-- ✅ Campaign link click tracking and analysis
-- ✅ Account and list performance metrics
-- ✅ Export functionality for campaign reports (CSV/XLSX)
-- ✅ Time-based reporting with custom date ranges
-- ✅ Enhanced error handling for reports API
-
-### Version 1.2.0
+### Version 1.2.0 - Production Ready
 - ✅ Enhanced UX with latest-first default sorting
-- ✅ New `cakemail_get_latest_campaign` tool
-- ✅ Intelligent campaign formatting with analytics
 - ✅ Production-ready retry and rate limiting
 - ✅ Comprehensive error handling
-
-### Version 1.1.0
-- ✅ Full API compliance with official documentation
-- ✅ 30+ tools for complete Cakemail functionality
-- ✅ Enhanced security with OAuth 2.0 refresh tokens
-- ✅ Advanced analytics and automation workflows
+- ✅ OAuth 2.0 authentication improvements
 
 ## 🔐 Security
 

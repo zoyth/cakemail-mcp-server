@@ -283,6 +283,9 @@ export interface DeleteSubAccountResponse {
 }
 
 export interface SuspendSubAccountResponse {
+  id: string;
+  object: string;
+  suspended: boolean;
   data: {
     id: string;
     status: 'suspended';
@@ -291,6 +294,9 @@ export interface SuspendSubAccountResponse {
 }
 
 export interface UnsuspendSubAccountResponse {
+  id: string;
+  object: string;
+  unsuspended: boolean;
   data: {
     id: string;
     status: 'active';
@@ -303,11 +309,8 @@ export interface ConfirmSubAccountResponse {
 }
 
 export interface ResendSubAccountVerificationResponse {
-  data: {
-    message: string;
-    email: string;
-    sent_on: string;
-  };
+  object: string;
+  verification_resent: boolean;
 }
 
 // Sub-Account input data interfaces

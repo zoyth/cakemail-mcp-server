@@ -37,6 +37,23 @@ import {
   handleGetCampaignStats,
   handleGetCampaignLinksStats
 } from './reports.js';
+import {
+  handleGetSelfAccount,
+  handleGetRetryConfig
+} from './account.js';
+import {
+  handleListSubAccounts,
+  handleCreateSubAccount,
+  handleGetSubAccount,
+  handleUpdateSubAccount,
+  handleDeleteSubAccount,
+  handleSuspendSubAccount,
+  handleUnsuspendSubAccount,
+  handleVerifySubAccountEmail,
+  handleResendVerificationEmail,
+  handleConvertSubAccountToOrganization,
+  handleDebugSubAccountAccess
+} from './sub-accounts.js';
 
 // Create the handler registry (phase 1 - core handlers only)
 export const handlerRegistry: HandlerRegistry = {
@@ -77,6 +94,23 @@ export const handlerRegistry: HandlerRegistry = {
   // Reports
   'cakemail_get_campaign_stats': handleGetCampaignStats,
   'cakemail_get_campaign_links_stats': handleGetCampaignLinksStats,
+  
+  // Account
+  'cakemail_get_self_account': handleGetSelfAccount,
+  'cakemail_get_retry_config': handleGetRetryConfig,
+  
+  // Sub-Account Management
+  'cakemail_list_sub_accounts': handleListSubAccounts,
+  'cakemail_create_sub_account': handleCreateSubAccount,
+  'cakemail_get_sub_account': handleGetSubAccount,
+  'cakemail_update_sub_account': handleUpdateSubAccount,
+  'cakemail_delete_sub_account': handleDeleteSubAccount,
+  'cakemail_suspend_sub_account': handleSuspendSubAccount,
+  'cakemail_unsuspend_sub_account': handleUnsuspendSubAccount,
+  'cakemail_verify_sub_account_email': handleVerifySubAccountEmail,
+  'cakemail_resend_sub_account_verification': handleResendVerificationEmail,
+  'cakemail_convert_sub_account_to_organization': handleConvertSubAccountToOrganization,
+  'cakemail_debug_sub_account_access': handleDebugSubAccountAccess,
   
   // Note: Additional handlers will be added incrementally as they are fully implemented
 };

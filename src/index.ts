@@ -12,7 +12,7 @@ import { handleToolCall } from './handlers/index.js';
 const server = new Server(
   {
     name: 'cakemail-mcp-server',
-    version: '1.7.0', // Refactored architecture
+    version: '1.8.0', // BEEeditor integration
   },
   {
     capabilities: {

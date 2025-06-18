@@ -5,7 +5,169 @@ All notable changes to the Cakemail MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.7.1] - 2025-06-17
+## [1.8.0] - 2025-06-17
+
+### 🎯 BEEeditor Visual Email Design Integration
+
+This version introduces **comprehensive BEEeditor integration**, transforming the Cakemail MCP Server into a powerful visual email design platform. Users can now create professional newsletters and campaigns using structured JSON templates instead of writing HTML manually.
+
+### 🆕 Added
+
+#### **Complete BEEeditor Schema Support**
+- **Schema Integration**: Added `simple_unified.schema.json` with complete BEE specification
+- **Type System**: 40+ TypeScript interfaces for all BEE components and modules
+- **Validation Engine**: Real-time schema validation with detailed error reporting
+- **Template Structure**: Support for rows, columns, and 10 different module types
+
+#### **Visual Design Module Types**
+- **Content Modules**: Title, paragraph, list, HTML content blocks
+- **Interactive Elements**: Buttons with hover effects, linked images
+- **Layout Components**: Dividers, spacing controls, responsive columns
+- **Media Support**: Images with responsive sizing and linking
+- **Navigation**: Menu systems and icon arrays
+
+#### **New MCP Tools (3 additions)**
+- **`cakemail_create_bee_template`** - Create basic BEEeditor template structures
+  - Customizable colors, width, and background settings
+  - Professional template metadata (title, subject, preheader)
+  - Responsive design with mobile optimization
+  
+- **`cakemail_create_bee_newsletter`** - Generate complete newsletter templates
+  - Automated header, content sections, and footer layout
+  - Multi-section content with images, buttons, and text
+  - Professional styling with consistent branding
+  
+- **`cakemail_validate_bee_template`** - Validate BEE JSON templates against schema
+  - Comprehensive validation with specific error messages
+  - Template structure visualization for debugging
+  - Schema compliance verification
+
+#### **Enhanced Campaign Tools**
+- **`cakemail_create_campaign`** - Now supports both HTML and BEEeditor JSON formats
+  - `content_type` parameter: 'html', 'bee', or 'auto-detect'
+  - `json_content` parameter for BEE templates
+  - Automatic template validation before campaign creation
+  
+- **`cakemail_update_campaign`** - Can update campaigns with BEE content
+  - Support for switching between HTML and BEE formats
+  - Template structure preservation during updates
+  - Validation feedback for content changes
+
+### 🎨 Visual Design Capabilities
+
+#### **Layout System**
+- **Flexible Grid**: 1-12 column responsive layout system
+- **Row Structure**: Organized content sections with customizable spacing
+- **Mobile Responsive**: Automatic column stacking and responsive behavior
+- **Visual Hierarchy**: Proper heading structure (H1, H2, H3) support
+
+#### **Styling Features**
+- **Color Management**: Brand-consistent color schemes and palettes
+- **Typography Control**: Font sizes, weights, spacing, and alignment
+- **Spacing System**: Precise padding and margin controls (0-60px range)
+- **Border Styling**: Customizable borders, radius, and colors
+- **Background Support**: Colors, images, and positioning options
+
+#### **Content Management**
+- **Rich Text**: Formatted paragraphs with line height and spacing control
+- **Interactive Buttons**: Call-to-action buttons with hover effects
+- **Image Integration**: Responsive images with alt text and linking
+- **Lists and Menus**: Organized content with custom styling
+- **Dividers**: Visual separation elements with customizable appearance
+
+### 🛠️ Technical Implementation
+
+#### **Utility Library (15+ Functions)**
+- **Template Creation**: `createBasicBEETemplate()`, `createNewsletterTemplate()`
+- **Module Builders**: `createBEETitleModule()`, `createBEEButtonModule()`, etc.
+- **Template Manipulation**: `addModuleToTemplate()`, `addRowToTemplate()`
+- **Validation**: `validateBEETemplate()` with comprehensive error checking
+- **Debugging**: `printBEETemplateStructure()` for visual template inspection
+
+#### **Type Safety & Validation**
+- **Complete TypeScript Support**: Full type definitions for all BEE components
+- **Schema Validation**: Real-time validation against BEE specification
+- **Error Handling**: Detailed validation messages with fix suggestions
+- **Range Validation**: Automatic checking of padding, borders, and sizing values
+
+#### **API Integration**
+- **Seamless Workflow**: BEE templates integrate with existing Cakemail API
+- **Content Type Detection**: Automatic format detection and handling
+- **Backward Compatibility**: Full support for existing HTML workflows
+- **Error Recovery**: Graceful handling of invalid templates with helpful feedback
+
+### 📚 Comprehensive Documentation
+
+#### **Documentation Files Created**
+- **`/docs/BEE_EDITOR_INTEGRATION.md`** - Complete integration guide (100+ pages)
+  - Overview of BEE integration and capabilities
+  - Tool documentation with detailed examples
+  - Template structure explanations and best practices
+  - Troubleshooting guide and common solutions
+  
+- **`/examples/bee-templates.md`** - Ready-to-use template examples
+  - Welcome email template with professional styling
+  - Product newsletter with images and call-to-action
+  - Event invitation with rich formatting and buttons
+  - Usage instructions and customization tips
+  
+- **`/BEE_IMPLEMENTATION_SUMMARY.md`** - Technical implementation details
+- **Updated README.md** - BEE integration information and examples
+
+### 💼 Business Value
+
+#### **For Email Marketers**
+- **Visual Design**: Create professional emails without HTML knowledge
+- **Consistency**: Maintain brand standards across all campaigns
+- **Efficiency**: Generate newsletter layouts in minutes vs hours
+- **Flexibility**: Easy content updates without developer assistance
+
+#### **For Developers**
+- **Type Safety**: Full TypeScript support prevents runtime errors
+- **Validation**: Comprehensive error checking before deployment
+- **Integration**: Seamless workflow with existing Cakemail tools
+- **Debugging**: Template structure visualization and error reporting
+
+#### **For Agencies & Enterprises**
+- **Brand Management**: Consistent templates across multiple clients
+- **Collaboration**: Non-technical team members can create content
+- **Quality Control**: Validation ensures professional output
+- **Scalability**: Reusable templates and components
+
+### 🎯 Usage Examples
+
+#### **Create Basic Template**
+```
+"Create a basic BEE template for welcome emails with blue theme"
+```
+
+#### **Generate Newsletter**
+```
+"Create a BEE newsletter with sections for product announcements and customer testimonials"
+```
+
+#### **Create Campaign with BEE**
+```
+"Create a campaign using BEE format with a professional newsletter layout"
+```
+
+#### **Validate Template**
+```
+"Validate this BEE template and show me the structure"
+```
+
+### 🔄 Backward Compatibility
+- **No Breaking Changes**: All existing HTML workflows continue unchanged
+- **Enhanced Tools**: Campaign tools now support both HTML and BEE formats
+- **Same Configuration**: No changes to environment variables or setup
+- **Seamless Migration**: Immediate access to visual design capabilities
+
+### 📦 Package Updates
+- **Version**: Updated to 1.8.0
+- **Keywords**: Added bee-editor, visual-design, newsletter, json-templates
+- **Description**: Enhanced to highlight BEEeditor visual email design capabilities
+
+---
 
 ### 🎯 Advanced Event Sequence Analysis
 
