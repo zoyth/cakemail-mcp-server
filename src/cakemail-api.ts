@@ -75,7 +75,7 @@ export type {
   SendersResponse, SenderResponse, CreateSenderResponse,
   
   // Template types
-  Template, CreateTemplateData, UpdateTemplateData,
+  Template, TemplateContent, CreateTemplateData, UpdateTemplateData,
   TemplatesResponse, TemplateResponse, CreateTemplateResponse,
   
   // Utility types
@@ -98,6 +98,12 @@ export { CampaignApi } from './api/campaign-api.js';
 export { ContactApi } from './api/contact-api.js';
 export { SenderApi } from './api/sender-api.js';
 export { TemplateApi } from './api/template-api.js';
+export type {
+  TemplateFilters,
+  GetTemplatesParams,
+  CreateTemplateParams,
+  TemplateOperationParams
+} from './api/template-api.js';
 export { EmailApi } from './api/email-api.js';
 export { ListApi } from './api/list-api.js';
 export type {

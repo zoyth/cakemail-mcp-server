@@ -7,6 +7,7 @@ import { accountTools } from './account-tools.js';
 import { reportTools } from './report-tools.js';
 import { logTools } from './log-tools.js';
 import { listTools } from './list-tools.js';
+import { templateTools } from './template-tools.js';
 
 export const allTools = [
   ...healthTools,
@@ -20,6 +21,8 @@ export const allTools = [
   ...subAccountTools,
   // List management tools
   ...listTools,
+  // Template management tools
+  ...templateTools,
 ];
 
 export {
@@ -31,5 +34,6 @@ export {
   accountTools,
   reportTools,
   logTools,
-  listTools
+  listTools,
+  templateTools
 };

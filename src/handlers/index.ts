@@ -63,6 +63,15 @@ import {
   handleArchiveList,
   handleGetListStats
 } from './lists.js';
+import {
+  handleListTemplates,
+  handleCreateTemplate,
+  handleGetTemplate,
+  handleUpdateTemplate,
+  handleDeleteTemplate,
+  handleDuplicateTemplate,
+  handleRenderTemplate
+} from './templates.js';
 
 // Create the handler registry (phase 1 - core handlers only)
 export const handlerRegistry: HandlerRegistry = {
@@ -129,6 +138,15 @@ export const handlerRegistry: HandlerRegistry = {
   'cakemail_delete_list': handleDeleteList,
   'cakemail_archive_list': handleArchiveList,
   'cakemail_get_list_stats': handleGetListStats,
+  
+  // Template Management
+  'cakemail_list_templates': handleListTemplates,
+  'cakemail_create_template': handleCreateTemplate,
+  'cakemail_get_template': handleGetTemplate,
+  'cakemail_update_template': handleUpdateTemplate,
+  'cakemail_delete_template': handleDeleteTemplate,
+  'cakemail_duplicate_template': handleDuplicateTemplate,
+  'cakemail_render_template': handleRenderTemplate,
   
   // Note: Additional handlers will be added incrementally as they are fully implemented
 };

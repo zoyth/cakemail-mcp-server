@@ -697,32 +697,59 @@ export interface UpdateSenderData {
   language?: string;
 }
 
-// Template interfaces
+// Template interfaces - Updated to match OpenAPI spec
+export interface TemplateContent {
+  type: 'html' | 'text' | 'bee' | 'custom';
+  subject?: string;
+  html?: string;
+  text?: string;
+  json?: any;
+}
+
 export interface Template {
   id: number;
   name: string;
-  subject?: string;
-  html_content: string;
-  text_content?: string;
   description?: string;
-  created_on?: string;
-  updated_on?: string;
+  created_on?: number;
+  updated_on?: number;
+  tags?: string[];
+  is_owner?: boolean;
+  sharing?: {
+    shared: boolean;
+    accounts?: any[];
+    automatic?: boolean;
+  };
+  thumbnail?: string; // deprecated
+  thumbnail_url?: string;
+  content: TemplateContent;
+  // Legacy fields for backward compatibility
+  subject?: string;
+  html_content?: string;
+  text_content?: string;
 }
 
 export interface CreateTemplateData {
   name: string;
-  subject?: string;
-  html_content: string;
-  text_content?: string;
   description?: string;
+  content?: TemplateContent;
+  tags?: string[];
+  account_id?: number;
+  // Legacy fields for backward compatibility
+  subject?: string;
+  html_content?: string;
+  text_content?: string;
 }
 
 export interface UpdateTemplateData {
   name?: string;
+  description?: string;
+  content?: TemplateContent;
+  tags?: string[];
+  account_id?: number;
+  // Legacy fields for backward compatibility
   subject?: string;
   html_content?: string;
   text_content?: string;
-  description?: string;
 }
 
 // Email API v2 Enhanced Types
