@@ -5,6 +5,12 @@ import { HandlerRegistry } from '../types/tools.js';
 // Import individual handlers
 import { handleHealthCheck } from './health.js';
 import { 
+  handleGetTokenStatus, 
+  handleRefreshToken, 
+  handleValidateToken, 
+  handleGetTokenScopes 
+} from './auth.js';
+import { 
   handleGetSenders, 
   handleCreateSender, 
   handleGetSender, 
@@ -127,6 +133,12 @@ import {
 export const handlerRegistry: HandlerRegistry = {
   // Health
   'cakemail_health_check': handleHealthCheck,
+  
+  // Authentication
+  'cakemail_get_token_status': handleGetTokenStatus,
+  'cakemail_refresh_token': handleRefreshToken,
+  'cakemail_validate_token': handleValidateToken,
+  'cakemail_get_token_scopes': handleGetTokenScopes,
   
   // Senders
   'cakemail_get_senders': handleGetSenders,

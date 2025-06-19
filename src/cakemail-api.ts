@@ -49,6 +49,23 @@ export class CakemailAPI extends BaseApiClient {
     this.logs = new LogsApi(config);
   }
 
+  // Expose token management methods
+  public getTokenStatus() {
+    return super.getTokenStatus();
+  }
+
+  public async forceRefreshToken() {
+    return super.forceRefreshToken();
+  }
+
+  public async validateToken() {
+    return super.validateToken();
+  }
+
+  public getTokenScopes() {
+    return super.getTokenScopes();
+  }
+
 
 }
 

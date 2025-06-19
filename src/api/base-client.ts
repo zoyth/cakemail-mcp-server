@@ -5,7 +5,6 @@ import { CakemailConfig, CakemailToken } from '../types/cakemail-types.js';
 import { 
   CakemailError as CakemailApiError,
   CakemailAuthenticationError,
-  CakemailNetworkError,
   createCakemailError
 } from '../types/errors.js';
 import {
@@ -81,49 +80,73 @@ export class BaseApiClient {
   }
 
   async authenticate(): Promise<void> {
-    // Try refresh token first if available and not expired
-    if (this.token?.refresh_token && this.tokenExpiry && new Date() < new Date(this.tokenExpiry.getTime() - 300000)) {
+    const maxRetries = 3;
+    let retryCount = 0;
+    
+    while (retryCount < maxRetries) {
       try {
-        await this.refreshToken();
-        return;
-      } catch (error) {
-        if (this.debugMode) {
-          console.warn('Refresh token failed, falling back to password authentication');
+        // Try refresh token first if available and not expired
+        if (this.token?.refresh_token && this.tokenExpiry && new Date() < new Date(this.tokenExpiry.getTime() - 300000)) {
+          try {
+            await this.refreshToken();
+            return;
+          } catch (error) {
+            if (this.debugMode) {
+              console.warn(`Refresh token failed (attempt ${retryCount + 1}), falling back to password authentication`);
+            }
+          }
         }
+
+        // Password authentication with retry logic
+        await this.passwordAuthenticate();
+        return;
+        
+      } catch (error) {
+        retryCount++;
+        
+        if (retryCount >= maxRetries) {
+          throw error;
+        }
+        
+        if (this.debugMode) {
+          console.warn(`Authentication attempt ${retryCount} failed, retrying...`);
+        }
+        
+        // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
       }
     }
+  }
 
-    // Password authentication
-    try {
-      const response = await fetch(`${this.baseUrl}/token`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'content-type': 'application/x-www-form-urlencoded'
-        },
-        body: new URLSearchParams({
-          grant_type: 'password',
-          username: this.config.username,
-          password: this.config.password
-        }).toString()
-      });
+  private async passwordAuthenticate(): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/token`, {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        grant_type: 'password',
+        username: this.config.username,
+        password: this.config.password,
+        scopes: 'user' // Request appropriate scopes
+      }).toString()
+    });
 
-      if (!response.ok) {
-        const errorBody = await this.parseErrorResponse(response);
-        throw new CakemailAuthenticationError(
-          `Authentication failed (${response.status}): ${errorBody?.error_description || errorBody?.message || errorBody?.error || response.statusText}`,
-          errorBody
-        );
-      }
+    if (!response.ok) {
+      const errorBody = await this.parseErrorResponse(response);
+      throw new CakemailAuthenticationError(
+        `Authentication failed (${response.status}): ${errorBody?.error_description || errorBody?.message || errorBody?.error || response.statusText}`,
+        errorBody
+      );
+    }
 
-      const tokenData = await response.json() as CakemailToken;
-      this.token = tokenData;
-      this.tokenExpiry = new Date(Date.now() + (tokenData.expires_in * 1000) - 60000); // 1 minute buffer
-    } catch (error) {
-      if (error instanceof CakemailAuthenticationError) {
-        throw error;
-      }
-      throw new CakemailNetworkError('Failed to authenticate due to network error', error as Error);
+    const tokenData = await response.json() as CakemailToken;
+    this.token = tokenData;
+    this.tokenExpiry = new Date(Date.now() + (tokenData.expires_in * 1000) - 60000); // 1 minute buffer
+    
+    if (this.debugMode) {
+      console.log(`[Cakemail API] Token obtained, expires at: ${this.tokenExpiry.toISOString()}`);
     }
   }
 
@@ -132,35 +155,43 @@ export class BaseApiClient {
       throw new CakemailAuthenticationError('No refresh token available');
     }
 
-    try {
-      const response = await fetch(`${this.baseUrl}/token`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'content-type': 'application/x-www-form-urlencoded'
-        },
-        body: new URLSearchParams({
-          grant_type: 'refresh_token',
-          refresh_token: this.token.refresh_token
-        }).toString()
-      });
+    const response = await fetch(`${this.baseUrl}/token`, {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: this.token.refresh_token
+      }).toString()
+    });
 
-      if (!response.ok) {
-        const errorBody = await this.parseErrorResponse(response);
+    if (!response.ok) {
+      const errorBody = await this.parseErrorResponse(response);
+      
+      // If refresh fails due to invalid refresh token, clear it and force password auth
+      if (response.status === 401 || response.status === 403) {
+        this.token = null;
+        this.tokenExpiry = null;
         throw new CakemailAuthenticationError(
-          `Token refresh failed (${response.status}): ${response.statusText}`,
+          'Refresh token invalid, password authentication required',
           errorBody
         );
       }
+      
+      throw new CakemailAuthenticationError(
+        `Token refresh failed (${response.status}): ${response.statusText}`,
+        errorBody
+      );
+    }
 
-      const tokenData = await response.json() as CakemailToken;
-      this.token = tokenData;
-      this.tokenExpiry = new Date(Date.now() + (tokenData.expires_in * 1000) - 60000);
-    } catch (error) {
-      if (error instanceof CakemailAuthenticationError) {
-        throw error;
-      }
-      throw new CakemailNetworkError('Failed to refresh token due to network error', error as Error);
+    const tokenData = await response.json() as CakemailToken;
+    this.token = tokenData;
+    this.tokenExpiry = new Date(Date.now() + (tokenData.expires_in * 1000) - 60000);
+    
+    if (this.debugMode) {
+      console.log(`[Cakemail API] Token refreshed, expires at: ${this.tokenExpiry.toISOString()}`);
     }
   }
 
@@ -184,6 +215,9 @@ export class BaseApiClient {
   }
 
   protected async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
+    // Ensure we have a valid token before making the request
+    await this.ensureValidToken();
+    
     const operation = async () => {
       // Apply rate limiting
       if (this.rateLimiter) {
@@ -208,7 +242,6 @@ export class BaseApiClient {
   }
   
   private async executeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
-    await this.authenticate();
 
     const headers: Record<string, string> = {
       'Authorization': `Bearer ${this.token!.access_token}`,
@@ -311,6 +344,143 @@ export class BaseApiClient {
     
     const parsedDate = new Date(date);
     return parsedDate instanceof Date && !isNaN(parsedDate.getTime());
+  }
+
+  // Enhanced token status checking
+  public getTokenStatus(): {
+    hasToken: boolean;
+    isExpired: boolean;
+    expiresAt: Date | null;
+    timeUntilExpiry: number | null; // milliseconds
+    needsRefresh: boolean;
+    tokenType: string | null;
+    hasRefreshToken: boolean;
+  } {
+    const now = new Date();
+    const hasToken = !!this.token?.access_token;
+    const isExpired = this.tokenExpiry ? now >= this.tokenExpiry : !hasToken;
+    const timeUntilExpiry = this.tokenExpiry ? this.tokenExpiry.getTime() - now.getTime() : null;
+    const needsRefresh = hasToken && this.tokenExpiry ? 
+      now >= new Date(this.tokenExpiry.getTime() - 300000) : // Refresh 5 minutes before expiry
+      !hasToken;
+
+    return {
+      hasToken,
+      isExpired,
+      expiresAt: this.tokenExpiry,
+      timeUntilExpiry,
+      needsRefresh,
+      tokenType: this.token?.token_type || null,
+      hasRefreshToken: !!this.token?.refresh_token
+    };
+  }
+
+  // Manual token refresh with better error handling
+  public async forceRefreshToken(): Promise<{
+    success: boolean;
+    newToken: Partial<CakemailToken> | null;
+    previousExpiry: Date | null;
+    newExpiry: Date | null;
+    error?: string;
+  }> {
+    const previousExpiry = this.tokenExpiry;
+    
+    try {
+      await this.refreshToken();
+      return {
+        success: true,
+        newToken: this.token ? {
+          token_type: this.token.token_type,
+          expires_in: this.token.expires_in,
+          // Don't expose actual tokens for security
+        } : null,
+        previousExpiry,
+        newExpiry: this.tokenExpiry
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return {
+        success: false,
+        newToken: null,
+        previousExpiry,
+        newExpiry: this.tokenExpiry,
+        error: errorMessage
+      };
+    }
+  }
+
+  // Validate token by making a test API call
+  public async validateToken(): Promise<{
+    isValid: boolean;
+    statusCode?: number;
+    error?: string;
+    accountInfo?: any;
+  }> {
+    try {
+      // Use a lightweight endpoint to test token validity
+      const response = await this.makeRequest('/accounts/self');
+      return {
+        isValid: true,
+        statusCode: 200,
+        accountInfo: {
+          id: response.data?.id,
+          email: response.data?.email,
+          name: response.data?.name
+        }
+      };
+    } catch (error: any) {
+      return {
+        isValid: false,
+        statusCode: error.statusCode || 0,
+        error: error.message || String(error)
+      };
+    }
+  }
+
+  // Get token scopes and permissions
+  public getTokenScopes(): {
+    accounts: number[];
+    scopes: string | null;
+    permissions: string[];
+  } {
+    return {
+      accounts: this.token?.accounts || [],
+      scopes: null, // The API doesn't directly expose scopes in the token response
+      permissions: this.inferPermissionsFromAccounts()
+    };
+  }
+
+  // Infer permissions based on available accounts
+  private inferPermissionsFromAccounts(): string[] {
+    const permissions: string[] = [];
+    
+    if (this.token?.accounts && this.token.accounts.length > 0) {
+      permissions.push('account_access');
+      permissions.push('email_send');
+      permissions.push('campaign_management');
+      permissions.push('contact_management');
+      permissions.push('list_management');
+      permissions.push('template_management');
+      permissions.push('analytics_access');
+    }
+    
+    return permissions;
+  }
+
+  // Auto-refresh token before requests if needed
+  protected async ensureValidToken(): Promise<void> {
+    const status = this.getTokenStatus();
+    
+    if (!status.hasToken || status.isExpired) {
+      await this.authenticate();
+    } else if (status.needsRefresh && status.hasRefreshToken) {
+      try {
+        await this.refreshToken();
+      } catch (error) {
+        // If refresh fails, fall back to full authentication
+        await this.authenticate();
+      }
+    }
   }
 
   // Enhanced health check with proper error handling and retry logic

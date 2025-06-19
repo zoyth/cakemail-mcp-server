@@ -1,4 +1,5 @@
 import { healthTools } from './health-tools.js';
+import { authTools } from './auth-tools.js';
 import { senderTools } from './sender-tools.js';
 import { campaignTools } from './campaign-tools.js';
 import { subAccountTools } from './sub-account-tools.js';
@@ -12,6 +13,7 @@ import { contactTools } from './contact-tools.js';
 
 export const allTools = [
   ...healthTools,
+  ...authTools,
   ...senderTools,
   ...campaignTools,
   ...emailTools,
@@ -30,6 +32,7 @@ export const allTools = [
 
 export {
   healthTools,
+  authTools,
   senderTools,
   campaignTools,
   subAccountTools,

@@ -12,6 +12,7 @@ export interface CakemailToken {
   token_type: string;
   expires_in: number;
   refresh_token: string;
+  accounts: number[];
 }
 
 export interface CakemailErrorResponse {
