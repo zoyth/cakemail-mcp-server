@@ -94,3 +94,17 @@ junit.xml
 
 # Archive directory for old documentation
 archive/
+
+# Backup files
+backup/
+*.backup
+*.bak
+
+# Development scripts
+scripts/
+run-test*.sh
+test-*.mjs
+test-*.js
+
+# Temporary test files
+test-mock.*
