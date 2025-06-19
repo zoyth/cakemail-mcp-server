@@ -5,6 +5,66 @@ All notable changes to the Cakemail MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.1] - 2025-06-19
+
+### 🏗️ Reports Module Refactoring
+
+This version refactors the reports module from a monolithic structure into focused, maintainable modules for enhanced development experience and easier future improvements.
+
+### 🔧 Refactored
+
+#### **Reports Module Architecture**
+Split the large `reports.ts` file (2,500+ lines) into **7 focused modules**:
+
+- **`campaign-analytics.ts`** - Campaign performance statistics and link analysis
+- **`email-stats.ts`** - Transactional email API statistics
+- **`list-account-stats.ts`** - List performance and account-wide analytics
+- **`exports.ts`** - Campaign and suppressed email exports management
+- **`insights.ts`** - Reusable analytics utilities and recommendation engine
+- **`debug.ts`** - API access debugging tools
+- **`index.ts`** - Clean module exports and coordination
+
+#### **Enhanced Analytics Features**
+- **Smart Performance Benchmarking** - Automatic comparison against industry standards
+- **Visual Performance Indicators** - Emoji-based performance indicators (🚀👍⚠️🛑)
+- **Intelligent Link Analysis** - Automatic categorization and optimization recommendations
+- **Contextual Insights** - Performance analysis based on data patterns
+- **Actionable Recommendations** - Specific, targeted improvement suggestions
+
+#### **Modular Benefits**
+- **Maintainability** - Smaller, focused files (200-400 lines vs 2,500+ lines)
+- **Extensibility** - Easy addition of new report types as focused modules
+- **Reusability** - Common analytics functions shared across modules
+- **Testing** - Easier unit testing of focused functionality
+- **Performance** - Tree-shaking friendly structure
+
+### 🔄 Backward Compatibility
+- **No Breaking Changes** - All existing function signatures preserved
+- **Same API** - All handler names and parameters unchanged
+- **Enhanced Responses** - Richer analytics with same structure
+- **Seamless Migration** - Drop-in replacement with enhanced capabilities
+
+### 🏢 Architecture Improvements
+- **Separation of Concerns** - Each module handles specific domain
+- **Clear Dependencies** - Well-defined interfaces between modules
+- **Code Reuse** - Shared insight generation functions
+- **Better Organization** - Related functionality grouped together
+
+### 📊 Enhanced Analytics
+- **Link Performance Analysis** - Click distribution, categorization, optimization
+- **Campaign Insights** - Intelligent analysis of performance patterns
+- **Account Health** - Comprehensive deliverability and usage monitoring
+- **Export Management** - Complete lifecycle with progress tracking
+- **Debug Tools** - API connectivity and access verification
+
+### 🔧 Technical Implementation
+- **TypeScript Safety** - Full type definitions across all modules
+- **Error Handling** - Comprehensive validation and error reporting
+- **Response Formatting** - Rich, user-friendly output with structure
+- **Parameter Validation** - Input checking before API calls
+
+---
+
 ## [1.10.0] - 2025-06-17
 
 ### 🎯 Complete Template Management Implementation

@@ -34,7 +34,7 @@ const api = new CakemailAPI({
   username, 
   password,
   circuitBreaker: { 
-    enabled: false,
+    enabled: true,
     failureThreshold: 5,
     resetTimeout: 60000
   }

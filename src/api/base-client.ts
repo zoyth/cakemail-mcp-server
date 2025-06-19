@@ -63,7 +63,7 @@ export class BaseApiClient {
     
     // Initialize circuit breaker if enabled
     const circuitBreakerConfig = {
-      enabled: true,
+      enabled: false, // Default to disabled unless explicitly enabled
       failureThreshold: 5,
       resetTimeout: 60000,
       ...config.circuitBreaker
