@@ -51,9 +51,29 @@ import {
   handleGetCampaignLogs
 } from './logs.js';
 import {
+  // Campaign analytics
   handleGetCampaignStats,
-  handleGetCampaignLinksStats
-} from './reports.js';
+  handleGetCampaignLinksStats,
+  // Email statistics
+  handleGetEmailStats as handleGetEmailStatsReports,
+  // List and account stats
+  handleGetListStats as handleGetListStatsReports,
+  handleGetAccountStats,
+  handleGetActionStats,
+  // Export management
+  handleListCampaignReportsExports,
+  handleCreateCampaignReportsExport,
+  handleGetCampaignReportsExport,
+  handleDownloadCampaignReportsExport,
+  handleDeleteCampaignReportsExport,
+  handleListSuppressedEmailsExports,
+  handleCreateSuppressedEmailsExport,
+  handleGetSuppressedEmailsExport,
+  handleDownloadSuppressedEmailsExport,
+  handleDeleteSuppressedEmailsExport,
+  // Debug utilities
+  handleDebugReportsAccess
+} from './reports/index.js';
 import {
   handleGetSelfAccount,
   handleGetRetryConfig
@@ -156,9 +176,38 @@ export const handlerRegistry: HandlerRegistry = {
   // Logs
   'cakemail_get_campaign_logs': handleGetCampaignLogs,
   
-  // Reports
+  // Reports - Campaign Analytics
   'cakemail_get_campaign_stats': handleGetCampaignStats,
   'cakemail_get_campaign_links_stats': handleGetCampaignLinksStats,
+  
+  // Reports - Email Statistics
+  'cakemail_get_reports_email_stats': handleGetEmailStatsReports,
+  
+  // Reports - List Analytics
+  'cakemail_get_reports_list_stats': handleGetListStatsReports,
+  
+  // Reports - Account Overview
+  'cakemail_get_account_stats': handleGetAccountStats,
+  
+  // Reports - Workflow Analytics
+  'cakemail_get_action_stats': handleGetActionStats,
+  
+  // Reports - Campaign Exports
+  'cakemail_list_campaign_reports_exports': handleListCampaignReportsExports,
+  'cakemail_create_campaign_reports_export': handleCreateCampaignReportsExport,
+  'cakemail_get_campaign_reports_export': handleGetCampaignReportsExport,
+  'cakemail_download_campaign_reports_export': handleDownloadCampaignReportsExport,
+  'cakemail_delete_campaign_reports_export': handleDeleteCampaignReportsExport,
+  
+  // Reports - Suppressed Emails Exports
+  'cakemail_list_suppressed_emails_exports': handleListSuppressedEmailsExports,
+  'cakemail_create_suppressed_emails_export': handleCreateSuppressedEmailsExport,
+  'cakemail_get_suppressed_emails_export': handleGetSuppressedEmailsExport,
+  'cakemail_download_suppressed_emails_export': handleDownloadSuppressedEmailsExport,
+  'cakemail_delete_suppressed_emails_export': handleDeleteSuppressedEmailsExport,
+  
+  // Reports - Debug
+  'cakemail_debug_reports_access': handleDebugReportsAccess,
   
   // Account
   'cakemail_get_self_account': handleGetSelfAccount,

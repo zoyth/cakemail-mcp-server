@@ -1,0 +1,2458 @@
+import { CakemailAPI } from '../cakemail-api.js';
+import { handleCakemailError } from '../utils/errors.js';
+import { formatSectionHeader, formatKeyValue, formatList } from '../utils/formatting.js';
+
+/**
+ * Get detailed campaign performance statistics and analytics
+ */
+export async function handleGetCampaignStats(args: any, api: CakemailAPI) {
+  try {
+    const { campaign_id, account_id } = args;
+    
+    if (!campaign_id) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Parameter**: campaign_id is required'
+        }],
+        isError: true
+      };
+    }
+    
+    // Get campaign stats with performance summary
+    const result = await api.reports.getCampaignPerformanceSummary(campaign_id, account_id);
+    const stats = result.campaign_stats;
+    
+    // Format the response with comprehensive analysis
+    let response = `${formatSectionHeader('📈 Campaign Performance Analysis')}\n\n`;
+    
+    // Basic campaign info
+    response += `${formatSectionHeader('📊 Campaign Overview')}\n`;
+    response += `${formatKeyValue('Campaign ID', campaign_id)}\n`;
+    response += `${formatKeyValue('Generated', new Date(result.generated_at).toLocaleString())}\n`;
+    
+    // Delivery metrics
+    response += `\n${formatSectionHeader('📧 Delivery Performance')}\n`;
+    response += `${formatKeyValue('Total Sent', stats.sent_emails?.toLocaleString() || '0')}\n`;
+    response += `${formatKeyValue('Active Emails', stats.active_emails?.toLocaleString() || '0')}\n`;
+    
+    if (stats.sent_rate !== undefined) {
+      response += `${formatKeyValue('Delivery Rate', `${(stats.sent_rate * 100).toFixed(2)}%`)}\n`;
+    }
+    
+    // Engagement metrics
+    response += `\n${formatSectionHeader('💭 Engagement Metrics')}\n`;
+    
+    // Opens
+    if (stats.opens !== undefined) {
+      response += `${formatKeyValue('Total Opens', stats.opens.toLocaleString())}\n`;
+    }
+    if (stats.unique_opens !== undefined) {
+      response += `${formatKeyValue('Unique Opens', stats.unique_opens.toLocaleString())}\n`;
+    }
+    if (stats.open_rate !== undefined) {
+      const openRate = (stats.open_rate * 100).toFixed(2);
+      const openRateEmoji = parseFloat(openRate) >= 20 ? '🚀' : parseFloat(openRate) >= 15 ? '👍' : '⚠️';
+      response += `${formatKeyValue('Open Rate', `${openRate}% ${openRateEmoji}`)}\n`;
+    }
+    
+    // Clicks
+    if (stats.clicks !== undefined) {
+      response += `${formatKeyValue('Total Clicks', stats.clicks.toLocaleString())}\n`;
+    }
+    if (stats.unique_clicks !== undefined) {
+      response += `${formatKeyValue('Unique Clicks', stats.unique_clicks.toLocaleString())}\n`;
+    }
+    if (stats.click_rate !== undefined) {
+      const clickRate = (stats.click_rate * 100).toFixed(2);
+      const clickRateEmoji = parseFloat(clickRate) >= 3 ? '🚀' : parseFloat(clickRate) >= 2 ? '👍' : '⚠️';
+      response += `${formatKeyValue('Click Rate', `${clickRate}% ${clickRateEmoji}`)}\n`;
+    }
+    if (stats.clickthru_rate !== undefined) {
+      response += `${formatKeyValue('Click-through Rate', `${(stats.clickthru_rate * 100).toFixed(2)}%`)}\n`;
+    }
+    
+    // Bounces and issues
+    response += `\n${formatSectionHeader('⚠️ Delivery Issues')}\n`;
+    
+    if (stats.bounces !== undefined) {
+      response += `${formatKeyValue('Total Bounces', stats.bounces.toLocaleString())}\n`;
+    }
+    if (stats.bounces_hard !== undefined) {
+      response += `${formatKeyValue('Hard Bounces', stats.bounces_hard.toLocaleString())}\n`;
+    }
+    if (stats.bounces_soft !== undefined) {
+      response += `${formatKeyValue('Soft Bounces', stats.bounces_soft.toLocaleString())}\n`;
+    }
+    if (stats.bounce_rate !== undefined) {
+      const bounceRate = (stats.bounce_rate * 100).toFixed(2);
+      const bounceRateEmoji = parseFloat(bounceRate) <= 2 ? '✅' : parseFloat(bounceRate) <= 5 ? '⚠️' : '🛑';
+      response += `${formatKeyValue('Bounce Rate', `${bounceRate}% ${bounceRateEmoji}`)}\n`;
+    }
+    
+    // Spam and unsubscribes
+    if (stats.spams !== undefined) {
+      response += `${formatKeyValue('Spam Reports', stats.spams.toLocaleString())}\n`;
+    }
+    if (stats.spam_rate !== undefined) {
+      const spamRate = (stats.spam_rate * 100).toFixed(2);
+      const spamRateEmoji = parseFloat(spamRate) <= 0.1 ? '✅' : parseFloat(spamRate) <= 0.5 ? '⚠️' : '🛑';
+      response += `${formatKeyValue('Spam Rate', `${spamRate}% ${spamRateEmoji}`)}\n`;
+    }
+    
+    if (stats.unsubscribes !== undefined) {
+      response += `${formatKeyValue('Unsubscribes', stats.unsubscribes.toLocaleString())}\n`;
+    }
+    if (stats.unsubscribe_rate !== undefined) {
+      const unsubRate = (stats.unsubscribe_rate * 100).toFixed(2);
+      const unsubRateEmoji = parseFloat(unsubRate) <= 0.5 ? '✅' : parseFloat(unsubRate) <= 2 ? '⚠️' : '🛑';
+      response += `${formatKeyValue('Unsubscribe Rate', `${unsubRate}% ${unsubRateEmoji}`)}\n`;
+    }
+    
+    // Detailed bounce breakdown
+    if (stats.bounces_address_changed || stats.bounces_challenge_response || stats.bounces_dns_failure || 
+        stats.bounces_full_mailbox || stats.bounces_mail_blocked || stats.bounces_transient) {
+      response += `\n${formatSectionHeader('🔍 Bounce Analysis')}\n`;
+      
+      if (stats.bounces_address_changed) {
+        response += `${formatKeyValue('Address Changed', stats.bounces_address_changed.toLocaleString())}\n`;
+      }
+      if (stats.bounces_challenge_response) {
+        response += `${formatKeyValue('Challenge Response', stats.bounces_challenge_response.toLocaleString())}\n`;
+      }
+      if (stats.bounces_dns_failure) {
+        response += `${formatKeyValue('DNS Failure', stats.bounces_dns_failure.toLocaleString())}\n`;
+      }
+      if (stats.bounces_full_mailbox) {
+        response += `${formatKeyValue('Full Mailbox', stats.bounces_full_mailbox.toLocaleString())}\n`;
+      }
+      if (stats.bounces_mail_blocked) {
+        response += `${formatKeyValue('Mail Blocked', stats.bounces_mail_blocked.toLocaleString())}\n`;
+      }
+      if (stats.bounces_transient) {
+        response += `${formatKeyValue('Transient Issues', stats.bounces_transient.toLocaleString())}\n`;
+      }
+    }
+    
+    // Links analysis
+    if (result.links_stats.total_links > 0) {
+      response += `\n${formatSectionHeader('🔗 Link Performance')}\n`;
+      response += `${formatKeyValue('Total Links', result.links_stats.total_links.toLocaleString())}\n`;
+      
+      if (result.links_stats.links.length > 0) {
+        response += `\n**Top Performing Links:**\n`;
+        const topLinks = result.links_stats.links
+          .sort((a, b) => (b.unique || 0) - (a.unique || 0))
+          .slice(0, 5);
+        
+        topLinks.forEach((link, index) => {
+          const linkText = link.link.length > 50 ? link.link.substring(0, 47) + '...' : link.link;
+          response += `**${index + 1}.** ${linkText}\n`;
+          response += `   • Unique clicks: ${link.unique || 0} (${((link.unique_rate || 0) * 100).toFixed(1)}%)\n`;
+          response += `   • Total clicks: ${link.total || 0} (${((link.total_rate || 0) * 100).toFixed(1)}%)\n`;
+        });
+      }
+    }
+    
+    // Performance insights and recommendations
+    const insights = generateCampaignInsights(stats);
+    if (insights.length > 0) {
+      response += `\n${formatSectionHeader('💡 Performance Insights')}\n`;
+      response += formatList(insights);
+    }
+    
+    const recommendations = generateCampaignRecommendations(stats);
+    if (recommendations.length > 0) {
+      response += `\n${formatSectionHeader('🎯 Optimization Recommendations')}\n`;
+      response += formatList(recommendations);
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * Generate insights for email performance
+ */
+function generateEmailInsights(stats: any): string[] {
+  const insights: string[] = [];
+  
+  if (stats.delivery_rate !== undefined) {
+    const deliveryRate = stats.delivery_rate * 100;
+    if (deliveryRate >= 98) {
+      insights.push('Excellent delivery rate - your sender reputation is very strong');
+    } else if (deliveryRate < 90) {
+      insights.push('Low delivery rate detected - investigate bounce causes and sender reputation');
+    }
+  }
+  
+  if (stats.open_rate !== undefined) {
+    const openRate = stats.open_rate * 100;
+    if (openRate >= 25) {
+      insights.push('Outstanding open rate - your subject lines are very effective');
+    } else if (openRate < 15) {
+      insights.push('Low open rate - consider improving subject lines and send timing');
+    }
+  }
+  
+  return insights;
+}
+
+/**
+ * Generate recommendations for email performance
+ */
+function generateEmailRecommendations(stats: any): string[] {
+  const recommendations: string[] = [];
+  
+  if (stats.bounce_rate !== undefined && stats.bounce_rate * 100 > 5) {
+    recommendations.push('High bounce rate - implement list cleaning and validation');
+  }
+  
+  if (stats.spam_rate !== undefined && stats.spam_rate * 100 > 0.5) {
+    recommendations.push('Monitor content for spam triggers and ensure clear unsubscribe options');
+  }
+  
+  return recommendations;
+}
+
+/**
+ * Generate insights for list performance
+ */
+function generateListInsights(stats: any): string[] {
+  const insights: string[] = [];
+  
+  if (stats.net_growth !== undefined) {
+    if (stats.net_growth > 0) {
+      insights.push('Positive list growth - your acquisition efforts are working');
+    } else if (stats.net_growth < 0) {
+      insights.push('Negative list growth - review content relevance and frequency');
+    }
+  }
+  
+  return insights;
+}
+
+/**
+ * Generate recommendations for list performance
+ */
+function generateListRecommendations(stats: any): string[] {
+  const recommendations: string[] = [];
+  
+  if (stats.unsubscribe_rate !== undefined && stats.unsubscribe_rate * 100 > 2) {
+    recommendations.push('High unsubscribe rate - review email frequency and content relevance');
+  }
+  
+  return recommendations;
+}
+
+/**
+ * Generate insights for account performance
+ */
+function generateAccountInsights(stats: any): string[] {
+  const insights: string[] = [];
+  
+  if (stats.open_rate !== undefined && stats.click_rate !== undefined) {
+    const openRate = stats.open_rate * 100;
+    const clickRate = stats.click_rate * 100;
+    
+    if (openRate >= 20 && clickRate >= 3) {
+      insights.push('Strong overall engagement - both opens and clicks are performing well');
+    } else if (openRate >= 20 && clickRate < 2) {
+      insights.push('Good open rates but low clicks - focus on improving content and CTAs');
+    }
+  }
+  
+  return insights;
+}
+
+/**
+ * Generate recommendations for account performance
+ */
+function generateAccountRecommendations(stats: any): string[] {
+  const recommendations: string[] = [];
+  
+  if (stats.emails_usage !== undefined && stats.emails_usage > 0.9) {
+    recommendations.push('High email usage - consider upgrading your plan or optimizing send frequency');
+  }
+  
+  if (stats.contacts_usage !== undefined && stats.contacts_usage > 0.9) {
+    recommendations.push('High contact usage - consider upgrading your plan or cleaning inactive contacts');
+  }
+  
+  return recommendations;
+}
+
+/**
+ * Generate insights for action performance
+ */
+function generateActionInsights(stats: any): string[] {
+  const insights: string[] = [];
+  
+  if (stats.sent_emails !== undefined && stats.unique_opens !== undefined) {
+    const openRate = (stats.unique_opens / stats.sent_emails) * 100;
+    if (openRate >= 25) {
+      insights.push('Excellent action performance - recipients are highly engaged');
+    } else if (openRate < 15) {
+      insights.push('Low engagement - review action triggers and content relevance');
+    }
+  }
+  
+  return insights;
+}
+
+/**
+ * Generate recommendations for action performance
+ */
+function generateActionRecommendations(stats: any): string[] {
+  const recommendations: string[] = [];
+  
+  if (stats.bounces !== undefined && stats.sent_emails !== undefined) {
+    const bounceRate = (stats.bounces / stats.sent_emails) * 100;
+    if (bounceRate > 5) {
+      recommendations.push('High bounce rate in automation - implement contact validation in workflow');
+    }
+  }
+  
+  return recommendations;
+}
+
+/**
+ * Format file size in human readable format
+ */
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+/**
+ * Analyze link statistics to generate summary metrics
+ */
+function analyzeLinkStats(links: any[]): {
+  totalUniqueClicks: number;
+  totalClicks: number;
+  avgUniqueRate: number;
+  avgTotalRate: number;
+  clickThroughRatio: number;
+  topPerformingCount: number;
+} {
+  const totalUniqueClicks = links.reduce((sum, link) => sum + (link.unique || 0), 0);
+  const totalClicks = links.reduce((sum, link) => sum + (link.total || 0), 0);
+  const avgUniqueRate = links.reduce((sum, link) => sum + ((link.unique_rate || 0) * 100), 0) / links.length;
+  const avgTotalRate = links.reduce((sum, link) => sum + ((link.total_rate || 0) * 100), 0) / links.length;
+  const clickThroughRatio = totalUniqueClicks > 0 ? totalClicks / totalUniqueClicks : 0;
+  const topPerformingCount = links.filter(link => (link.unique || 0) >= 10).length;
+  
+  return {
+    totalUniqueClicks,
+    totalClicks,
+    avgUniqueRate,
+    avgTotalRate,
+    clickThroughRatio,
+    topPerformingCount
+  };
+}
+
+/**
+ * Categorize links by type/domain for analysis
+ */
+function categorizeLinks(links: any[]): Record<string, any[]> {
+  const categories: Record<string, any[]> = {};
+  
+  links.forEach(link => {
+    let category = 'Other';
+    const url = link.link.toLowerCase();
+    
+    try {
+      const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+      const domain = urlObj.hostname;
+      
+      // Social media platforms
+      if (domain.includes('facebook') || domain.includes('fb.com')) {
+        category = 'Social Media (Facebook)';
+      } else if (domain.includes('twitter') || domain.includes('x.com')) {
+        category = 'Social Media (Twitter/X)';
+      } else if (domain.includes('linkedin')) {
+        category = 'Social Media (LinkedIn)';
+      } else if (domain.includes('instagram')) {
+        category = 'Social Media (Instagram)';
+      } else if (domain.includes('youtube')) {
+        category = 'Video (YouTube)';
+      } else if (domain.includes('vimeo')) {
+        category = 'Video (Vimeo)';
+      }
+      // E-commerce
+      else if (domain.includes('shop') || domain.includes('store') || domain.includes('buy') || 
+               domain.includes('cart') || domain.includes('checkout') || domain.includes('amazon') ||
+               domain.includes('ebay')) {
+        category = 'E-commerce';
+      }
+      // Content/Blog
+      else if (domain.includes('blog') || domain.includes('news') || domain.includes('article')) {
+        category = 'Content/Blog';
+      }
+      // External domains
+      else if (!domain.includes('localhost') && !domain.includes('127.0.0.1')) {
+        category = `External (${domain})`;
+      }
+      // Internal links
+      else {
+        category = 'Internal Links';
+      }
+    } catch (e) {
+      // If URL parsing fails, categorize by content
+      if (url.includes('unsubscribe')) {
+        category = 'Unsubscribe';
+      } else if (url.includes('social')) {
+        category = 'Social Media';
+      } else if (url.includes('shop') || url.includes('buy') || url.includes('product')) {
+        category = 'E-commerce';
+      }
+    }
+    
+    if (!categories[category]) {
+      categories[category] = [];
+    }
+    categories[category].push(link);
+  });
+  
+  return categories;
+}
+
+/**
+ * Generate insights based on link performance data
+ */
+function generateLinkInsights(links: any[], stats: any): string[] {
+  const insights: string[] = [];
+  
+  // Overall performance insights
+  if (stats.totalUniqueClicks === 0) {
+    insights.push('No clicks recorded - consider reviewing link placement and call-to-action effectiveness');
+  } else if (stats.topPerformingCount === 0) {
+    insights.push('All links have low engagement - content may need optimization');
+  } else if (stats.topPerformingCount >= links.length * 0.5) {
+    insights.push('Strong overall link performance - good content engagement');
+  }
+  
+  // Click distribution insights
+  const sortedLinks = links.sort((a, b) => (b.unique || 0) - (a.unique || 0));
+  if (sortedLinks.length >= 3) {
+    const topLink = sortedLinks[0];
+    const topClicks = topLink.unique || 0;
+    const totalClicks = stats.totalUniqueClicks;
+    
+    if (topClicks > totalClicks * 0.5) {
+      insights.push('One link dominates clicks - consider distributing engagement across multiple CTAs');
+    } else if (topClicks < totalClicks * 0.2 && sortedLinks.length > 5) {
+      insights.push('Even click distribution - good variety of engaging content');
+    }
+  }
+  
+  // Repeat click insights
+  if (stats.clickThroughRatio > 2) {
+    insights.push('High repeat click rate - users are very engaged with your links');
+  } else if (stats.clickThroughRatio < 1.1) {
+    insights.push('Low repeat clicks - links may not be providing expected value');
+  }
+  
+  // Category-based insights
+  const categories = categorizeLinks(links);
+  const socialLinks = Object.keys(categories).filter(cat => cat.includes('Social')).length;
+  const ecommerceLinks = Object.keys(categories).filter(cat => cat.includes('E-commerce')).length;
+  
+  if (socialLinks > 0 && ecommerceLinks > 0) {
+    insights.push('Good mix of social and commercial links - balanced engagement strategy');
+  } else if (socialLinks > 3) {
+    insights.push('Heavy focus on social media - consider adding more direct conversion links');
+  } else if (ecommerceLinks > links.length * 0.8) {
+    insights.push('Sales-focused campaign - monitor conversion rates alongside click rates');
+  }
+  
+  return insights;
+}
+
+/**
+ * Generate recommendations based on link performance
+ */
+function generateLinkRecommendations(links: any[], stats: any): string[] {
+  const recommendations: string[] = [];
+  
+  // Low overall performance
+  if (stats.totalUniqueClicks < links.length * 2) {
+    recommendations.push('Consider A/B testing different link text and button designs');
+    recommendations.push('Review link placement - ensure CTAs are visible and compelling');
+    recommendations.push('Simplify your message - too many links can reduce individual performance');
+  }
+  
+  // Uneven distribution
+  const sortedLinks = links.sort((a, b) => (b.unique || 0) - (a.unique || 0));
+  const zeroClickLinks = links.filter(link => (link.unique || 0) === 0);
+  
+  if (zeroClickLinks.length > 0) {
+    recommendations.push('Remove or optimize links with zero clicks - they may be confusing or irrelevant');
+    recommendations.push('Consider consolidating similar links to reduce choice paralysis');
+  }
+  
+  if (zeroClickLinks.length > links.length * 0.3) {
+    recommendations.push('Too many ineffective links - focus on 2-3 primary CTAs per email');
+  }
+  
+  // Repeat clicks
+  if (stats.clickThroughRatio < 1.2) {
+    recommendations.push('Improve landing page experience - users may not find what they expect');
+    recommendations.push('Ensure link promises match landing page content');
+  }
+  
+  // Performance-based recommendations
+  if (stats.avgUniqueRate < 1) {
+    recommendations.push('Low click rates overall - consider more compelling call-to-action copy');
+    recommendations.push('Test different link colors, sizes, and button styles');
+    recommendations.push('Add urgency or scarcity elements to increase click motivation');
+  }
+  
+  // Link categorization recommendations
+  const categories = categorizeLinks(links);
+  if (Object.keys(categories).length === 1) {
+    recommendations.push('Diversify link types - include social proof, content, and conversion links');
+  }
+  
+  // Top performer analysis
+  if (sortedLinks.length > 0 && sortedLinks[0].unique > 0) {
+    const topPerformer = sortedLinks[0];
+    recommendations.push(`Top link: "${topPerformer.link}" - analyze what makes this effective and apply to other links`);
+  }
+  
+  return recommendations;
+}
+
+/**
+ * Generate insights based on campaign statistics
+ */
+function generateCampaignInsights(stats: any): string[] {
+  const insights: string[] = [];
+  
+  // Open rate insights
+  if (stats.open_rate !== undefined) {
+    const openRate = stats.open_rate * 100;
+    if (openRate >= 25) {
+      insights.push('Excellent open rate - your subject line and sender reputation are performing well');
+    } else if (openRate >= 20) {
+      insights.push('Good open rate - above industry average');
+    } else if (openRate >= 15) {
+      insights.push('Average open rate - room for improvement in subject lines');
+    } else if (openRate < 15) {
+      insights.push('Low open rate - consider improving subject lines and sender reputation');
+    }
+  }
+  
+  // Click rate insights
+  if (stats.click_rate !== undefined) {
+    const clickRate = stats.click_rate * 100;
+    if (clickRate >= 5) {
+      insights.push('Outstanding click rate - your content is highly engaging');
+    } else if (clickRate >= 3) {
+      insights.push('Good click rate - content is resonating with your audience');
+    } else if (clickRate >= 2) {
+      insights.push('Average click rate - consider improving call-to-action placement');
+    } else if (clickRate < 2) {
+      insights.push('Low click rate - content may need optimization');
+    }
+  }
+  
+  // Bounce rate insights
+  if (stats.bounce_rate !== undefined) {
+    const bounceRate = stats.bounce_rate * 100;
+    if (bounceRate <= 2) {
+      insights.push('Excellent delivery rate - your list quality is very good');
+    } else if (bounceRate <= 5) {
+      insights.push('Good delivery rate - minimal bounce issues');
+    } else if (bounceRate > 10) {
+      insights.push('High bounce rate detected - list cleaning recommended');
+    }
+  }
+  
+  // Engagement ratio insights
+  if (stats.opens !== undefined && stats.clicks !== undefined && stats.opens > 0) {
+    const engagementRatio = (stats.clicks / stats.opens) * 100;
+    if (engagementRatio >= 15) {
+      insights.push('High engagement ratio - recipients who open are very likely to click');
+    } else if (engagementRatio < 5) {
+      insights.push('Low engagement ratio - content may not match reader expectations');
+    }
+  }
+  
+  return insights;
+}
+
+/**
+ * Generate recommendations based on campaign statistics
+ */
+function generateCampaignRecommendations(stats: any): string[] {
+  const recommendations: string[] = [];
+  
+  // Open rate recommendations
+  if (stats.open_rate !== undefined && stats.open_rate * 100 < 20) {
+    recommendations.push('Try A/B testing different subject lines to improve open rates');
+    recommendations.push('Consider optimizing send times based on your audience timezone');
+    recommendations.push('Review sender name and "from" address for trust and recognition');
+  }
+  
+  // Click rate recommendations
+  if (stats.click_rate !== undefined && stats.click_rate * 100 < 3) {
+    recommendations.push('Strengthen your call-to-action buttons with more compelling copy');
+    recommendations.push('Consider simplifying your email design to highlight key actions');
+    recommendations.push('Test different content formats (images vs text, length, etc.)');
+  }
+  
+  // Bounce rate recommendations
+  if (stats.bounce_rate !== undefined && stats.bounce_rate * 100 > 5) {
+    recommendations.push('Implement list cleaning to remove invalid email addresses');
+    recommendations.push('Use double opt-in for new subscribers to ensure email validity');
+    recommendations.push('Regular list hygiene - remove addresses that consistently bounce');
+  }
+  
+  // Spam rate recommendations
+  if (stats.spam_rate !== undefined && stats.spam_rate * 100 > 0.5) {
+    recommendations.push('Review email content for spam trigger words');
+    recommendations.push('Ensure clear unsubscribe options are prominently displayed');
+    recommendations.push('Monitor sender reputation and consider authentication (SPF, DKIM)');
+  }
+  
+  // Unsubscribe rate recommendations
+  if (stats.unsubscribe_rate !== undefined && stats.unsubscribe_rate * 100 > 2) {
+    recommendations.push('Review email frequency - you may be sending too often');
+    recommendations.push('Segment your audience for more targeted, relevant content');
+    recommendations.push('Survey unsubscribers to understand their reasons for leaving');
+  }
+  
+  // General recommendations based on overall performance
+  if (stats.open_rate !== undefined && stats.click_rate !== undefined) {
+    const openRate = stats.open_rate * 100;
+    const clickRate = stats.click_rate * 100;
+    
+    if (openRate >= 20 && clickRate < 2) {
+      recommendations.push('Good open rate but low clicks - focus on improving email content and CTAs');
+    }
+    
+    if (openRate < 15 && clickRate >= 3) {
+      recommendations.push('Good engagement from openers - work on subject lines to increase opens');
+    }
+  }
+  
+  return recommendations;
+}
+
+/**
+ * Get campaign link click statistics and performance data
+ */
+export async function handleGetCampaignLinksStats(args: any, api: CakemailAPI) {
+  try {
+    const { campaign_id, start_time, end_time, account_id, page, per_page, sort, order } = args;
+    
+    if (!campaign_id) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Parameter**: campaign_id is required'
+        }],
+        isError: true
+      };
+    }
+    
+    // Build parameters object
+    const params: any = {
+      page: page || 1,
+      per_page: per_page || 50,
+      with_count: true // Always include count for links stats
+    };
+    
+    if (account_id) params.account_id = account_id;
+    if (start_time) params.start_time = start_time;
+    if (end_time) params.end_time = end_time;
+    if (sort) params.sort = sort;
+    if (order) params.order = order;
+    
+    // Get campaign links stats
+    const result = await api.reports.getCampaignLinksStats(campaign_id, params);
+    
+    // Format the response with comprehensive analysis
+    let response = `${formatSectionHeader('🔗 Campaign Links Performance Analysis')}\n\n`;
+    
+    // Basic info
+    response += `${formatSectionHeader('📊 Overview')}\n`;
+    response += `${formatKeyValue('Campaign ID', campaign_id)}\n`;
+    response += `${formatKeyValue('Total Links', result.data?.length?.toLocaleString() || '0')}\n`;
+    
+    if (start_time || end_time) {
+      response += `\n${formatSectionHeader('📅 Time Range')}\n`;
+      if (start_time) {
+        response += `${formatKeyValue('Start Time', new Date(start_time * 1000).toLocaleString())}\n`;
+      }
+      if (end_time) {
+        response += `${formatKeyValue('End Time', new Date(end_time * 1000).toLocaleString())}\n`;
+      }
+    }
+    
+    // Pagination info
+    if (result.pagination) {
+      const p = result.pagination;
+      response += `\n${formatSectionHeader('📄 Pagination')}\n`;
+      response += `${formatKeyValue('Page', `${p.page} (${result.data?.length || 0} items)`)}\n`;
+      if (p.count !== undefined) {
+        response += `${formatKeyValue('Total Links', p.count.toLocaleString())}\n`;
+      }
+    }
+    
+    if (result.data && result.data.length > 0) {
+      // Calculate summary statistics
+      const linkStats = analyzeLinkStats(result.data);
+      
+      // Summary statistics
+      response += `\n${formatSectionHeader('📈 Performance Summary')}\n`;
+      response += `${formatKeyValue('Total Unique Clicks', linkStats.totalUniqueClicks.toLocaleString())}\n`;
+      response += `${formatKeyValue('Total Clicks', linkStats.totalClicks.toLocaleString())}\n`;
+      response += `${formatKeyValue('Average Unique Rate', `${linkStats.avgUniqueRate.toFixed(2)}%`)}\n`;
+      response += `${formatKeyValue('Average Total Rate', `${linkStats.avgTotalRate.toFixed(2)}%`)}\n`;
+      
+      if (linkStats.clickThroughRatio > 0) {
+        response += `${formatKeyValue('Click-through Ratio', `${linkStats.clickThroughRatio.toFixed(2)}:1`)}\n`;
+      }
+      
+      // Top performing links
+      response += `\n${formatSectionHeader('🏆 Top Performing Links')}\n`;
+      const topLinks = result.data
+        .sort((a, b) => (b.unique || 0) - (a.unique || 0))
+        .slice(0, 10);
+      
+      topLinks.forEach((link, index) => {
+        const linkText = link.link.length > 60 ? link.link.substring(0, 57) + '...' : link.link;
+        const uniqueClicks = link.unique || 0;
+        const totalClicks = link.total || 0;
+        const uniqueRate = ((link.unique_rate || 0) * 100).toFixed(2);
+        const totalRate = ((link.total_rate || 0) * 100).toFixed(2);
+        
+        // Performance indicators
+        const performanceEmoji = uniqueClicks >= 50 ? '🚀' : uniqueClicks >= 20 ? '👍' : uniqueClicks >= 5 ? '📈' : '📊';
+        
+        response += `\n**${index + 1}.** ${linkText} ${performanceEmoji}\n`;
+        response += `   • **Unique Clicks:** ${uniqueClicks.toLocaleString()} (${uniqueRate}%)\n`;
+        response += `   • **Total Clicks:** ${totalClicks.toLocaleString()} (${totalRate}%)\n`;
+        
+        if (totalClicks > uniqueClicks) {
+          const repeatRatio = (totalClicks / uniqueClicks).toFixed(1);
+          response += `   • **Repeat Clicks:** ${repeatRatio}x average per user\n`;
+        }
+      });
+      
+      // Link categories analysis
+      const categorizedLinks = categorizeLinks(result.data);
+      if (Object.keys(categorizedLinks).length > 1) {
+        response += `\n${formatSectionHeader('🎯 Link Categories Performance')}\n`;
+        Object.entries(categorizedLinks).forEach(([category, links]) => {
+          const categoryClicks = links.reduce((sum, link) => sum + (link.unique || 0), 0);
+          // Calculate category totals for potential future use
+          // const categoryTotal = links.reduce((sum, link) => sum + (link.total || 0), 0);
+          response += `${formatKeyValue(category, `${links.length} links, ${categoryClicks} unique clicks`)}\n`;
+        });
+      }
+      
+      // Performance insights
+      const insights = generateLinkInsights(result.data, linkStats);
+      if (insights.length > 0) {
+        response += `\n${formatSectionHeader('💡 Performance Insights')}\n`;
+        response += formatList(insights);
+      }
+      
+      // Optimization recommendations
+      const recommendations = generateLinkRecommendations(result.data, linkStats);
+      if (recommendations.length > 0) {
+        response += `\n${formatSectionHeader('🎯 Optimization Recommendations')}\n`;
+        response += formatList(recommendations);
+      }
+      
+      // Low performing links (if any)
+      const lowPerformingLinks = result.data.filter(link => (link.unique || 0) === 0);
+      if (lowPerformingLinks.length > 0) {
+        response += `\n${formatSectionHeader('⚠️ Links with No Clicks')}\n`;
+        response += `Found ${lowPerformingLinks.length} links with zero clicks:\n\n`;
+        lowPerformingLinks.slice(0, 5).forEach((link, index) => {
+          const linkText = link.link.length > 70 ? link.link.substring(0, 67) + '...' : link.link;
+          response += `**${index + 1}.** ${linkText}\n`;
+        });
+        
+        if (lowPerformingLinks.length > 5) {
+          response += `\n*... and ${lowPerformingLinks.length - 5} more*\n`;
+        }
+      }
+      
+    } else {
+      response += `\n${formatSectionHeader('ℹ️ No Links Found')}\n`;
+      response += 'No links were found for this campaign. This could mean:\n\n';
+      response += '• The campaign has no clickable links\n';
+      response += '• The campaign hasn\'t been sent yet\n';
+      response += '• Links haven\'t received any clicks\n';
+      response += '• There may be permission or access issues\n';
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * Get email statistics for the transactional email API
+ */
+export async function handleGetEmailStats(args: any, api: CakemailAPI) {
+  try {
+    const { start_time, end_time, account_id } = args;
+    
+    if (!start_time || !end_time) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Parameters**: start_time and end_time are required'
+        }],
+        isError: true
+      };
+    }
+    
+    // Get email stats
+    const result = await api.reports.getEmailStats(start_time, end_time, account_id);
+    
+    // Format the response
+    let response = `${formatSectionHeader('📊 Email API Statistics')}
+
+`;
+    
+    // Time range
+    response += `${formatSectionHeader('📅 Report Period')}
+`;
+    response += `${formatKeyValue('Start Time', new Date(start_time * 1000).toLocaleString())}
+`;
+    response += `${formatKeyValue('End Time', new Date(end_time * 1000).toLocaleString())}
+`;
+    
+    if (result.data) {
+      const stats = result.data;
+      
+      // Overall delivery metrics
+      response += `
+${formatSectionHeader('📧 Delivery Performance')}
+`;
+      if (stats.submitted !== undefined) {
+        response += `${formatKeyValue('Emails Submitted', stats.submitted.toLocaleString())}
+`;
+      }
+      if (stats.delivered !== undefined) {
+        response += `${formatKeyValue('Emails Delivered', stats.delivered.toLocaleString())}
+`;
+      }
+      if (stats.delivery_rate !== undefined) {
+        const deliveryRate = (stats.delivery_rate * 100).toFixed(2);
+        const deliveryEmoji = parseFloat(deliveryRate) >= 95 ? '✅' : parseFloat(deliveryRate) >= 90 ? '👍' : '⚠️';
+        response += `${formatKeyValue('Delivery Rate', `${deliveryRate}% ${deliveryEmoji}`)}
+`;
+      }
+      
+      // Engagement metrics
+      response += `
+${formatSectionHeader('💭 Engagement Metrics')}
+`;
+      if (stats.opens !== undefined) {
+        response += `${formatKeyValue('Total Opens', stats.opens.toLocaleString())}
+`;
+      }
+      if (stats.unique_opens !== undefined) {
+        response += `${formatKeyValue('Unique Opens', stats.unique_opens.toLocaleString())}
+`;
+      }
+      if (stats.open_rate !== undefined) {
+        const openRate = (stats.open_rate * 100).toFixed(2);
+        const openEmoji = parseFloat(openRate) >= 20 ? '🚀' : parseFloat(openRate) >= 15 ? '👍' : '⚠️';
+        response += `${formatKeyValue('Open Rate', `${openRate}% ${openEmoji}`)}
+`;
+      }
+      
+      if (stats.clicks !== undefined) {
+        response += `${formatKeyValue('Total Clicks', stats.clicks.toLocaleString())}
+`;
+      }
+      if (stats.unique_clicks !== undefined) {
+        response += `${formatKeyValue('Unique Clicks', stats.unique_clicks.toLocaleString())}
+`;
+      }
+      if (stats.click_rate !== undefined) {
+        const clickRate = (stats.click_rate * 100).toFixed(2);
+        const clickEmoji = parseFloat(clickRate) >= 3 ? '🚀' : parseFloat(clickRate) >= 2 ? '👍' : '⚠️';
+        response += `${formatKeyValue('Click Rate', `${clickRate}% ${clickEmoji}`)}
+`;
+      }
+      
+      // Delivery issues
+      response += `
+${formatSectionHeader('⚠️ Delivery Issues')}
+`;
+      if (stats.bounces !== undefined) {
+        response += `${formatKeyValue('Total Bounces', stats.bounces.toLocaleString())}
+`;
+      }
+      if (stats.hard_bounces !== undefined) {
+        response += `${formatKeyValue('Hard Bounces', stats.hard_bounces.toLocaleString())}
+`;
+      }
+      if (stats.soft_bounces !== undefined) {
+        response += `${formatKeyValue('Soft Bounces', stats.soft_bounces.toLocaleString())}
+`;
+      }
+      if (stats.bounce_rate !== undefined) {
+        const bounceRate = (stats.bounce_rate * 100).toFixed(2);
+        const bounceEmoji = parseFloat(bounceRate) <= 2 ? '✅' : parseFloat(bounceRate) <= 5 ? '⚠️' : '🛑';
+        response += `${formatKeyValue('Bounce Rate', `${bounceRate}% ${bounceEmoji}`)}
+`;
+      }
+      
+      if (stats.spam_reports !== undefined) {
+        response += `${formatKeyValue('Spam Reports', stats.spam_reports.toLocaleString())}
+`;
+      }
+      if (stats.spam_rate !== undefined) {
+        const spamRate = (stats.spam_rate * 100).toFixed(2);
+        const spamEmoji = parseFloat(spamRate) <= 0.1 ? '✅' : parseFloat(spamRate) <= 0.5 ? '⚠️' : '🛑';
+        response += `${formatKeyValue('Spam Rate', `${spamRate}% ${spamEmoji}`)}
+`;
+      }
+      
+      if (stats.unsubscribes !== undefined) {
+        response += `${formatKeyValue('Unsubscribes', stats.unsubscribes.toLocaleString())}
+`;
+      }
+      
+      // Processing metrics
+      if (stats.rejected !== undefined || stats.queued !== undefined) {
+        response += `
+${formatSectionHeader('🔄 Processing Status')}
+`;
+        if (stats.rejected !== undefined) {
+          response += `${formatKeyValue('Rejected', stats.rejected.toLocaleString())}
+`;
+        }
+        if (stats.queued !== undefined) {
+          response += `${formatKeyValue('Queued', stats.queued.toLocaleString())}
+`;
+        }
+      }
+      
+      // Generate insights for email performance
+      const insights = generateEmailInsights(stats);
+      if (insights.length > 0) {
+        response += `
+${formatSectionHeader('💡 Performance Insights')}
+`;
+        response += formatList(insights);
+      }
+      
+      const recommendations = generateEmailRecommendations(stats);
+      if (recommendations.length > 0) {
+        response += `
+${formatSectionHeader('🎯 Optimization Recommendations')}
+`;
+        response += formatList(recommendations);
+      }
+    } else {
+      response += `
+${formatSectionHeader('ℹ️ No Data')}
+`;
+      response += 'No email statistics found for the specified time period.\n';
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * Get list-specific performance statistics
+ */
+export async function handleGetListStats(args: any, api: CakemailAPI) {
+  try {
+    const { list_id, start_time, end_time, interval, account_id } = args;
+    
+    if (!list_id) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Parameter**: list_id is required'
+        }],
+        isError: true
+      };
+    }
+    
+    // Get list stats
+    const result = await api.reports.getListStats(list_id, account_id);
+    
+    // Format the response
+    let response = `${formatSectionHeader('📈 List Performance Statistics')}
+
+`;
+    
+    // Basic list info
+    response += `${formatSectionHeader('📅 List Overview')}
+`;
+    response += `${formatKeyValue('List ID', list_id)}
+`;
+    
+    if (start_time || end_time) {
+      response += `
+${formatSectionHeader('📅 Time Range')}
+`;
+      if (start_time) {
+        response += `${formatKeyValue('Start Time', new Date(start_time * 1000).toLocaleString())}
+`;
+      }
+      if (end_time) {
+        response += `${formatKeyValue('End Time', new Date(end_time * 1000).toLocaleString())}
+`;
+      }
+      if (interval) {
+        response += `${formatKeyValue('Interval', interval)}
+`;
+      }
+    }
+    
+    if (result.data) {
+      const stats = result.data;
+      
+      // Subscriber metrics
+      response += `
+${formatSectionHeader('👥 Subscriber Metrics')}
+`;
+      if (stats.total_contacts !== undefined) {
+        response += `${formatKeyValue('Total Contacts', stats.total_contacts.toLocaleString())}
+`;
+      }
+      if (stats.active_contacts !== undefined) {
+        response += `${formatKeyValue('Active Contacts', stats.active_contacts.toLocaleString())}
+`;
+      }
+      if (stats.unsubscribed_contacts !== undefined) {
+        response += `${formatKeyValue('Unsubscribed', stats.unsubscribed_contacts.toLocaleString())}
+`;
+      }
+      if (stats.bounced_contacts !== undefined) {
+        response += `${formatKeyValue('Bounced Contacts', stats.bounced_contacts.toLocaleString())}
+`;
+      }
+      
+      // Growth metrics
+      if (stats.new_subscribers !== undefined || stats.unsubscribes !== undefined) {
+        response += `
+${formatSectionHeader('📈 Growth Metrics')}
+`;
+        if (stats.new_subscribers !== undefined) {
+          response += `${formatKeyValue('New Subscribers', stats.new_subscribers.toLocaleString())}
+`;
+        }
+        if (stats.unsubscribes !== undefined) {
+          response += `${formatKeyValue('Unsubscribes', stats.unsubscribes.toLocaleString())}
+`;
+        }
+        if (stats.net_growth !== undefined) {
+          const growthEmoji = stats.net_growth >= 0 ? '📈' : '📉';
+          response += `${formatKeyValue('Net Growth', `${stats.net_growth.toLocaleString()} ${growthEmoji}`)}
+`;
+        }
+      }
+      
+      // Email performance for this list
+      if (stats.emails_sent !== undefined || stats.opens !== undefined || stats.clicks !== undefined) {
+        response += `
+${formatSectionHeader('📧 Email Performance')}
+`;
+        if (stats.emails_sent !== undefined) {
+          response += `${formatKeyValue('Emails Sent', stats.emails_sent.toLocaleString())}
+`;
+        }
+        if (stats.opens !== undefined) {
+          response += `${formatKeyValue('Total Opens', stats.opens.toLocaleString())}
+`;
+        }
+        if (stats.unique_opens !== undefined) {
+          response += `${formatKeyValue('Unique Opens', stats.unique_opens.toLocaleString())}
+`;
+        }
+        if (stats.open_rate !== undefined) {
+          const openRate = (stats.open_rate * 100).toFixed(2);
+          const openEmoji = parseFloat(openRate) >= 20 ? '🚀' : parseFloat(openRate) >= 15 ? '👍' : '⚠️';
+          response += `${formatKeyValue('Open Rate', `${openRate}% ${openEmoji}`)}
+`;
+        }
+        
+        if (stats.clicks !== undefined) {
+          response += `${formatKeyValue('Total Clicks', stats.clicks.toLocaleString())}
+`;
+        }
+        if (stats.unique_clicks !== undefined) {
+          response += `${formatKeyValue('Unique Clicks', stats.unique_clicks.toLocaleString())}
+`;
+        }
+        if (stats.click_rate !== undefined) {
+          const clickRate = (stats.click_rate * 100).toFixed(2);
+          const clickEmoji = parseFloat(clickRate) >= 3 ? '🚀' : parseFloat(clickRate) >= 2 ? '👍' : '⚠️';
+          response += `${formatKeyValue('Click Rate', `${clickRate}% ${clickEmoji}`)}
+`;
+        }
+      }
+      
+      // Deliverability metrics
+      if (stats.bounces !== undefined || stats.spam_reports !== undefined) {
+        response += `
+${formatSectionHeader('⚠️ Deliverability Issues')}
+`;
+        if (stats.bounces !== undefined) {
+          response += `${formatKeyValue('Total Bounces', stats.bounces.toLocaleString())}
+`;
+        }
+        if (stats.hard_bounces !== undefined) {
+          response += `${formatKeyValue('Hard Bounces', stats.hard_bounces.toLocaleString())}
+`;
+        }
+        if (stats.soft_bounces !== undefined) {
+          response += `${formatKeyValue('Soft Bounces', stats.soft_bounces.toLocaleString())}
+`;
+        }
+        if (stats.bounce_rate !== undefined) {
+          const bounceRate = (stats.bounce_rate * 100).toFixed(2);
+          const bounceEmoji = parseFloat(bounceRate) <= 2 ? '✅' : parseFloat(bounceRate) <= 5 ? '⚠️' : '🛑';
+          response += `${formatKeyValue('Bounce Rate', `${bounceRate}% ${bounceEmoji}`)}
+`;
+        }
+        
+        if (stats.spam_reports !== undefined) {
+          response += `${formatKeyValue('Spam Reports', stats.spam_reports.toLocaleString())}
+`;
+        }
+        if (stats.spam_rate !== undefined) {
+          const spamRate = (stats.spam_rate * 100).toFixed(2);
+          const spamEmoji = parseFloat(spamRate) <= 0.1 ? '✅' : parseFloat(spamRate) <= 0.5 ? '⚠️' : '🛑';
+          response += `${formatKeyValue('Spam Rate', `${spamRate}% ${spamEmoji}`)}
+`;
+        }
+      }
+      
+      // Generate insights for list performance
+      const insights = generateListInsights(stats);
+      if (insights.length > 0) {
+        response += `
+${formatSectionHeader('💡 Performance Insights')}
+`;
+        response += formatList(insights);
+      }
+      
+      const recommendations = generateListRecommendations(stats);
+      if (recommendations.length > 0) {
+        response += `
+${formatSectionHeader('🎯 Optimization Recommendations')}
+`;
+        response += formatList(recommendations);
+      }
+    } else {
+      response += `
+${formatSectionHeader('ℹ️ No Data')}
+`;
+      response += 'No list statistics found for the specified list.\n';
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * Get account-wide performance statistics
+ */
+/**
+ * Get workflow action performance statistics
+ */
+export async function handleGetActionStats(args: any, api: CakemailAPI) {
+  try {
+    const { workflow_id, action_id, account_id } = args;
+    
+    if (!workflow_id || !action_id) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Parameters**: workflow_id and action_id are required'
+        }],
+        isError: true
+      };
+    }
+    
+    // Get action stats
+    const result = await api.reports.getActionStats(workflow_id, action_id, account_id);
+    
+    // Format the response
+    let response = `${formatSectionHeader('⚙️ Workflow Action Performance')}
+
+`;
+    
+    // Basic action info
+    response += `${formatSectionHeader('📄 Action Details')}
+`;
+    response += `${formatKeyValue('Workflow ID', workflow_id)}
+`;
+    response += `${formatKeyValue('Action ID', action_id)}
+`;
+    response += `${formatKeyValue('Generated', new Date().toLocaleString())}
+`;
+    
+    if (result.data) {
+      const stats = result.data;
+      
+      // Email delivery metrics
+      response += `
+${formatSectionHeader('📧 Email Delivery')}
+`;
+      if (stats.sent_emails !== undefined) {
+        response += `${formatKeyValue('Emails Sent', stats.sent_emails.toLocaleString())}
+`;
+      }
+      
+      // Engagement metrics
+      response += `
+${formatSectionHeader('💭 Engagement Metrics')}
+`;
+      if (stats.opens !== undefined) {
+        response += `${formatKeyValue('Total Opens', stats.opens.toLocaleString())}
+`;
+      }
+      if (stats.unique_opens !== undefined) {
+        response += `${formatKeyValue('Unique Opens', stats.unique_opens.toLocaleString())}
+`;
+      }
+      if (stats.clicks !== undefined) {
+        response += `${formatKeyValue('Total Clicks', stats.clicks.toLocaleString())}
+`;
+      }
+      if (stats.unique_clicks !== undefined) {
+        response += `${formatKeyValue('Unique Clicks', stats.unique_clicks.toLocaleString())}
+`;
+      }
+      if (stats.forwards !== undefined) {
+        response += `${formatKeyValue('Forwards', stats.forwards.toLocaleString())}
+`;
+      }
+      if (stats.implied_opens !== undefined) {
+        response += `${formatKeyValue('Implied Opens', stats.implied_opens.toLocaleString())}
+`;
+      }
+      
+      // Delivery issues
+      response += `
+${formatSectionHeader('⚠️ Delivery Issues')}
+`;
+      if (stats.bounces !== undefined) {
+        response += `${formatKeyValue('Total Bounces', stats.bounces.toLocaleString())}
+`;
+      }
+      if (stats.bounces_hard !== undefined) {
+        response += `${formatKeyValue('Hard Bounces', stats.bounces_hard.toLocaleString())}
+`;
+      }
+      if (stats.bounces_soft !== undefined) {
+        response += `${formatKeyValue('Soft Bounces', stats.bounces_soft.toLocaleString())}
+`;
+      }
+      
+      // Detailed bounce breakdown
+      if (stats.bounces_address_changed || stats.bounces_challenge_response || 
+          stats.bounces_dns_failure || stats.bounces_full_mailbox || 
+          stats.bounces_mail_blocked || stats.bounces_transient) {
+        response += `
+${formatSectionHeader('🔍 Bounce Analysis')}
+`;
+        
+        if (stats.bounces_address_changed) {
+          response += `${formatKeyValue('Address Changed', stats.bounces_address_changed.toLocaleString())}
+`;
+        }
+        if (stats.bounces_challenge_response) {
+          response += `${formatKeyValue('Challenge Response', stats.bounces_challenge_response.toLocaleString())}
+`;
+        }
+        if (stats.bounces_dns_failure) {
+          response += `${formatKeyValue('DNS Failure', stats.bounces_dns_failure.toLocaleString())}
+`;
+        }
+        if (stats.bounces_full_mailbox) {
+          response += `${formatKeyValue('Full Mailbox', stats.bounces_full_mailbox.toLocaleString())}
+`;
+        }
+        if (stats.bounces_mail_blocked) {
+          response += `${formatKeyValue('Mail Blocked', stats.bounces_mail_blocked.toLocaleString())}
+`;
+        }
+        if (stats.bounces_transient) {
+          response += `${formatKeyValue('Transient Issues', stats.bounces_transient.toLocaleString())}
+`;
+        }
+      }
+      
+      // Spam and unsubscribes
+      if (stats.spams !== undefined || stats.unsubscribes !== undefined) {
+        response += `
+${formatSectionHeader('🚫 User Actions')}
+`;
+        if (stats.spams !== undefined) {
+          response += `${formatKeyValue('Spam Reports', stats.spams.toLocaleString())}
+`;
+        }
+        if (stats.spam_rate !== undefined) {
+          const spamRate = (stats.spam_rate * 100).toFixed(2);
+          const spamEmoji = parseFloat(spamRate) <= 0.1 ? '✅' : parseFloat(spamRate) <= 0.5 ? '⚠️' : '🛑';
+          response += `${formatKeyValue('Spam Rate', `${spamRate}% ${spamEmoji}`)}
+`;
+        }
+        if (stats.unsubscribes !== undefined) {
+          response += `${formatKeyValue('Unsubscribes', stats.unsubscribes.toLocaleString())}
+`;
+        }
+      }
+      
+      // Calculate and display rates
+      if (stats.sent_emails && stats.sent_emails > 0) {
+        response += `
+${formatSectionHeader('📊 Calculated Rates')}
+`;
+        
+        if (stats.unique_opens !== undefined) {
+          const openRate = (stats.unique_opens / stats.sent_emails * 100).toFixed(2);
+          const openEmoji = parseFloat(openRate) >= 20 ? '🚀' : parseFloat(openRate) >= 15 ? '👍' : '⚠️';
+          response += `${formatKeyValue('Open Rate', `${openRate}% ${openEmoji}`)}
+`;
+        }
+        
+        if (stats.unique_clicks !== undefined) {
+          const clickRate = (stats.unique_clicks / stats.sent_emails * 100).toFixed(2);
+          const clickEmoji = parseFloat(clickRate) >= 3 ? '🚀' : parseFloat(clickRate) >= 2 ? '👍' : '⚠️';
+          response += `${formatKeyValue('Click Rate', `${clickRate}% ${clickEmoji}`)}
+`;
+        }
+        
+        if (stats.bounces !== undefined) {
+          const bounceRate = (stats.bounces / stats.sent_emails * 100).toFixed(2);
+          const bounceEmoji = parseFloat(bounceRate) <= 2 ? '✅' : parseFloat(bounceRate) <= 5 ? '⚠️' : '🛑';
+          response += `${formatKeyValue('Bounce Rate', `${bounceRate}% ${bounceEmoji}`)}
+`;
+        }
+      }
+      
+      // Generate insights for action performance
+      const insights = generateActionInsights(stats);
+      if (insights.length > 0) {
+        response += `
+${formatSectionHeader('💡 Performance Insights')}
+`;
+        response += formatList(insights);
+      }
+      
+      const recommendations = generateActionRecommendations(stats);
+      if (recommendations.length > 0) {
+        response += `
+${formatSectionHeader('🎯 Optimization Recommendations')}
+`;
+        response += formatList(recommendations);
+      }
+    } else {
+      response += `
+${formatSectionHeader('ℹ️ No Data')}
+`;
+      response += 'No action statistics found for the specified workflow and action.\n';
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+export async function handleGetAccountStats(args: any, api: CakemailAPI) {
+  try {
+    const { account_id, start_time, end_time } = args;
+    
+    let result;
+    if (account_id) {
+      // Get specific account stats
+      result = await api.reports.getAccountStats(account_id.toString(), start_time, end_time);
+    } else {
+      // Get self account stats
+      result = await api.reports.getSelfAccountStats(start_time, end_time);
+    }
+    
+    // Format the response
+    let response = `${formatSectionHeader('📈 Account Performance Overview')}
+
+`;
+    
+    // Account info
+    response += `${formatSectionHeader('🏢 Account Details')}
+`;
+    response += `${formatKeyValue('Account', account_id ? `ID: ${account_id}` : 'Self Account')}
+`;
+    response += `${formatKeyValue('Generated', new Date().toLocaleString())}
+`;
+    
+    if (start_time || end_time) {
+      response += `
+${formatSectionHeader('📅 Report Period')}
+`;
+      if (start_time) {
+        response += `${formatKeyValue('Start Time', new Date(start_time * 1000).toLocaleString())}
+`;
+      }
+      if (end_time) {
+        response += `${formatKeyValue('End Time', new Date(end_time * 1000).toLocaleString())}
+`;
+      }
+    }
+    
+    if (result.data) {
+      const stats = result.data;
+      
+      // Contact metrics
+      response += `
+${formatSectionHeader('👥 Contact Statistics')}
+`;
+      if (stats.active_contacts !== undefined) {
+        response += `${formatKeyValue('Active Contacts', stats.active_contacts.toLocaleString())}
+`;
+      }
+      if (stats.current_lists !== undefined) {
+        response += `${formatKeyValue('Total Lists', stats.current_lists.toLocaleString())}
+`;
+      }
+      
+      // Email volume metrics
+      response += `
+${formatSectionHeader('📧 Email Volume')}
+`;
+      if (stats.sent_emails !== undefined) {
+        response += `${formatKeyValue('Total Emails Sent', stats.sent_emails.toLocaleString())}
+`;
+      }
+      if (stats.sent_campaign_emails !== undefined) {
+        response += `${formatKeyValue('Campaign Emails', stats.sent_campaign_emails.toLocaleString())}
+`;
+      }
+      if (stats.sent_action_emails !== undefined) {
+        response += `${formatKeyValue('Action Emails', stats.sent_action_emails.toLocaleString())}
+`;
+      }
+      if (stats.sent_email_emails !== undefined) {
+        response += `${formatKeyValue('API Emails', stats.sent_email_emails.toLocaleString())}
+`;
+      }
+      
+      // Performance metrics
+      response += `
+${formatSectionHeader('📊 Performance Metrics')}
+`;
+      if (stats.open_rate !== undefined) {
+        const openRate = (stats.open_rate * 100).toFixed(2);
+        const openEmoji = parseFloat(openRate) >= 20 ? '🚀' : parseFloat(openRate) >= 15 ? '👍' : '⚠️';
+        response += `${formatKeyValue('Average Open Rate', `${openRate}% ${openEmoji}`)}
+`;
+      }
+      if (stats.click_rate !== undefined) {
+        const clickRate = (stats.click_rate * 100).toFixed(2);
+        const clickEmoji = parseFloat(clickRate) >= 3 ? '🚀' : parseFloat(clickRate) >= 2 ? '👍' : '⚠️';
+        response += `${formatKeyValue('Average Click Rate', `${clickRate}% ${clickEmoji}`)}
+`;
+      }
+      
+      // Deliverability metrics
+      response += `
+${formatSectionHeader('⚠️ Deliverability Health')}
+`;
+      if (stats.bounce_rate !== undefined) {
+        const bounceRate = (stats.bounce_rate * 100).toFixed(2);
+        const bounceEmoji = parseFloat(bounceRate) <= 2 ? '✅' : parseFloat(bounceRate) <= 5 ? '⚠️' : '🛑';
+        response += `${formatKeyValue('Average Bounce Rate', `${bounceRate}% ${bounceEmoji}`)}
+`;
+      }
+      if (stats.bounces_hard !== undefined) {
+        response += `${formatKeyValue('Hard Bounces', stats.bounces_hard.toLocaleString())}
+`;
+      }
+      if (stats.bounce_hard_rate !== undefined) {
+        const hardBounceRate = (stats.bounce_hard_rate * 100).toFixed(2);
+        const hardBounceEmoji = parseFloat(hardBounceRate) <= 1 ? '✅' : parseFloat(hardBounceRate) <= 3 ? '⚠️' : '🛑';
+        response += `${formatKeyValue('Hard Bounce Rate', `${hardBounceRate}% ${hardBounceEmoji}`)}
+`;
+      }
+      
+      if (stats.spam_rate !== undefined) {
+        const spamRate = (stats.spam_rate * 100).toFixed(2);
+        const spamEmoji = parseFloat(spamRate) <= 0.1 ? '✅' : parseFloat(spamRate) <= 0.5 ? '⚠️' : '🛑';
+        response += `${formatKeyValue('Spam Rate', `${spamRate}% ${spamEmoji}`)}
+`;
+      }
+      if (stats.spams !== undefined) {
+        response += `${formatKeyValue('Total Spam Reports', stats.spams.toLocaleString())}
+`;
+      }
+      
+      if (stats.unsubscribe_rate !== undefined) {
+        const unsubRate = (stats.unsubscribe_rate * 100).toFixed(2);
+        const unsubEmoji = parseFloat(unsubRate) <= 0.5 ? '✅' : parseFloat(unsubRate) <= 2 ? '⚠️' : '🛑';
+        response += `${formatKeyValue('Unsubscribe Rate', `${unsubRate}% ${unsubEmoji}`)}
+`;
+      }
+      
+      // Usage metrics
+      if (stats.emails_usage !== undefined || stats.contacts_usage !== undefined) {
+        response += `
+${formatSectionHeader('📄 Account Usage')}
+`;
+        if (stats.emails_usage !== undefined) {
+          const emailUsage = (stats.emails_usage * 100).toFixed(1);
+          const usageEmoji = parseFloat(emailUsage) <= 80 ? '✅' : parseFloat(emailUsage) <= 95 ? '⚠️' : '🛑';
+          response += `${formatKeyValue('Email Usage', `${emailUsage}% ${usageEmoji}`)}
+`;
+        }
+        if (stats.contacts_usage !== undefined) {
+          const contactUsage = (stats.contacts_usage * 100).toFixed(1);
+          const contactUsageEmoji = parseFloat(contactUsage) <= 80 ? '✅' : parseFloat(contactUsage) <= 95 ? '⚠️' : '🛑';
+          response += `${formatKeyValue('Contact Usage', `${contactUsage}% ${contactUsageEmoji}`)}
+`;
+        }
+      }
+      
+      // Email API specific stats if available
+      if (stats.email_api) {
+        response += `
+${formatSectionHeader('🚀 Email API Statistics')}
+`;
+        const emailApi = stats.email_api;
+        if (emailApi.sent !== undefined) {
+          response += `${formatKeyValue('API Emails Sent', emailApi.sent.toLocaleString())}
+`;
+        }
+        if (emailApi.delivered !== undefined) {
+          response += `${formatKeyValue('API Emails Delivered', emailApi.delivered.toLocaleString())}
+`;
+        }
+        if (emailApi.delivery_rate !== undefined) {
+          const deliveryRate = (emailApi.delivery_rate * 100).toFixed(2);
+          const deliveryEmoji = parseFloat(deliveryRate) >= 95 ? '✅' : parseFloat(deliveryRate) >= 90 ? '⚠️' : '🛑';
+          response += `${formatKeyValue('API Delivery Rate', `${deliveryRate}% ${deliveryEmoji}`)}
+`;
+        }
+      }
+      
+      // Generate insights for account performance
+      const insights = generateAccountInsights(stats);
+      if (insights.length > 0) {
+        response += `
+${formatSectionHeader('💡 Performance Insights')}
+`;
+        response += formatList(insights);
+      }
+      
+      const recommendations = generateAccountRecommendations(stats);
+      if (recommendations.length > 0) {
+        response += `
+${formatSectionHeader('🎯 Optimization Recommendations')}
+`;
+        response += formatList(recommendations);
+      }
+    } else {
+      response += `
+${formatSectionHeader('ℹ️ No Data')}
+`;
+      response += 'No account statistics found for the specified parameters.\n';
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * Get comprehensive campaign performance summary (convenience method)
+ */
+export async function handleGetCampaignPerformanceSummary(args: any, api: CakemailAPI) {
+  try {
+    const { campaign_id, account_id } = args;
+    
+    if (!campaign_id) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Parameter**: campaign_id is required'
+        }],
+        isError: true
+      };
+    }
+    
+    // This function delegates to handleGetCampaignStats which calls the API
+    // No need to call the API twice
+    return handleGetCampaignStats(args, api);
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * Get comprehensive account performance overview (convenience method)
+ */
+export async function handleGetAccountPerformanceOverview(args: any, api: CakemailAPI) {
+  try {
+    const { account_id, start_time, end_time } = args;
+    
+    // Use the convenience method from the API
+    await api.reports.getAccountPerformanceOverview(account_id, start_time, end_time);
+    
+    // This uses the same formatting as handleGetAccountStats since it returns the same data
+    return handleGetAccountStats(args, api);
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * List all campaign reports exports
+ */
+export async function handleListCampaignReportsExports(args: any, api: CakemailAPI) {
+  try {
+    const { account_id, page, per_page, status, progress } = args;
+    
+    // Build parameters
+    const params: any = {
+      page: page || 1,
+      per_page: per_page || 50,
+      with_count: true
+    };
+    
+    if (account_id) params.account_id = account_id;
+    if (status) params.status = status;
+    if (progress) params.progress = progress;
+    
+    // Get exports list
+    const result = await api.reports.listCampaignReportsExports(params);
+    
+    // Format the response
+    let response = `${formatSectionHeader('📈 Campaign Reports Exports')}
+
+`;
+    
+    // Pagination info
+    if (result.pagination) {
+      const p = result.pagination;
+      response += `${formatSectionHeader('📄 Pagination')}
+`;
+      response += `${formatKeyValue('Page', `${p.page} of ${p.total_pages || '?'}`)}
+`;
+      response += `${formatKeyValue('Items', `${result.data?.length || 0} of ${p.count || '?'} total`)}
+`;
+    }
+    
+    if (result.data && result.data.length > 0) {
+      response += `
+${formatSectionHeader('📁 Available Exports')}
+
+`;
+      
+      result.data.forEach((exp: any, index: number) => {
+        const statusEmoji = exp.status === 'completed' ? '✅' : exp.status === 'failed' ? '❌' : '⏳';
+        
+        response += `**${index + 1}. Export ${exp.id}**
+`;
+        if (exp.description) {
+          response += `   ${exp.description}
+`;
+        }
+        response += `   • **Status:** ${statusEmoji} ${exp.status || 'unknown'}
+`;
+        if (exp.progress !== undefined) {
+          response += `   • **Progress:** ${exp.progress}%
+`;
+        }
+        if (exp.file_size) {
+          response += `   • **File Size:** ${formatFileSize(exp.file_size)}
+`;
+        }
+        if (exp.created_on) {
+          response += `   • **Created:** ${new Date(exp.created_on * 1000).toLocaleString()}
+`;
+        }
+        if (exp.expires_on) {
+          response += `   • **Expires:** ${new Date(exp.expires_on * 1000).toLocaleString()}
+`;
+        }
+        response += '\n';
+      });
+      
+      response += `${formatSectionHeader('ℹ️ About Campaign Exports')}
+`;
+      response += '• Campaign exports contain detailed performance data\n';
+      response += '• Use exports for external analysis and reporting\n';
+      response += '• Files are available for download until expiry date\n';
+    } else {
+      response += `${formatSectionHeader('ℹ️ No Exports Found')}
+`;
+      response += 'No campaign reports exports are currently available.\n\n';
+      response += 'To create a new export, use the `cakemail_create_campaign_reports_export` tool.\n';
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * Create a campaign reports export
+ */
+export async function handleCreateCampaignReportsExport(args: any, api: CakemailAPI) {
+  try {
+    const { campaign_ids, start_time, end_time, format, fields, account_id } = args;
+    
+    if (!campaign_ids || !Array.isArray(campaign_ids) || campaign_ids.length === 0) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Parameter**: campaign_ids array is required'
+        }],
+        isError: true
+      };
+    }
+    
+    // Build export data
+    const exportData: any = {
+      campaign_ids,
+      format: format || 'csv'
+    };
+    
+    if (start_time) exportData.start_time = start_time;
+    if (end_time) exportData.end_time = end_time;
+    if (fields && Array.isArray(fields)) exportData.fields = fields;
+    
+    // Create the export
+    const result = await api.reports.createCampaignReportsExport(exportData, account_id);
+    
+    // Format the response
+    let response = `${formatSectionHeader('✅ Campaign Report Export Created')}\n\n`;
+    
+    if (result.data) {
+      const exp = result.data;
+      response += `${formatSectionHeader('📄 Export Details')}\n`;
+      response += `${formatKeyValue('Export ID', exp.id)}\n`;
+      response += `${formatKeyValue('Status', exp.status || 'processing')}\n`;
+      
+      if (exp.description) {
+        response += `${formatKeyValue('Description', exp.description)}\n`;
+      }
+      
+      response += `\n${formatSectionHeader('📊 Export Configuration')}\n`;
+      response += `${formatKeyValue('Campaigns', campaign_ids.length.toString())}\n`;
+      response += `${formatKeyValue('Format', format || 'csv')}\n`;
+      
+      if (start_time || end_time) {
+        response += `\n${formatSectionHeader('📅 Time Range')}\n`;
+        if (start_time) {
+          response += `${formatKeyValue('Start', new Date(start_time * 1000).toLocaleString())}\n`;
+        }
+        if (end_time) {
+          response += `${formatKeyValue('End', new Date(end_time * 1000).toLocaleString())}\n`;
+        }
+      }
+      
+      response += `\n${formatSectionHeader('ℹ️ Next Steps')}\n`;
+      response += '• The export is being processed in the background\n';
+      response += '• Use `cakemail_get_campaign_reports_export` to check the status\n';
+      response += '• Once complete, use `cakemail_download_campaign_reports_export` to get the file\n';
+      response += '• Exports typically complete within a few minutes depending on data size\n';
+      
+      if (exp.expires_on) {
+        response += `\n⚠️ **Note:** This export will expire on ${new Date(exp.expires_on * 1000).toLocaleString()}\n`;
+      }
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * Get status of a campaign reports export
+ */
+export async function handleGetCampaignReportsExport(args: any, api: CakemailAPI) {
+  try {
+    const { export_id, account_id } = args;
+    
+    if (!export_id) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Parameter**: export_id is required'
+        }],
+        isError: true
+      };
+    }
+    
+    // Get export details
+    const result = await api.reports.getCampaignReportsExport(export_id, account_id);
+    
+    // Format the response
+    let response = `${formatSectionHeader('📊 Campaign Report Export Status')}\n\n`;
+    
+    if (result.data) {
+      const exp = result.data;
+      
+      // Status indicator
+      const statusEmoji = exp.status === 'completed' ? '✅' : exp.status === 'failed' ? '❌' : '⏳';
+      
+      response += `${formatSectionHeader('📄 Export Details')}\n`;
+      response += `${formatKeyValue('Export ID', exp.id)}\n`;
+      response += `${formatKeyValue('Status', `${statusEmoji} ${exp.status || 'unknown'}`)}\n`;
+      
+      if (exp.progress !== undefined) {
+        response += `${formatKeyValue('Progress', `${exp.progress}%`)}\n`;
+        
+        // Progress bar
+        const progressBar = generateProgressBar(exp.progress);
+        response += `${progressBar}\n`;
+      }
+      
+      if (exp.description) {
+        response += `${formatKeyValue('Description', exp.description)}\n`;
+      }
+      
+      if (exp.file_size) {
+        response += `${formatKeyValue('File Size', formatFileSize(exp.file_size))}\n`;
+      }
+      
+      response += `\n${formatSectionHeader('📅 Timeline')}\n`;
+      if (exp.created_on) {
+        response += `${formatKeyValue('Created', new Date(Number(exp.created_on) * 1000).toLocaleString())}\n`;
+      }
+      if (exp.completed_on) {
+        response += `${formatKeyValue('Completed', new Date(Number(exp.completed_on) * 1000).toLocaleString())}\n`;
+      }
+      if (exp.expires_on) {
+        const expiryDate = new Date(exp.expires_on * 1000);
+        const now = new Date();
+        const hoursLeft = Math.max(0, (expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60));
+        response += `${formatKeyValue('Expires', `${expiryDate.toLocaleString()} (${hoursLeft.toFixed(1)} hours left)`)}\n`;
+      }
+      
+      // Status-specific instructions
+      response += `\n${formatSectionHeader('ℹ️ Instructions')}\n`;
+      if (exp.status === 'completed') {
+        response += '✅ Export is ready for download!\n';
+        response += `• Use \`cakemail_download_campaign_reports_export\` with export ID: ${exp.id}\n`;
+        response += '• Download before the expiry time shown above\n';
+      } else if (exp.status === 'processing') {
+        response += '⏳ Export is still being processed...\n';
+        response += '• Check back in a few moments\n';
+        response += '• Large exports may take several minutes\n';
+      } else if (exp.status === 'failed') {
+        response += '❌ Export failed to process\n';
+        response += '• Try creating a new export\n';
+        response += '• Contact support if the issue persists\n';
+      }
+      
+      // Export metadata if available
+      if (exp.metadata) {
+        response += `\n${formatSectionHeader('📋 Export Metadata')}\n`;
+        if (exp.metadata.campaign_count) {
+          response += `${formatKeyValue('Campaigns Included', exp.metadata.campaign_count.toString())}\n`;
+        }
+        if (exp.metadata.record_count) {
+          response += `${formatKeyValue('Total Records', exp.metadata.record_count.toLocaleString())}\n`;
+        }
+      }
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * Generate a visual progress bar
+ */
+function generateProgressBar(progress: number): string {
+  const width = 20;
+  const filled = Math.round((progress / 100) * width);
+  const empty = width - filled;
+  
+  return `Progress: [${'█'.repeat(filled)}${'░'.repeat(empty)}] ${progress}%`;
+}
+
+/**
+ * Download a campaign reports export
+ */
+export async function handleDownloadCampaignReportsExport(args: any, api: CakemailAPI) {
+  try {
+    const { export_id, account_id } = args;
+    
+    if (!export_id) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Parameter**: export_id is required'
+        }],
+        isError: true
+      };
+    }
+    
+    // Get download URL
+    const result = await api.reports.downloadCampaignReportsExport(export_id, account_id);
+    
+    // Format the response
+    let response = `${formatSectionHeader('📥 Campaign Report Export Download')}\n\n`;
+    
+    if (result.data) {
+      response += `${formatSectionHeader('✅ Download Ready')}\n`;
+      response += `${formatKeyValue('Export ID', export_id)}\n`;
+      
+      if (result.data.download_url) {
+        response += `\n${formatSectionHeader('🔗 Download Link')}\n`;
+        response += `${result.data.download_url}\n\n`;
+        
+        response += `${formatSectionHeader('ℹ️ Download Instructions')}\n`;
+        response += '• Click the link above to download the export file\n';
+        response += '• The link is temporary and will expire soon\n';
+        response += '• Save the file to your local system for analysis\n';
+        
+        if ((result.data as any).file_name) {
+          response += `\n${formatKeyValue('File Name', (result.data as any).file_name)}\n`;
+        }
+        if ((result.data as any).file_size) {
+          response += `${formatKeyValue('File Size', formatFileSize((result.data as any).file_size))}\n`;
+        }
+        if ((result.data as any).content_type) {
+          response += `${formatKeyValue('Content Type', (result.data as any).content_type)}\n`;
+        }
+      } else {
+        response += `\n${formatSectionHeader('⚠️ Download Not Available')}\n`;
+        response += 'The download URL is not available. This could mean:\n';
+        response += '• The export is still being processed\n';
+        response += '• The export has expired\n';
+        response += '• There was an error generating the download link\n\n';
+        response += 'Try checking the export status with `cakemail_get_campaign_reports_export`\n';
+      }
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * Delete a campaign reports export
+ */
+export async function handleDeleteCampaignReportsExport(args: any, api: CakemailAPI) {
+  try {
+    const { export_id, account_id } = args;
+    
+    if (!export_id) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Parameter**: export_id is required'
+        }],
+        isError: true
+      };
+    }
+    
+    // Delete the export
+    await api.reports.deleteCampaignReportsExport(export_id, account_id);
+    
+    // Format the response
+    let response = `${formatSectionHeader('🗑️ Campaign Report Export Deleted')}\n\n`;
+    response += `${formatSectionHeader('✅ Success')}\n`;
+    response += `${formatKeyValue('Export ID', export_id)}\n`;
+    response += `${formatKeyValue('Status', 'Deleted')}\n`;
+    response += `\n${formatSectionHeader('ℹ️ Note')}\n`;
+    response += '• The export and its associated files have been permanently deleted\n';
+    response += '• This action cannot be undone\n';
+    response += '• You can create a new export at any time using `cakemail_create_campaign_reports_export`\n';
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * List suppressed emails exports
+ */
+export async function handleListSuppressedEmailsExports(args: any, api: CakemailAPI) {
+  try {
+    const { account_id, page, per_page } = args;
+    
+    // Build parameters
+    const params: any = {
+      page: page || 1,
+      per_page: per_page || 50,
+      with_count: true
+    };
+    
+    if (account_id) params.account_id = account_id;
+    
+    // Get exports list
+    const result = await api.reports.listSuppressedEmailsExports(params);
+    
+    // Format the response
+    let response = `${formatSectionHeader('🚫 Suppressed Emails Exports')}\n\n`;
+    
+    // Pagination info
+    if (result.pagination) {
+      const p = result.pagination;
+      response += `${formatSectionHeader('📄 Pagination')}\n`;
+      response += `${formatKeyValue('Page', `${p.page} of ${p.total_pages || '?'}`)}\n`;
+      response += `${formatKeyValue('Items', `${result.data?.length || 0} of ${p.count || '?'} total`)}\n`;
+    }
+    
+    if (result.data && result.data.length > 0) {
+      response += `\n${formatSectionHeader('📁 Available Exports')}\n\n`;
+      
+      result.data.forEach((exp: any, index: number) => {
+        const statusEmoji = exp.status === 'completed' ? '✅' : exp.status === 'failed' ? '❌' : '⏳';
+        
+        response += `**${index + 1}. Export ${exp.id}**\n`;
+        if (exp.description) {
+          response += `   ${exp.description}\n`;
+        }
+        response += `   • **Status:** ${statusEmoji} ${exp.status || 'unknown'}\n`;
+        if (exp.progress !== undefined) {
+          response += `   • **Progress:** ${exp.progress}%\n`;
+        }
+        if (exp.file_size) {
+          response += `   • **File Size:** ${formatFileSize(exp.file_size)}\n`;
+        }
+        if (exp.created_on) {
+          response += `   • **Created:** ${new Date(exp.created_on * 1000).toLocaleString()}\n`;
+        }
+        if (exp.expires_on) {
+          response += `   • **Expires:** ${new Date(exp.expires_on * 1000).toLocaleString()}\n`;
+        }
+        response += '\n';
+      });
+      
+      response += `${formatSectionHeader('ℹ️ About Suppressed Emails')}\n`;
+      response += '• Suppressed emails are addresses that should not receive emails\n';
+      response += '• Includes hard bounces, spam complaints, and manual suppressions\n';
+      response += '• Exporting this list helps maintain compliance and deliverability\n';
+    } else {
+      response += `${formatSectionHeader('ℹ️ No Exports Found')}\n`;
+      response += 'No suppressed emails exports are currently available.\n\n';
+      response += 'To create a new export, use the `cakemail_create_suppressed_emails_export` tool.\n';
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * Create a suppressed emails export
+ */
+export async function handleCreateSuppressedEmailsExport(args: any, api: CakemailAPI) {
+  try {
+    const { description, account_id } = args;
+    
+    // Create the export
+    const result = await api.reports.createSuppressedEmailsExport(description, account_id);
+    
+    // Format the response
+    let response = `${formatSectionHeader('✅ Suppressed Emails Export Created')}\n\n`;
+    
+    if (result.data) {
+      const exp = result.data;
+      response += `${formatSectionHeader('📄 Export Details')}\n`;
+      response += `${formatKeyValue('Export ID', exp.id)}\n`;
+      response += `${formatKeyValue('Status', exp.status || 'processing')}\n`;
+      
+      if (description) {
+        response += `${formatKeyValue('Description', description)}\n`;
+      }
+      
+      response += `\n${formatSectionHeader('ℹ️ Next Steps')}\n`;
+      response += '• The export is being processed in the background\n';
+      response += '• Use `cakemail_get_suppressed_emails_export` to check the status\n';
+      response += '• Once complete, use `cakemail_download_suppressed_emails_export` to get the file\n';
+      response += '• The export will include all suppressed email addresses and reasons\n';
+      
+      if (exp.expires_on) {
+        response += `\n⚠️ **Note:** This export will expire on ${new Date(exp.expires_on * 1000).toLocaleString()}\n`;
+      }
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * Get status of a suppressed emails export
+ */
+export async function handleGetSuppressedEmailsExport(args: any, api: CakemailAPI) {
+  try {
+    const { export_id, account_id } = args;
+    
+    if (!export_id) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Parameter**: export_id is required'
+        }],
+        isError: true
+      };
+    }
+    
+    // Get export details
+    const result = await api.reports.getSuppressedEmailsExport(export_id, account_id);
+    
+    // Format the response
+    let response = `${formatSectionHeader('🚫 Suppressed Emails Export Status')}\n\n`;
+    
+    if (result.data) {
+      const exp = result.data;
+      const statusEmoji = exp.status === 'completed' ? '✅' : exp.status === 'failed' ? '❌' : '⏳';
+      
+      response += `${formatSectionHeader('📄 Export Details')}\n`;
+      response += `${formatKeyValue('Export ID', exp.id)}\n`;
+      response += `${formatKeyValue('Status', `${statusEmoji} ${exp.status || 'unknown'}`)}\n`;
+      
+      if (exp.progress !== undefined) {
+        response += `${formatKeyValue('Progress', `${exp.progress}%`)}\n`;
+        const progressBar = generateProgressBar(exp.progress);
+        response += `${progressBar}\n`;
+      }
+      
+      if (exp.description) {
+        response += `${formatKeyValue('Description', exp.description)}\n`;
+      }
+      
+      if (exp.file_size) {
+        response += `${formatKeyValue('File Size', formatFileSize(exp.file_size))}\n`;
+      }
+      
+      // Export metadata
+      if (exp.metadata) {
+        response += `\n${formatSectionHeader('📊 Export Content')}\n`;
+        if (exp.metadata.total_suppressions !== undefined) {
+          response += `${formatKeyValue('Total Suppressions', exp.metadata.total_suppressions.toLocaleString())}\n`;
+        }
+        if (exp.metadata.hard_bounces !== undefined) {
+          response += `${formatKeyValue('Hard Bounces', exp.metadata.hard_bounces.toLocaleString())}\n`;
+        }
+        if (exp.metadata.spam_complaints !== undefined) {
+          response += `${formatKeyValue('Spam Complaints', exp.metadata.spam_complaints.toLocaleString())}\n`;
+        }
+        if (exp.metadata.manual_suppressions !== undefined) {
+          response += `${formatKeyValue('Manual Suppressions', exp.metadata.manual_suppressions.toLocaleString())}\n`;
+        }
+      }
+      
+      response += `\n${formatSectionHeader('📅 Timeline')}\n`;
+      if (exp.created_on) {
+        response += `${formatKeyValue('Created', new Date(Number(exp.created_on) * 1000).toLocaleString())}\n`;
+      }
+      if (exp.completed_on) {
+        response += `${formatKeyValue('Completed', new Date(Number(exp.completed_on) * 1000).toLocaleString())}\n`;
+      }
+      if (exp.expires_on) {
+        response += `${formatKeyValue('Expires', new Date(exp.expires_on * 1000).toLocaleString())}\n`;
+      }
+      
+      // Status-specific instructions
+      response += `\n${formatSectionHeader('ℹ️ Instructions')}\n`;
+      if (exp.status === 'completed') {
+        response += '✅ Export is ready for download!\n';
+        response += `• Use \`cakemail_download_suppressed_emails_export\` with export ID: ${exp.id}\n`;
+      } else if (exp.status === 'processing') {
+        response += '⏳ Export is still being processed...\n';
+        response += '• Check back in a few moments\n';
+      } else if (exp.status === 'failed') {
+        response += '❌ Export failed to process\n';
+        response += '• Try creating a new export\n';
+      }
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * Download a suppressed emails export
+ */
+export async function handleDownloadSuppressedEmailsExport(args: any, api: CakemailAPI) {
+  try {
+    const { export_id, account_id } = args;
+    
+    if (!export_id) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Parameter**: export_id is required'
+        }],
+        isError: true
+      };
+    }
+    
+    // Get download URL
+    const result = await api.reports.downloadSuppressedEmailsExport(export_id, account_id);
+    
+    // Format the response
+    let response = `${formatSectionHeader('📥 Suppressed Emails Export Download')}\n\n`;
+    
+    if (result.data) {
+      response += `${formatSectionHeader('✅ Download Ready')}\n`;
+      response += `${formatKeyValue('Export ID', export_id)}\n`;
+      
+      if (result.data.download_url) {
+        response += `\n${formatSectionHeader('🔗 Download Link')}\n`;
+        response += `${result.data.download_url}\n\n`;
+        
+        response += `${formatSectionHeader('ℹ️ File Contents')}\n`;
+        response += 'The CSV file contains:\n';
+        response += '• Email addresses that are suppressed\n';
+        response += '• Suppression reason (bounce, spam, manual, etc.)\n';
+        response += '• Date of suppression\n';
+        response += '• Additional metadata where available\n';
+        
+        if ((result.data as any).file_name) {
+          response += `\n${formatKeyValue('File Name', (result.data as any).file_name)}\n`;
+        }
+        if ((result.data as any).file_size) {
+          response += `${formatKeyValue('File Size', formatFileSize((result.data as any).file_size))}\n`;
+        }
+      } else {
+        response += `\n${formatSectionHeader('⚠️ Download Not Available')}\n`;
+        response += 'The download URL is not available.\n';
+      }
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * Delete a suppressed emails export
+ */
+export async function handleDeleteSuppressedEmailsExport(args: any, api: CakemailAPI) {
+  try {
+    const { export_id, account_id } = args;
+    
+    if (!export_id) {
+      return {
+        content: [{
+          type: 'text',
+          text: '❌ **Missing Parameter**: export_id is required'
+        }],
+        isError: true
+      };
+    }
+    
+    // Delete the export
+    await api.reports.deleteSuppressedEmailsExport(export_id, account_id);
+    
+    // Format the response
+    let response = `${formatSectionHeader('🗑️ Suppressed Emails Export Deleted')}\n\n`;
+    response += `${formatSectionHeader('✅ Success')}\n`;
+    response += `${formatKeyValue('Export ID', export_id)}\n`;
+    response += `${formatKeyValue('Status', 'Deleted')}\n`;
+    response += `\n${formatSectionHeader('ℹ️ Note')}\n`;
+    response += '• The export has been permanently deleted\n';
+    response += '• You can create a new export using `cakemail_create_suppressed_emails_export`\n';
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
+
+/**
+ * Debug reports API access
+ */
+export async function handleDebugReportsAccess(args: any, api: CakemailAPI) {
+  try {
+    const { campaign_id } = args;
+    
+    const results = await api.reports.debugReportsAccess(campaign_id);
+    
+    // Format the response
+    let response = `${formatSectionHeader('🔍 Reports API Access Debug')}\n\n`;
+    response += `${formatKeyValue('Timestamp', results.timestamp)}\n\n`;
+    
+    response += `${formatSectionHeader('📊 Test Results')}\n\n`;
+    
+    results.tests.forEach((test: any, index: number) => {
+      const statusEmoji = test.success ? '✅' : '❌';
+      response += `**${index + 1}. ${test.test}** ${statusEmoji}\n`;
+      
+      if (test.success) {
+        if (test.hasData !== undefined) {
+          response += `   • Has Data: ${test.hasData ? 'Yes' : 'No'}\n`;
+        }
+        if (test.dataKeys && test.dataKeys.length > 0) {
+          response += `   • Available Fields: ${test.dataKeys.join(', ')}\n`;
+        }
+        if (test.linksCount !== undefined) {
+          response += `   • Links Found: ${test.linksCount}\n`;
+        }
+        if (test.exportsCount !== undefined) {
+          response += `   • Exports Available: ${test.exportsCount}\n`;
+        }
+      } else {
+        response += `   • Error: ${test.error}\n`;
+      }
+      response += '\n';
+    });
+    
+    // Summary
+    const successCount = results.tests.filter((t: any) => t.success).length;
+    const totalCount = results.tests.length;
+    
+    response += `${formatSectionHeader('📈 Summary')}\n`;
+    response += `${formatKeyValue('Tests Passed', `${successCount}/${totalCount}`)}\n`;
+    
+    if (successCount === totalCount) {
+      response += '\n✅ All reports API endpoints are accessible!\n';
+    } else {
+      response += '\n⚠️ Some reports API endpoints returned errors.\n';
+      response += 'This may indicate permission issues or missing data.\n';
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: response
+      }]
+    };
+    
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}
