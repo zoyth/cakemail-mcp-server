@@ -17,10 +17,16 @@ import type {
   SendTestEmailRequest       // now exists
 } from '../types/cakemail-types.js';
 import type { Components } from '../types/schema.js';
+import {
+  UnifiedPaginationOptions,
+  PaginatedResult,
+  PaginatedIterator,
+  IteratorOptions
+} from '../utils/pagination/index.js';
 
 export class CampaignApi extends BaseApiClient {
   
-  // FIXED: Campaign API methods with correct parameter syntax
+  // FIXED: Campaign API methods with correct parameter syntax - Legacy method (deprecated)
   async getCampaigns(params?: GetCampaignsParams & { account_id?: number }): Promise<CampaignsResponse> {
     let apiParams: any = {};
     let filters: string[] = [];
@@ -87,6 +93,121 @@ export class CampaignApi extends BaseApiClient {
     }
     
     return this.makeRequest(`/campaigns${query}`);
+  }
+
+  // NEW: Unified pagination method for campaigns
+  async getCampaignsPaginated(
+    options: UnifiedPaginationOptions = {},
+    // Filters are processed inline rather than using a dedicated object
+    additionalFilters: {
+      status?: string;
+      name?: string;
+      type?: string;
+      list_id?: string;
+      sort?: string;
+      order?: 'asc' | 'desc';
+      account_id?: number;
+    } = {}
+  ): Promise<PaginatedResult<any>> {
+    const accountId = await this.getCurrentAccountId();
+    const params: any = {
+      account_id: additionalFilters.account_id || accountId
+    };
+    
+    // Handle sorting with correct API syntax ([-|+]term)
+    if (additionalFilters.sort) {
+      const direction = additionalFilters.order === 'desc' ? '-' : '+';
+      params.sort = `${direction}${additionalFilters.sort}`;
+    } else {
+      params.sort = '-created_on'; // Default sort
+    }
+    
+    // Handle filtering with correct API syntax (term==value;term2==value2)
+    const filterParts: string[] = [];
+    if (additionalFilters.status) filterParts.push(`status==${additionalFilters.status}`);
+    if (additionalFilters.name) filterParts.push(`name==${additionalFilters.name}`);
+    if (additionalFilters.type) filterParts.push(`type==${additionalFilters.type}`);
+    if (additionalFilters.list_id) filterParts.push(`list_id==${additionalFilters.list_id}`);
+    
+    if (filterParts.length > 0) {
+      params.filter = filterParts.join(';');
+    }
+    
+    return this.fetchPaginated('/campaigns', 'campaigns', options, params);
+  }
+
+  // NEW: Iterator for automatic pagination through campaigns
+  getCampaignsIterator(
+    options: IteratorOptions = {},
+    campaignFilters: {
+      status?: string;
+      name?: string;
+      type?: string;
+      list_id?: string;
+      sort?: string;
+      order?: 'asc' | 'desc';
+      account_id?: number;
+    } = {}
+  ): PaginatedIterator<any> {
+    // Use campaignFilters to build query parameters
+    const queryParams = {
+      ...campaignFilters
+    };
+    
+    return this.createRobustIterator(
+      '/campaigns',
+      'campaigns',
+      {
+        ...options,
+        validateResponse: (response) => {
+          return response && (Array.isArray(response.data) || (response.data && Array.isArray(response.data.data)));
+        },
+        onError: (error, attempt) => {
+          if (this.debugMode) {
+            console.warn(`[Campaign API] Attempt ${attempt} failed:`, error.message);
+          }
+        }
+      },
+      // Pass queryParams to be used by the iterator
+      queryParams
+    );
+  }
+
+  // NEW: Get all campaigns with automatic pagination
+  async getAllCampaigns(
+    options: IteratorOptions = {},
+    filters: {
+      status?: string;
+      name?: string;
+      type?: string;
+      list_id?: string;
+      sort?: string;
+      order?: 'asc' | 'desc';
+      account_id?: number;
+    } = {}
+  ): Promise<any[]> {
+    const iterator = this.getCampaignsIterator(options, filters);
+    return iterator.toArray();
+  }
+
+  // NEW: Process campaigns in batches
+  async processCampaignsInBatches(
+    processor: (campaigns: any[]) => Promise<void>,
+    options: IteratorOptions = {},
+    filters: {
+      status?: string;
+      name?: string;
+      type?: string;
+      list_id?: string;
+      sort?: string;
+      order?: 'asc' | 'desc';
+      account_id?: number;
+    } = {}
+  ): Promise<void> {
+    const iterator = this.getCampaignsIterator(options, filters);
+    for await (const batch of iterator.batches()) {
+      await processor(batch);
+    }
   }
 
   // Update sendCampaign to use the new scheduleCampaign method

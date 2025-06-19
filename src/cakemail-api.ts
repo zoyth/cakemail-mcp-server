@@ -107,6 +107,16 @@ export type { Components, Paths } from './types/schema.js';
 export * from './types/errors.js';
 export * from './types/retry.js';
 
+// Export unified pagination system
+export * from './utils/pagination/index.js';
+export type {
+  UnifiedPaginationOptions,
+  PaginatedResult,
+  PaginationStrategy,
+  EndpointPaginationConfig,
+  IteratorOptions
+} from './utils/pagination/index.js';
+
 // Export event types
 export type { EventType } from './types/event-taxonomy.js';
 export { BaseApiClient } from './api/base-client.js';

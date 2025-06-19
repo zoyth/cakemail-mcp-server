@@ -17,6 +17,13 @@ import {
   RateLimitConfig,
   DEFAULT_RATE_LIMIT_CONFIG
 } from '../types/retry.js';
+import {
+  PaginatedIterator,
+  PaginationFactory,
+  UnifiedPaginationOptions,
+  PaginatedResult,
+  IteratorOptions
+} from '../utils/pagination/index.js';
 
 export interface EnhancedCakemailConfig extends CakemailConfig {
   retry?: Partial<RetryConfig>;
@@ -549,5 +556,85 @@ export class BaseApiClient {
   
   getRequestQueueStats() {
     return this.requestQueue.getStats();
+  }
+
+  // Unified pagination support methods
+  protected async fetchPaginated<T>(
+    endpoint: string,
+    endpointName: string,
+    options: UnifiedPaginationOptions = {},
+    additionalParams: Record<string, any> = {}
+  ): Promise<PaginatedResult<T>> {
+    const manager = PaginationFactory.createManager(endpointName);
+    const params = { ...manager.buildQueryParams(options), ...additionalParams };
+    
+    const query = Object.keys(params).length > 0 ? `?${new URLSearchParams(params)}` : '';
+    const response = await this.makeRequest(`${endpoint}${query}`, {
+      method: 'GET'
+    });
+    
+    return manager.parseResponse<T>(response);
+  }
+
+  protected createIterator<T>(
+    endpoint: string,
+    endpointName: string,
+    options: IteratorOptions = {},
+    additionalParams: Record<string, any> = {}
+  ): PaginatedIterator<T> {
+    return PaginationFactory.createIterator<T>(
+      endpointName,
+      (params) => {
+        const queryParams = { ...params, ...additionalParams };
+        const query = Object.keys(queryParams).length > 0 ? `?${new URLSearchParams(queryParams)}` : '';
+        return this.makeRequest(`${endpoint}${query}`);
+      },
+      options
+    );
+  }
+
+  protected createRobustIterator<T>(
+    endpoint: string,
+    endpointName: string,
+    options: IteratorOptions & {
+      onError?: (error: Error, attempt: number) => void;
+      validateResponse?: (response: any) => boolean;
+    } = {},
+    additionalParams: Record<string, any> = {}
+  ): PaginatedIterator<T> {
+    return PaginationFactory.createRobustIterator<T>(
+      endpointName,
+      (params) => {
+        const queryParams = { ...params, ...additionalParams };
+        const query = Object.keys(queryParams).length > 0 ? `?${new URLSearchParams(queryParams)}` : '';
+        return this.makeRequest(`${endpoint}${query}`);
+      },
+      options
+    );
+  }
+
+  // Helper method to get all items from an endpoint with automatic pagination
+  protected async getAllItems<T>(
+    endpoint: string,
+    endpointName: string,
+    options: IteratorOptions = {},
+    additionalParams: Record<string, any> = {}
+  ): Promise<T[]> {
+    const iterator = this.createIterator<T>(endpoint, endpointName, options, additionalParams);
+    return iterator.toArray();
+  }
+
+  // Helper method to process items in batches
+  protected async processBatches<T>(
+    endpoint: string,
+    endpointName: string,
+    processor: (batch: T[]) => Promise<void>,
+    options: IteratorOptions = {},
+    additionalParams: Record<string, any> = {}
+  ): Promise<void> {
+    const iterator = this.createIterator<T>(endpoint, endpointName, options, additionalParams);
+    for await (const batch of iterator.batches()) {
+      await processor(batch);
+    }
   }
 }

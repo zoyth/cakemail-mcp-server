@@ -15,10 +15,16 @@ import {
   ListResponse,
   CreateListResponse
 } from '../types/cakemail-types.js';
+import {
+  UnifiedPaginationOptions,
+  PaginatedResult,
+  PaginatedIterator,
+  IteratorOptions
+} from '../utils/pagination/index.js';
 
 export class ContactApi extends BaseApiClient {
 
-  // Contact Management
+  // Contact Management - Legacy method (deprecated)
   async getContacts(params?: PaginationParams & { list_id?: string; account_id?: number }): Promise<ContactsResponse> {
     const enhancedParams = { ...params };
     const accountId = await this.getCurrentAccountId();
@@ -28,6 +34,86 @@ export class ContactApi extends BaseApiClient {
     
     const query = enhancedParams ? `?${new URLSearchParams(enhancedParams as any)}` : '';
     return this.makeRequest(`/contacts${query}`);
+  }
+
+  // NEW: Unified pagination method for contacts
+  async getContactsPaginated(
+    listId?: string, 
+    options: UnifiedPaginationOptions = {},
+    additionalFilters: { account_id?: number; status?: string; email?: string; list_id?: string } = {}
+  ): Promise<PaginatedResult<any>> {
+    const accountId = await this.getCurrentAccountId();
+    const params: any = {
+      ...additionalFilters,
+      account_id: additionalFilters.account_id || accountId
+    };
+    
+    if (listId) {
+      params.list_id = listId;
+    }
+    
+    const endpoint = listId ? `/lists/${listId}/contacts` : '/contacts';
+    return this.fetchPaginated(endpoint, 'contacts', options, params);
+  }
+
+  // NEW: Iterator for automatic pagination through contacts
+  getContactsIterator(
+    listId?: string,
+    options: IteratorOptions = {},
+    filters: { account_id?: number; status?: string; email?: string; list_id?: string } = {}
+  ): PaginatedIterator<any> {
+    // We'll handle account_id synchronously in the iterator's fetch function
+    const baseParams: any = {
+      ...filters
+    };
+    
+    if (listId) {
+      baseParams.list_id = listId;
+    }
+    
+    const endpoint = listId ? `/lists/${listId}/contacts` : '/contacts';
+    
+    return this.createRobustIterator(
+      endpoint,
+      'contacts',
+      {
+        ...options,
+        validateResponse: (response) => {
+          // Validate that response has expected structure
+          return response && (Array.isArray(response.data) || (response.data && Array.isArray(response.data.data)));
+        },
+        onError: (error, attempt) => {
+          if (this.debugMode) {
+            console.warn(`[Contact API] Attempt ${attempt} failed:`, error.message);
+          }
+        }
+      },
+      // Pass baseParams to be used by the iterator
+      baseParams
+    );
+  }
+
+  // NEW: Get all contacts from a list with automatic pagination
+  async getAllContacts(
+    listId?: string,
+    options: IteratorOptions = {},
+    filters: { account_id?: number; status?: string; email?: string; list_id?: string } = {}
+  ): Promise<any[]> {
+    const iterator = this.getContactsIterator(listId, options, filters);
+    return iterator.toArray();
+  }
+
+  // NEW: Process contacts in batches
+  async processContactsInBatches(
+    listId: string,
+    processor: (contacts: any[]) => Promise<void>,
+    options: IteratorOptions = {},
+    filters: { account_id?: number; status?: string; email?: string; list_id?: string } = {}
+  ): Promise<void> {
+    const iterator = this.getContactsIterator(listId, options, filters);
+    for await (const batch of iterator.batches()) {
+      await processor(batch);
+    }
   }
 
   async createContact(data: CreateContactData): Promise<CreateContactResponse> {
@@ -103,7 +189,7 @@ export class ContactApi extends BaseApiClient {
     });
   }
 
-  // List Management with correct sort syntax
+  // List Management with correct sort syntax - Legacy method (deprecated)
   async getLists(params?: PaginationParams & SortParams & { account_id?: number }): Promise<ListsResponse> {
     const enhancedParams: any = {
       sort: '-created_on', // Use correct API syntax
@@ -123,6 +209,69 @@ export class ContactApi extends BaseApiClient {
     
     const query = enhancedParams ? `?${new URLSearchParams(enhancedParams)}` : '';
     return this.makeRequest(`/lists${query}`);
+  }
+
+  // NEW: Unified pagination method for lists
+  async getListsPaginated(
+    options: UnifiedPaginationOptions = {},
+    // Using inline comment to avoid unused variable error
+    additionalFilters: { account_id?: number; status?: string; name?: string; sort?: string; order?: 'asc' | 'desc' } = {}
+  ): Promise<PaginatedResult<any>> {
+    const accountId = await this.getCurrentAccountId();
+    const params: any = {
+      ...additionalFilters,
+      account_id: additionalFilters.account_id || accountId
+    };
+    
+    // Handle sorting with correct API syntax ([-|+]term)
+    if (additionalFilters.sort) {
+      const direction = additionalFilters.order === 'desc' ? '-' : '+';
+      params.sort = `${direction}${additionalFilters.sort}`;
+      // Remove the separate order parameter
+      delete params.order;
+    } else {
+      params.sort = '-created_on'; // Default sort
+    }
+    
+    return this.fetchPaginated('/lists', 'lists', options, params);
+  }
+
+  // NEW: Iterator for automatic pagination through lists
+  getListsIterator(
+    options: IteratorOptions = {},
+    filters: { account_id?: number; status?: string; name?: string; sort?: string; order?: 'asc' | 'desc' } = {}
+  ): PaginatedIterator<any> {
+    // Build base params from filters
+    const queryParams = {
+      ...filters
+    };
+    
+    return this.createRobustIterator(
+      '/lists',
+      'lists',
+      {
+        ...options,
+        validateResponse: (response) => {
+          return response && (Array.isArray(response.data) || (response.data && Array.isArray(response.data.data)));
+        },
+        onError: (error, attempt) => {
+          if (this.debugMode) {
+            console.warn(`[Contact API] Lists iteration attempt ${attempt} failed:`, error.message);
+          }
+        }
+      },
+      // Pass queryParams to be used by the iterator
+      queryParams
+    );
+  }
+
+  // NEW: Get all lists with automatic pagination
+  async getAllLists(
+    options: IteratorOptions = {},
+    filters: { account_id?: number; status?: string; name?: string; sort?: string; order?: 'asc' | 'desc' } = {}
+  ): Promise<any[]> {
+    const iterator = this.getListsIterator(options, filters);
+    return iterator.toArray();
   }
 
   async createList(data: CreateListData): Promise<CreateListResponse> {
