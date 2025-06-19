@@ -25,7 +25,7 @@ import {
 export class ContactApi extends BaseApiClient {
 
   // Contact Management - Legacy method (deprecated)
-  async getContacts(params?: PaginationParams & { list_id?: string; account_id?: number }): Promise<ContactsResponse> {
+  async getContacts(params?: PaginationParams & { list_id?: string; account_id?: number; email?: string; status?: string }): Promise<ContactsResponse> {
     const enhancedParams = { ...params };
     const accountId = await this.getCurrentAccountId();
     if (accountId && !enhancedParams.account_id) {
@@ -334,5 +334,113 @@ export class ContactApi extends BaseApiClient {
     return this.makeRequest(`/lists/${listId}${query}`, { 
       method: 'DELETE' 
     });
+  }
+
+  // Additional helper methods for tests
+  async unsubscribeContact(listId: string, contactId: string): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const query = accountId ? `?account_id=${accountId}` : '';
+    
+    return this.makeRequest(`/lists/${listId}/contacts/${contactId}/unsubscribe${query}`, {
+      method: 'POST'
+    });
+  }
+
+  async importContacts(listId: string, contacts: any[], updateExisting: boolean = false): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const query = accountId ? `?account_id=${accountId}` : '';
+    
+    const importData = {
+      contacts,
+      update_existing: updateExisting
+    };
+    
+    return this.makeRequest(`/lists/${listId}/contacts/import${query}`, {
+      method: 'POST',
+      body: JSON.stringify(importData)
+    });
+  }
+
+  async tagContacts(listId: string, contactIds: number[], tags: string[]): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const query = accountId ? `?account_id=${accountId}` : '';
+    
+    const tagData = {
+      contact_ids: contactIds,
+      tags
+    };
+    
+    return this.makeRequest(`/lists/${listId}/contacts/tags${query}`, {
+      method: 'POST',
+      body: JSON.stringify(tagData)
+    });
+  }
+
+  async untagContacts(listId: string, contactIds: number[], tags: string[]): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const query = accountId ? `?account_id=${accountId}` : '';
+    
+    const tagData = {
+      contact_ids: contactIds,
+      tags
+    };
+    
+    return this.makeRequest(`/lists/${listId}/contacts/tags${query}`, {
+      method: 'DELETE',
+      body: JSON.stringify(tagData)
+    });
+  }
+
+  async searchContacts(listId: string, params: { query?: string; filters?: any; page?: number; per_page?: number }): Promise<any> {
+    const accountId = await this.getCurrentAccountId();
+    const queryParams = new URLSearchParams();
+    
+    if (accountId) queryParams.append('account_id', accountId.toString());
+    if (params.query) queryParams.append('query', params.query);
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.per_page) queryParams.append('per_page', params.per_page.toString());
+    
+    // Handle filters
+    if (params.filters) {
+      Object.entries(params.filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (Array.isArray(value)) {
+            queryParams.append(key, value.join(','));
+          } else {
+            queryParams.append(key, String(value));
+          }
+        }
+      });
+    }
+    
+    return this.makeRequest(`/lists/${listId}/contacts/search?${queryParams.toString()}`);
+  }
+
+  async findContactByEmail(email: string): Promise<any | null> {
+    const response = await this.getContacts({ email });
+    if (response.data && response.data.length > 0) {
+      return response.data[0];
+    }
+    return null;
+  }
+
+  async getActiveContactsInList(listId: string): Promise<any[]> {
+    const response = await this.getContacts({ list_id: listId, status: 'active' });
+    return response.data || [];
+  }
+
+  async ensureContactExists(listId: string, email: string): Promise<any> {
+    // Check if contact exists
+    const existing = await this.findContactByEmail(email);
+    if (existing) {
+      return existing;
+    }
+    
+    // Create new contact
+    const response = await this.createContact({
+      list_id: parseInt(listId),
+      email
+    });
+    return response.data;
   }
 }

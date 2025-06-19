@@ -80,4 +80,43 @@ export class SenderApi extends BaseApiClient {
       method: 'DELETE' 
     });
   }
+
+  // Helper methods
+  async findSenderByEmail(email: string): Promise<any | null> {
+    const response = await this.getSenders();
+    const sender = response.data?.find(s => s.email === email);
+    return sender || null;
+  }
+
+  async ensureSenderExists(email: string, name: string, language?: string): Promise<any> {
+    // Check if sender already exists
+    const existing = await this.findSenderByEmail(email);
+    if (existing) {
+      return existing;
+    }
+
+    // Create new sender
+    const createData: CreateSenderData = { email, name };
+    if (language !== undefined) {
+      createData.language = language;
+    }
+    const response = await this.createSender(createData);
+    return response.data;
+  }
+
+  async getDefaultSender(): Promise<any | null> {
+    const response = await this.getSenders();
+    if (!response.data || response.data.length === 0) {
+      return null;
+    }
+
+    // Look for a sender marked as default
+    const defaultSender = response.data.find(s => (s as any).is_default === true);
+    if (defaultSender) {
+      return defaultSender;
+    }
+
+    // Return the first sender if no default is set
+    return response.data[0];
+  }
 }

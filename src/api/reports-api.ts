@@ -70,7 +70,7 @@ export class ReportsApi extends BaseApiClient {
   }
 
   // Email Reports (Transactional)
-  async getEmailStats(
+  async getEmailStatsReport(
     startTime: number, 
     endTime: number, 
     accountId?: number
@@ -472,5 +472,81 @@ export class ReportsApi extends BaseApiClient {
     }
 
     return results;
+  }
+
+  // Additional helper methods for tests
+  async getEmailStats(startTime: number, endTime: number, params?: { interval?: string }): Promise<any> {
+    const queryParams: any = {
+      start_time: startTime,
+      end_time: endTime
+    };
+    
+    if (params?.interval) queryParams.interval = params.interval;
+    
+    const accountId = await this.getCurrentAccountId();
+    if (accountId) queryParams.account_id = accountId;
+    
+    const query = `?${new URLSearchParams(queryParams)}`;
+    return this.makeRequest(`/reports/emails${query}`);
+  }
+
+  async getReportsEmailStats(startTime: number, endTime: number, params?: { interval?: string }): Promise<any> {
+    return this.getEmailStats(startTime, endTime, params);
+  }
+
+  async getReportsListStats(listId: string, params?: { start_time?: number; end_time?: number; interval?: string }): Promise<any> {
+    const queryParams: any = {};
+    
+    if (params?.start_time) queryParams.start_time = params.start_time;
+    if (params?.end_time) queryParams.end_time = params.end_time;
+    if (params?.interval) queryParams.interval = params.interval;
+    
+    const accountId = await this.getCurrentAccountId();
+    if (accountId) queryParams.account_id = accountId;
+    
+    const query = Object.keys(queryParams).length > 0 ? `?${new URLSearchParams(queryParams)}` : '';
+    return this.makeRequest(`/reports/lists/${listId}${query}`);
+  }
+
+  async compareCampaignPerformance(campaignId1: string, campaignId2: string): Promise<any> {
+    const [stats1, stats2] = await Promise.all([
+      this.getCampaignStats(campaignId1),
+      this.getCampaignStats(campaignId2)
+    ]);
+    
+    return {
+      campaign1: stats1.data,
+      campaign2: stats2.data,
+      comparison: {
+        delivery_rate_diff: (stats1.data?.delivery_rate || 0) - (stats2.data?.delivery_rate || 0),
+        open_rate_diff: (stats1.data?.open_rate || 0) - (stats2.data?.open_rate || 0),
+        click_rate_diff: (stats1.data?.click_rate || 0) - (stats2.data?.click_rate || 0)
+      }
+    };
+  }
+
+  async getTopPerformingLinks(campaignId: string, limit: number = 10): Promise<any[]> {
+    const linksStats = await this.getCampaignLinksStats(campaignId, {
+      per_page: limit,
+      sort: 'unique',
+      order: 'desc'
+    });
+    
+    return linksStats.data || [];
+  }
+
+  async getEngagementTimeline(startTime: number, endTime: number): Promise<any[]> {
+    const emailStats = await this.getEmailStats(startTime, endTime, { interval: 'hour' });
+    
+    if (!emailStats.data) return [];
+    
+    // Transform data into timeline format
+    return emailStats.data.map((stat: any) => ({
+      timestamp: stat.timestamp || stat.time,
+      delivered: stat.delivered || 0,
+      opened: stat.opened || 0,
+      clicked: stat.clicked || 0,
+      bounced: stat.bounced || 0
+    }));
   }
 }

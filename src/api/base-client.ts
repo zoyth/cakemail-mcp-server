@@ -24,6 +24,7 @@ import {
   PaginatedResult,
   IteratorOptions
 } from '../utils/pagination/index.js';
+import { CakemailNetworkError } from '../types/errors.js';
 
 export interface EnhancedCakemailConfig extends CakemailConfig {
   retry?: Partial<RetryConfig>;
@@ -40,6 +41,7 @@ export interface EnhancedCakemailConfig extends CakemailConfig {
 export class BaseApiClient {
   protected config: EnhancedCakemailConfig;
   protected token: CakemailToken | null = null;
+  protected mockToken: CakemailToken | null = null;
   protected tokenExpiry: Date | null = null;
   protected baseUrl: string;
   protected debugMode: boolean;
@@ -249,9 +251,14 @@ export class BaseApiClient {
   }
   
   private async executeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
+    // Use mock token in test environment if available
+    const token = this.mockToken || this.token;
+    if (!token) {
+      throw new CakemailAuthenticationError('No authentication token available');
+    }
 
     const headers: Record<string, string> = {
-      'Authorization': `Bearer ${this.token!.access_token}`,
+      'Authorization': `Bearer ${token.access_token}`,
       'Accept': 'application/json',
       'Content-Type': 'application/json'
     };
@@ -270,17 +277,34 @@ export class BaseApiClient {
       }
     }
 
-    // Add timeout to the request
-    const fetchPromise = fetch(url, {
-      ...options,
-      headers
-    });
-    
-    const response = await withTimeout(
-      fetchPromise, 
-      this.timeout, 
-      `Request to ${endpoint} timed out after ${this.timeout}ms`
-    );
+    let response: Response;
+    try {
+      // Add timeout to the request
+      const fetchPromise = fetch(url, {
+        ...options,
+        headers
+      });
+      
+      response = await withTimeout(
+        fetchPromise, 
+        this.timeout, 
+        `Request to ${endpoint} timed out after ${this.timeout}ms`
+      );
+    } catch (error) {
+      // Handle network errors (fetch rejections)
+      if (this.debugMode) {
+        console.error(`[Cakemail API] Network error for ${method} ${endpoint}:`, error);
+      }
+      
+      // If it's already a CakemailNetworkError, re-throw it
+      if (error instanceof CakemailNetworkError) {
+        throw error;
+      }
+      
+      // Otherwise, wrap it in a CakemailNetworkError
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new CakemailNetworkError(`Network error: ${errorMessage}`, error as Error);
+    }
 
     if (this.debugMode) {
       console.log(`[Cakemail API] Response: ${response.status} ${response.statusText}`);
@@ -476,6 +500,11 @@ export class BaseApiClient {
 
   // Auto-refresh token before requests if needed
   protected async ensureValidToken(): Promise<void> {
+    // Skip token refresh in test environment if mock token is set
+    if (this.mockToken) {
+      return;
+    }
+    
     const status = this.getTokenStatus();
     
     if (!status.hasToken || status.isExpired) {
@@ -488,6 +517,11 @@ export class BaseApiClient {
         await this.authenticate();
       }
     }
+  }
+  
+  // Method to set mock token for testing
+  public setMockToken(token: CakemailToken): void {
+    this.mockToken = token;
   }
 
   // Enhanced health check with proper error handling and retry logic

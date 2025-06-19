@@ -712,4 +712,242 @@ export class LogsApi extends BaseApiClient {
 
     return results;
   }
+
+  // Additional methods for email logs
+  async getEmailLogs(logType: string, params?: any): Promise<any> {
+    // Validate log type
+    const validTypes = ['all', 'submitted', 'queued', 'delivered', 'rejected', 'error', 'open', 'click', 'bounce', 'spam', 'unsubscribe', 'global_unsubscribe'];
+    if (!validTypes.includes(logType)) {
+      throw new Error('Invalid log type');
+    }
+
+    const queryParams = new URLSearchParams();
+    queryParams.append('log_type', logType);
+    queryParams.append('page', params?.page || '1');
+    queryParams.append('per_page', params?.per_page || '50');
+    queryParams.append('with_count', params?.with_count !== undefined ? params.with_count.toString() : 'false');
+    
+    // Add account ID
+    const accountId = await this.getCurrentAccountId();
+    if (accountId) queryParams.append('account_id', accountId.toString());
+    
+    // Add other parameters
+    if (params?.email_id) queryParams.append('email_id', params.email_id);
+    if (params?.start_time) queryParams.append('start_time', params.start_time.toString());
+    if (params?.end_time) queryParams.append('end_time', params.end_time.toString());
+    if (params?.tags) queryParams.append('tags', params.tags);
+    if (params?.providers) queryParams.append('providers', params.providers);
+    if (params?.iso_time) queryParams.append('iso_time', params.iso_time.toString());
+    
+    return this.makeRequest(`/logs/emails?${queryParams.toString()}`);
+  }
+
+  async getEmailLogsWithAnalysis(logType: string, params?: any): Promise<any> {
+    const logs = await this.getEmailLogs(logType, params);
+    
+    const analysis = {
+      total_logs: logs.data?.length || 0,
+      by_type: {} as Record<string, number>,
+      performance: {
+        delivery_rate: 0,
+        open_rate: 0,
+        click_rate: 0,
+        bounce_rate: 0
+      },
+      timeline: {}
+    };
+    
+    // Count by type
+    if (logs.data) {
+      let delivered = 0, opens = 0, clicks = 0, bounces = 0;
+      
+      logs.data.forEach((log: any) => {
+        const type = log.type || 'unknown';
+        analysis.by_type[type] = (analysis.by_type[type] || 0) + 1;
+        
+        if (type === 'delivered') delivered++;
+        if (type === 'open') opens++;
+        if (type === 'click') clicks++;
+        if (type === 'bounce') bounces++;
+      });
+      
+      const total = delivered + bounces;
+      if (total > 0) {
+        analysis.performance.delivery_rate = delivered / total;
+        analysis.performance.bounce_rate = bounces / total;
+      }
+      if (delivered > 0) {
+        analysis.performance.open_rate = opens / delivered;
+        analysis.performance.click_rate = clicks / delivered;
+      }
+    }
+    
+    return { logs, analysis };
+  }
+
+  async getCampaignEngagementLogs(campaignId: string): Promise<any[]> {
+    const response = await this.getCampaignLogs(campaignId, {
+      filter: 'type==open;type==click;type==unsubscribe'
+    });
+    return response.data || [];
+  }
+
+  async getCampaignBounceAndSpamLogs(campaignId: string): Promise<any[]> {
+    const response = await this.getCampaignLogs(campaignId, {
+      filter: 'type==bounce;type==spam'
+    });
+    return response.data || [];
+  }
+
+  async getEmailJourney(emailId: string): Promise<any> {
+    const logs = await this.getEmailLogs('all', { email_id: emailId });
+    const events = logs.data || [];
+    
+    // Sort events by timestamp
+    events.sort((a: any, b: any) => (a.timestamp || 0) - (b.timestamp || 0));
+    
+    // Calculate journey duration
+    let duration = 0;
+    if (events.length > 1) {
+      duration = (events[events.length - 1].timestamp || 0) - (events[0].timestamp || 0);
+    }
+    
+    // Determine final status
+    let finalStatus = 'pending';
+    if (events.some((e: any) => e.type === 'click')) {
+      finalStatus = 'engaged';
+    } else if (events.some((e: any) => e.type === 'open')) {
+      finalStatus = 'opened';
+    } else if (events.some((e: any) => e.type === 'delivered')) {
+      finalStatus = 'delivered';
+    } else if (events.some((e: any) => e.type === 'bounce')) {
+      finalStatus = 'bounced';
+    }
+    
+    return {
+      email_id: emailId,
+      events,
+      journey_duration: duration,
+      final_status: finalStatus
+    };
+  }
+
+  async aggregateCampaignLogsByType(campaignId: string): Promise<any> {
+    const logs = await this.getCampaignLogs(campaignId, { per_page: 100 });
+    const aggregated: Record<string, any> = {};
+    
+    if (logs.data) {
+      logs.data.forEach((log: any) => {
+        const type = log.type || 'unknown';
+        if (!aggregated[type]) {
+          aggregated[type] = {
+            total: 0,
+            unique: 0,
+            contacts: []
+          };
+        }
+        
+        aggregated[type].total++;
+        if (log.contact_id && !aggregated[type].contacts.includes(log.contact_id)) {
+          aggregated[type].contacts.push(log.contact_id);
+          aggregated[type].unique = aggregated[type].contacts.length;
+        }
+      });
+    }
+    
+    return aggregated;
+  }
+
+  async getClickPatterns(campaignId: string): Promise<any> {
+    const logs = await this.getCampaignLogs(campaignId, {
+      filter: 'type==click',
+      per_page: 100
+    });
+    
+    const clickData: Record<string, any> = {};
+    const uniqueClickers = new Set<number>();
+    let totalClicks = 0;
+    
+    if (logs.data) {
+      logs.data.forEach((log: any) => {
+        if (log.type === 'click' && log.clickthru_url) {
+          totalClicks++;
+          if (log.contact_id) uniqueClickers.add(log.contact_id);
+          
+          const url = log.clickthru_url;
+          if (!clickData[url]) {
+            clickData[url] = {
+              url,
+              clicks: 0,
+              unique_clicks: 0,
+              clickers: new Set(),
+              first_click: log.timestamp,
+              last_click: log.timestamp
+            };
+          }
+          
+          clickData[url].clicks++;
+          if (log.contact_id) {
+            clickData[url].clickers.add(log.contact_id);
+            clickData[url].unique_clicks = clickData[url].clickers.size;
+          }
+          
+          if (log.timestamp < clickData[url].first_click) {
+            clickData[url].first_click = log.timestamp;
+          }
+          if (log.timestamp > clickData[url].last_click) {
+            clickData[url].last_click = log.timestamp;
+          }
+        }
+      });
+    }
+    
+    // Convert to array and clean up
+    const links = Object.values(clickData).map((link: any) => ({
+      url: link.url,
+      clicks: link.clicks,
+      unique_clicks: link.unique_clicks,
+      first_click: link.first_click,
+      last_click: link.last_click
+    }));
+    
+    // Sort by clicks descending
+    links.sort((a, b) => b.clicks - a.clicks);
+    
+    return {
+      total_clicks: totalClicks,
+      unique_clickers: uniqueClickers.size,
+      links
+    };
+  }
+
+  async *iterateCampaignLogs(campaignId: string, params?: any): AsyncGenerator<any[], void, unknown> {
+    let cursor: string | undefined = undefined;
+    let hasMore = true;
+    
+    while (hasMore) {
+      const response = await this.getCampaignLogs(campaignId, {
+        ...params,
+        cursor,
+        per_page: params?.per_page || 100
+      });
+      
+      if (response.data && response.data.length > 0) {
+        yield response.data;
+      }
+      
+      cursor = response.pagination?.cursor;
+      hasMore = !!cursor;
+    }
+  }
+
+  async processCampaignLogsInBatches(
+    campaignId: string,
+    processor: (batch: any[]) => Promise<void>,
+    params?: any
+  ): Promise<void> {
+    for await (const batch of this.iterateCampaignLogs(campaignId, params)) {
+      await processor(batch);
+    }
+  }
 }

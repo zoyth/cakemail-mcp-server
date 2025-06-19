@@ -485,6 +485,176 @@ export class SubAccountApi extends BaseApiClient {
   }
 
   /**
+   * Verify sub-account email with code or resend verification
+   * This is a wrapper for the confirm endpoint with different behavior
+   */
+  async verifySubAccountEmail(accountId: string, data: {
+    verification_code?: string;
+    email?: string;
+  }): Promise<any> {
+    this.validateAccountId(accountId, 'verify');
+    
+    const url = `/accounts/${accountId}/verify`;
+    return this.makeRequest(url, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  /**
+   * Resend sub-account verification email
+   * Alternative method name for resendVerificationEmail
+   */
+  async resendSubAccountVerification(email: string): Promise<ResendSubAccountVerificationResponse> {
+    return this.resendVerificationEmail({ email });
+  }
+
+  /**
+   * Convert sub-account to organization (overloaded version)
+   */
+  async convertToOrganization(accountId: string, migrateOwner: boolean = true): Promise<SubAccountResponse> {
+    const data: ConvertSubAccountData = { migrate_owner: migrateOwner };
+    return this.convertSubAccountToOrganization(accountId, data);
+  }
+
+  /**
+   * Find sub-account by email
+   */
+  async findSubAccountByEmail(email: string): Promise<any | null> {
+    const response = await this.listSubAccounts();
+    const account = response.data?.find(acc => 
+      acc.account_owner?.email === email || 
+      (acc as any).email === email
+    );
+    return account || null;
+  }
+
+  /**
+   * Get active sub-accounts
+   */
+  async getActiveSubAccounts(): Promise<any[]> {
+    const response = await this.getSubAccountsByStatus('active');
+    return response.data || [];
+  }
+
+  /**
+   * Get sub-account statistics
+   */
+  async getSubAccountStatistics(): Promise<{
+    total: number;
+    active: number;
+    suspended: number;
+    pending: number;
+    inactive: number;
+  }> {
+    const response = await this.listSubAccounts({
+      pagination: { page: 1, per_page: 100, with_count: true }
+    });
+    
+    const stats = {
+      total: (response.pagination as any)?.total_count || response.pagination?.count || response.data?.length || 0,
+      active: 0,
+      suspended: 0,
+      pending: 0,
+      inactive: 0
+    };
+    
+    response.data?.forEach(account => {
+      if (account.status === 'active') stats.active++;
+      else if (account.status === 'suspended') stats.suspended++;
+      else if (account.status === 'pending') stats.pending++;
+      else if (account.status === 'inactive') stats.inactive++;
+    });
+    
+    return stats;
+  }
+
+  /**
+   * Get all sub-accounts (pagination helper)
+   */
+  async getAllSubAccounts(): Promise<any[]> {
+    const allAccounts: any[] = [];
+    let page = 1;
+    let hasMore = true;
+    
+    while (hasMore) {
+      const response = await this.listSubAccounts({
+        pagination: { page, per_page: 100, with_count: true }
+      });
+      
+      if (response.data && response.data.length > 0) {
+        allAccounts.push(...response.data);
+      }
+      
+      hasMore = response.data?.length === 100;
+      page++;
+    }
+    
+    return allAccounts;
+  }
+
+  /**
+   * Export sub-accounts to CSV or JSON format
+   */
+  async exportSubAccounts(params?: {
+    format?: 'csv' | 'json';
+    filename?: string;
+    status_filter?: 'pending' | 'active' | 'suspended' | 'inactive';
+    include_usage_stats?: boolean;
+    include_owner_details?: boolean;
+    include_contact_counts?: boolean;
+  }): Promise<{
+    format: string;
+    filename: string;
+    data: string;
+    totalAccounts: number;
+  }> {
+    const exportParams: Parameters<typeof this.exportSubAccountsData>[0] = {};
+    if (params?.status_filter !== undefined) {
+      exportParams.status_filter = params.status_filter;
+    }
+    if (params?.include_usage_stats !== undefined) {
+      exportParams.include_usage_stats = params.include_usage_stats;
+    }
+    if (params?.include_owner_details !== undefined) {
+      exportParams.include_owner_details = params.include_owner_details;
+    }
+    const exportData = await this.exportSubAccountsData(exportParams);
+    
+    const format = params?.format || 'csv';
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = params?.filename || `sub-accounts-export-${timestamp}.${format}`;
+    
+    let data: string;
+    
+    if (format === 'json') {
+      data = JSON.stringify(exportData.accounts, null, 2);
+    } else {
+      // CSV format
+      const headers = ['id', 'name', 'email', 'status', 'created_on'];
+      const rows = exportData.accounts.map(account => [
+        account.id,
+        account.name,
+        account.owner_email || '',
+        account.status,
+        account.created_on
+      ]);
+      
+      data = [
+        headers.join(','),
+        ...rows.map(row => row.join(','))
+      ].join('\n');
+    }
+    
+    return {
+      format,
+      filename,
+      data,
+      totalAccounts: exportData.accounts.length
+    };
+  }
+
+  /**
    * Export sub-accounts data with comprehensive information
    * This is a convenience method that aggregates all sub-account data
    * for export purposes (CSV, JSON, etc.)

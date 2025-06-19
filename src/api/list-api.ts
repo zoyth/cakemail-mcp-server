@@ -219,24 +219,67 @@ export class ListApi extends BaseApiClient {
     });
   }
 
-  async getListStats(params: ListStatsParams): Promise<ListStatsResponse> {
+  async getListStats(listId: string, params?: { start_time?: number; end_time?: number; interval?: string }): Promise<ListStatsResponse> {
     const queryParams = new URLSearchParams();
     
-    if (params.start_time) queryParams.append('start_time', params.start_time.toString());
-    if (params.end_time) queryParams.append('end_time', params.end_time.toString());
-    if (params.interval) queryParams.append('interval', params.interval);
+    if (params?.start_time) queryParams.append('start_time', params.start_time.toString());
+    if (params?.end_time) queryParams.append('end_time', params.end_time.toString());
+    if (params?.interval) queryParams.append('interval', params.interval);
     
-    if (params.account_id) {
-      queryParams.append('account_id', params.account_id.toString());
-    } else {
-      const accountId = await this.getCurrentAccountId();
-      if (accountId) queryParams.append('account_id', accountId.toString());
-    }
+    const accountId = await this.getCurrentAccountId();
+    if (accountId) queryParams.append('account_id', accountId.toString());
 
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
     
     // Note: This endpoint might need to be adjusted based on actual API documentation
     // Using a generic stats endpoint for now
-    return this.makeRequest(`/lists/${params.list_id}/stats${query}`);
+    return this.makeRequest(`/lists/${listId}/stats${query}`);
+  }
+
+  // Helper methods
+  async findListByName(name: string): Promise<any | null> {
+    const response = await this.getLists({ name, per_page: 50 });
+    const list = response.data?.find(l => l.name === name);
+    return list || null;
+  }
+
+  async getActiveLists(): Promise<any[]> {
+    const response = await this.getLists({ status: 'active', per_page: 100 });
+    return response.data || [];
+  }
+
+  async getAllLists(): Promise<any[]> {
+    const allLists: any[] = [];
+    let page = 1;
+    let hasMore = true;
+    
+    while (hasMore) {
+      const response = await this.getLists({ page, per_page: 100, with_count: true });
+      
+      if (response.data && response.data.length > 0) {
+        allLists.push(...response.data);
+      }
+      
+      hasMore = response.data?.length === 100;
+      page++;
+    }
+    
+    return allLists;
+  }
+
+  async processListsInBatches(processor: (batch: any[]) => Promise<void>): Promise<void> {
+    let page = 1;
+    let hasMore = true;
+    
+    while (hasMore) {
+      const response = await this.getLists({ page, per_page: 100 });
+      
+      if (response.data && response.data.length > 0) {
+        await processor(response.data);
+      }
+      
+      hasMore = response.data?.length === 100;
+      page++;
+    }
   }
 }

@@ -1,3 +1,3 @@
 #!/bin/bash
 cd /Users/francoislane/dev/cakemail-mcp-server
-npm run build
+npm test -- tests/api/sender-api.test.ts
