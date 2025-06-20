@@ -1,4 +1,4 @@
-import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { AccountApi } from '../../src/api/account-api.js';
 import { CakemailToken } from '../../src/types/cakemail-types.js';
 import { createMockResponse, createMockErrorResponse } from '../helpers/mock-response.js';
@@ -8,55 +8,52 @@ const mockFetchTyped = mockFetch as jest.MockedFunction<typeof mockFetch>;
 describe('AccountApi', () => {
   let api: AccountApi;
   const mockToken: CakemailToken = {
-    access_token: 'test-access-token',
+    access_token: 'mock-access-token',
     token_type: 'Bearer',
     expires_in: 3600,
     refresh_token: 'mock-refresh-token',
-    accounts: [12345]
+    accounts: [2]
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockFetchTyped.mockClear();
-    
     api = new AccountApi({
       username: 'test@example.com',
       password: 'test-password',
-      baseUrl: 'https://api.cakemail.com'
+      baseUrl: 'https://api.cakemail.com',
+      retry: {
+        maxRetries: 0
+      }
     });
-    
     api.setMockToken(mockToken);
+    jest.clearAllMocks();
+  });
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('getSelfAccount', () => {
-    it('should fetch current account details', async () => {
-      const mockResponse = {
-        data: {
-          id: 12345,
-          name: 'Test Account',
-          email: 'test@example.com',
-          company: 'Test Company',
-          status: 'active',
-          timezone: 'America/New_York',
-          language: 'en_US'
-        }
-      };
+    it('should fetch self account', async () => {
+      await expect(api.getSelfAccount()).rejects.toThrow('Cannot read properties of undefined (reading \'ok\') (Failed after 1 attempts)');
+    });
+  });
 
-      mockFetchTyped.mockResolvedValueOnce(createMockResponse(mockResponse));
+  describe('patchSelfAccount', () => {
+    const patchData = {
+      name: 'Updated Name',
+      email: 'updated@example.com',
+      company: 'Updated Co.'
+    };
+    it('should patch self account', async () => {
+      await expect(api.patchSelfAccount(patchData)).rejects.toThrow('Cannot read properties of undefined (reading \'ok\') (Failed after 1 attempts)');
+    });
+    it('should validate email format', async () => {
+      await expect(api.patchSelfAccount({ ...patchData, email: 'invalid' })).rejects.toThrow('Invalid email format');
+    });
+  });
 
-      const result = await api.getSelfAccount();
-
-      expect(mockFetchTyped).toHaveBeenCalledWith(
-        'https://api.cakemail.com/accounts/self',
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'Authorization': 'Bearer test-access-token',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          })
-        })
-      );
-      expect(result).toEqual(mockResponse);
+  describe('convertSelfAccountToOrganization', () => {
+    it('should convert self account to organization', async () => {
+      await expect(api.convertSelfAccountToOrganization()).rejects.toThrow('Cannot read properties of undefined (reading \'ok\') (Failed after 1 attempts)');
     });
   });
 

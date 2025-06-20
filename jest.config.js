@@ -41,5 +41,8 @@ export default {
   roots: ['<rootDir>/src', '<rootDir>/tests'],
   clearMocks: true,
   resetMocks: true,
-  restoreMocks: true
+  restoreMocks: true,
+  globals: {
+    fetch: 'mock'
+  }
 };

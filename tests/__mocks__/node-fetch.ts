@@ -38,10 +38,12 @@ const createMockResponse = (data: any, options: {
   };
 };
 
-// Add debugging
-mockFetch.mockImplementation((...args) => {
-  console.log('Mock fetch called with:', args);
-  return Promise.resolve({
+// Add debugging and better default implementation
+mockFetch.mockImplementation((url: string, options?: any) => {
+  console.log('Mock fetch called with:', { url, options });
+  
+  // Default successful response
+  const defaultResponse = {
     ok: true,
     status: 200,
     statusText: 'OK',
@@ -55,7 +57,7 @@ mockFetch.mockImplementation((...args) => {
     clone: () => mockFetch(),
     body: null,
     bodyUsed: false,
-    url: args[0] || 'https://api.cakemail.com',
+    url: url || 'https://api.cakemail.com',
     type: 'basic',
     redirected: false,
     size: 0,
@@ -63,7 +65,9 @@ mockFetch.mockImplementation((...args) => {
     arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
     formData: () => Promise.resolve(new FormData()),
     blob: () => Promise.resolve(new Blob())
-  } as any);
+  } as any;
+  
+  return Promise.resolve(defaultResponse);
 });
 
 // Export as default (ES module)

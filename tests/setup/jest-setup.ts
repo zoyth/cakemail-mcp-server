@@ -1,6 +1,10 @@
 // Global test setup
 import { jest } from '@jest/globals';
 
+// Mock fetch globally
+const mockFetch = jest.fn();
+global.fetch = mockFetch as any;
+
 // No need to mock node-fetch here; handled by moduleNameMapper
 // Export nothing, or export helpers if needed
 
