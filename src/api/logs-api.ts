@@ -2,6 +2,7 @@
 
 import { BaseApiClient } from './base-client.js';
 import type { PaginationParams } from '../types/cakemail-types.js';
+import logger from '../utils/logger.js';
 
 export interface GetCampaignLogsParams extends PaginationParams {
   account_id?: number;
@@ -87,9 +88,9 @@ export class LogsApi extends BaseApiClient {
     const query = Object.keys(apiParams).length > 0 ? `?${new URLSearchParams(apiParams)}` : '';
     
     if (this.debugMode) {
-      console.log(`[Logs API] Getting campaign logs for campaign ${campaignId}`);
-      console.log(`[Logs API] Query parameters:`, apiParams);
-      console.log(`[Logs API] Final URL: GET /logs/campaigns/${campaignId}${query}`);
+      logger.info(`[Logs API] Getting campaign logs for campaign ${campaignId}`);
+      logger.info(`[Logs API] Query parameters:`, apiParams);
+      logger.info(`[Logs API] Final URL: GET /logs/campaigns/${campaignId}${query}`);
     }
     
     return this.makeRequest(`/logs/campaigns/${campaignId}${query}`);

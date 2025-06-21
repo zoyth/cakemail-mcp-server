@@ -25,6 +25,7 @@ import {
   IteratorOptions
 } from '../utils/pagination/index.js';
 import { CakemailNetworkError } from '../types/errors.js';
+import logger from '../utils/logger.js';
 
 export interface EnhancedCakemailConfig extends CakemailConfig {
   retry?: Partial<RetryConfig>;
@@ -101,7 +102,7 @@ export class BaseApiClient {
             return;
           } catch (error) {
             if (this.debugMode) {
-              console.warn(`Refresh token failed (attempt ${retryCount + 1}), falling back to password authentication`);
+              logger.info(`Refresh token failed (attempt ${retryCount + 1}), falling back to password authentication`);
             }
           }
         }
@@ -118,7 +119,7 @@ export class BaseApiClient {
         }
         
         if (this.debugMode) {
-          console.warn(`Authentication attempt ${retryCount} failed, retrying...`);
+          logger.info(`Authentication attempt ${retryCount} failed, retrying...`);
         }
         
         // Exponential backoff
@@ -155,7 +156,7 @@ export class BaseApiClient {
     this.tokenExpiry = new Date(Date.now() + (tokenData.expires_in * 1000) - 60000); // 1 minute buffer
     
     if (this.debugMode) {
-      console.log(`[Cakemail API] Token obtained, expires at: ${this.tokenExpiry.toISOString()}`);
+      logger.info(`[Cakemail API] Token obtained, expires at: ${this.tokenExpiry.toISOString()}`);
     }
   }
 
@@ -200,7 +201,7 @@ export class BaseApiClient {
     this.tokenExpiry = new Date(Date.now() + (tokenData.expires_in * 1000) - 60000);
     
     if (this.debugMode) {
-      console.log(`[Cakemail API] Token refreshed, expires at: ${this.tokenExpiry.toISOString()}`);
+      logger.info(`[Cakemail API] Token refreshed, expires at: ${this.tokenExpiry.toISOString()}`);
     }
   }
 
@@ -271,9 +272,9 @@ export class BaseApiClient {
     const method = options.method || 'GET';
 
     if (this.debugMode) {
-      console.log(`[Cakemail API] ${method} ${url}`);
+      logger.info(`[Cakemail API] ${method} ${url}`);
       if (options.body) {
-        console.log(`[Cakemail API] Request body:`, options.body);
+        logger.info(`[Cakemail API] Request body:`, options.body);
       }
     }
 
@@ -293,7 +294,7 @@ export class BaseApiClient {
     } catch (error) {
       // Handle network errors (fetch rejections)
       if (this.debugMode) {
-        console.error(`[Cakemail API] Network error for ${method} ${endpoint}:`, error);
+        logger.error(`[Cakemail API] Network error for ${method} ${endpoint}:`, error);
       }
       
       // If it's already a CakemailNetworkError, re-throw it
@@ -307,14 +308,14 @@ export class BaseApiClient {
     }
 
     if (this.debugMode) {
-      console.log(`[Cakemail API] Response: ${response.status} ${response.statusText}`);
+      logger.info(`[Cakemail API] Response: ${response.status} ${response.statusText}`);
     }
 
     if (!response.ok) {
       const errorBody = await this.parseErrorResponse(response);
       
       if (this.debugMode) {
-        console.error(`[Cakemail API] Error response:`, {
+        logger.error(`[Cakemail API] Error response:`, {
           status: response.status,
           statusText: response.statusText,
           endpoint: `${method} ${endpoint}`,
@@ -331,7 +332,7 @@ export class BaseApiClient {
       const result = await response.json();
       
       if (this.debugMode) {
-        console.log(`[Cakemail API] Response data:`, {
+        logger.info(`[Cakemail API] Response data:`, {
           hasData: !!(result as any).data,
           dataType: typeof (result as any).data,
           dataLength: Array.isArray((result as any).data) ? (result as any).data.length : 'N/A',
@@ -357,7 +358,7 @@ export class BaseApiClient {
       return this.currentAccountId || undefined;
     } catch (error: any) {
       if (this.debugMode) {
-        console.warn('[Cakemail API] Could not fetch account ID:', error.message);
+        logger.warn('[Cakemail API] Could not fetch account ID:', error.message);
       }
       return undefined;
     }

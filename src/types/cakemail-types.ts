@@ -590,7 +590,7 @@ export interface Campaign {
   subject?: string;
   html_content?: string;
   text_content?: string;
-  status?: 'incomplete' | 'draft' | 'scheduled' | 'sending' | 'sent' | 'archived';
+  status?: 'active' | 'delivering' | 'delivered' | 'archived' | 'deleted' | 'incomplete' | 'scheduled';
   list_id?: number;
   sender_id?: number;
   from_name?: string;

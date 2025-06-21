@@ -15,6 +15,7 @@ import type {
   EmailStatsParams   // Now exists
 } from '../types/cakemail-types.js';
 import { EmailAPIError } from '../types/errors.js';
+import logger from '../utils/logger.js';
 
 export class EmailApi extends BaseApiClient {
 
@@ -50,7 +51,7 @@ export class EmailApi extends BaseApiClient {
     // Some accounts require list_id for all emails (list management cannot be disabled)
     // This is a common requirement for newer accounts or certain account types
     if (!emailData.list_id && emailData.content.type !== 'transactional') {
-      console.warn('[Email API] Warning: Some accounts require list_id for all emails. Consider providing list_id.');
+      logger.info('[Email API] Warning: Some accounts require list_id for all emails. Consider providing list_id.');
     }
 
     // Structure request according to v2 API specification
@@ -118,7 +119,7 @@ export class EmailApi extends BaseApiClient {
     }
 
     if (this.debugMode) {
-      console.log('[Email API] v2 Submit request:', JSON.stringify(submitRequest, null, 2));
+      logger.info('[Email API] v2 Submit request:', JSON.stringify(submitRequest, null, 2));
     }
 
     const accountId = await this.getCurrentAccountId();
@@ -198,7 +199,7 @@ export class EmailApi extends BaseApiClient {
           }
           
           if (this.debugMode) {
-            console.error('[Email API] Detailed error:', {
+            logger.error('[Email API] Detailed error:', {
               message: errorMessage,
               error: error,
               response: (error as any).response,

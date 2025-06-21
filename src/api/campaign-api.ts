@@ -23,6 +23,7 @@ import {
   PaginatedIterator,
   IteratorOptions
 } from '../utils/pagination/index.js';
+import logger from '../utils/logger.js';
 
 export class CampaignApi extends BaseApiClient {
   
@@ -88,8 +89,8 @@ export class CampaignApi extends BaseApiClient {
     const query = Object.keys(apiParams).length > 0 ? `?${new URLSearchParams(apiParams)}` : '';
     
     if (this.debugMode) {
-      console.log(`[Campaign API] Final query parameters:`, apiParams);
-      console.log(`[Campaign API] Final URL: GET /campaigns${query}`);
+      logger.info(`[Campaign API] Final query parameters:`, apiParams);
+      logger.info(`[Campaign API] Final URL: GET /campaigns${query}`);
     }
     
     return this.makeRequest(`/campaigns${query}`);
@@ -164,7 +165,7 @@ export class CampaignApi extends BaseApiClient {
         },
         onError: (error, attempt) => {
           if (this.debugMode) {
-            console.warn(`[Campaign API] Attempt ${attempt} failed:`, error.message);
+            logger.info(`[Campaign API] Attempt ${attempt} failed:`, error.message);
           }
         }
       },
@@ -218,7 +219,7 @@ export class CampaignApi extends BaseApiClient {
   // FIXED: Enhanced getLatestCampaign with correct API usage
   async getLatestCampaign(status?: Components['schemas']['CampaignStatus']): Promise<Components['schemas']['CampaignFullResponse'] | null> {
     if (this.debugMode) {
-      console.log(`[Campaign API] Getting latest campaign with status filter: ${status || 'none'}`);
+      logger.info(`[Campaign API] Getting latest campaign with status filter: ${status || 'none'}`);
     }
 
     const params: any = {
@@ -243,13 +244,13 @@ export class CampaignApi extends BaseApiClient {
       
       if (result.data && Array.isArray(result.data) && result.data.length > 0) {
       if (this.debugMode) {
-      console.log(`[Campaign API] Latest campaign found: ${result.data[0].id}`);
+      logger.info(`[Campaign API] Latest campaign found: ${result.data[0].id}`);
       }
       return result.data[0] as unknown as Components['schemas']['CampaignFullResponse'];
       }
     } catch (error: any) {
       if (this.debugMode) {
-        console.warn(`[Campaign API] Failed to get latest campaign:`, error.message);
+        logger.info(`[Campaign API] Failed to get latest campaign:`, error.message);
       }
     }
     
@@ -261,19 +262,19 @@ export class CampaignApi extends BaseApiClient {
         
         if (result.data && Array.isArray(result.data) && result.data.length > 0) {
           if (this.debugMode) {
-            console.log(`[Campaign API] Latest campaign found (fallback): ${result.data[0].id}`);
+            logger.info(`[Campaign API] Latest campaign found (fallback): ${result.data[0].id}`);
           }
           return result.data[0] as unknown as Components['schemas']['CampaignFullResponse'];
         }
       } catch (error: any) {
         if (this.debugMode) {
-          console.warn(`[Campaign API] Fallback also failed:`, error.message);
+          logger.info(`[Campaign API] Fallback also failed:`, error.message);
         }
       }
     }
     
     if (this.debugMode) {
-      console.log(`[Campaign API] No latest campaign found`);
+      logger.info(`[Campaign API] No latest campaign found`);
     }
     
     return null;
@@ -289,7 +290,7 @@ export class CampaignApi extends BaseApiClient {
     } as GetCampaignsParams;
     
     if (this.debugMode) {
-      console.log(`[Campaign API] Getting campaigns with defaults:`, enhancedParams);
+      logger.info(`[Campaign API] Getting campaigns with defaults:`, enhancedParams);
     }
     
     return this.getCampaigns(enhancedParams as GetCampaignsParams & { account_id?: number });
@@ -306,31 +307,32 @@ export class CampaignApi extends BaseApiClient {
 
   // FIXED: Campaign creation with exact API spec structure
   async createCampaign(data: CreateCampaignRequest & { account_id?: number }): Promise<CreateCampaignResponse> {
+    // 1. Require and validate list_id
+    if (!data.list_id) {
+      throw new Error('list_id is required to create a campaign (audience.list_id)');
+    }
+
     // Build campaign data according to exact API specification
     const campaignData: any = {
-      name: data.name
-    };
-    
-    // Audience - structure with list_id and optional segment_id
-    if (data.list_id) {
-      campaignData.audience = {
+      name: data.name,
+      audience: {
         list_id: parseInt(String(data.list_id))
-      };
-      // Add segment_id if provided
-      if ((data as any).segment_id) {
-        campaignData.audience.segment_id = parseInt(String((data as any).segment_id));
       }
+    };
+    // Add segment_id if provided
+    if ((data as any).segment_id) {
+      campaignData.audience.segment_id = parseInt(String((data as any).segment_id));
     }
-    
-    // Tracking - with defaults matching API spec
+
+    // 2. Tracking - with defaults matching API spec
     campaignData.tracking = {
       opens: true,
       clicks_html: true,
       clicks_text: true,
-      ...(data as any).tracking // Allow override of tracking settings
+      ...((data as any).tracking || {}) // Allow override of tracking settings
     };
-    
-    // Sender - required structure with id and optional name
+
+    // 3. Sender - required structure with id and optional name
     if (data.sender_id) {
       campaignData.sender = {
         id: String(data.sender_id)
@@ -339,72 +341,64 @@ export class CampaignApi extends BaseApiClient {
         campaignData.sender.name = data.from_name;
       }
     }
-    
-    // Reply-to email (separate from sender)
+
+    // 4. Reply-to email (separate from sender)
     if (data.reply_to) {
       campaignData.reply_to_email = data.reply_to;
     }
-    
-    // Content - full structure according to CampaignContent schema
-    const hasContent = data.subject || data.html_content || data.text_content || (data as any).json_content || (data as any).template_id;
-    if (hasContent) {
-      campaignData.content = {
-        // Default type - can be overridden
-        type: 'html'
-      };
-      
-      if (data.subject) {
-        campaignData.content.subject = data.subject;
-      }
-      
-      if (data.html_content) {
-        campaignData.content.html = data.html_content;
-      }
-      
-      if (data.text_content) {
-        campaignData.content.text = data.text_content;
-      }
-      
-      // JSON content for BEE editor
-      if ((data as any).json_content) {
-        campaignData.content.json = (data as any).json_content;
-        campaignData.content.type = 'bee';
-      }
-      
-      // Template reference
-      if ((data as any).template_id) {
-        campaignData.content.template = {
-          id: parseInt(String((data as any).template_id))
-        };
-      }
-      
-      // Blueprint reference
-      if ((data as any).blueprint_id) {
-        campaignData.content.blueprint = {
-          id: parseInt(String((data as any).blueprint_id))
-        };
-      }
-      
-      // Content type - allow override from input
-      if ((data as any).content_type) {
-        campaignData.content.type = (data as any).content_type;
-      }
-      
-      // Encoding
-      if ((data as any).encoding) {
-        campaignData.content.encoding = (data as any).encoding;
-      }
-      
-      // Default unsubscribe link
-      if ((data as any).default_unsubscribe_link !== undefined) {
-        campaignData.content.default_unsubscribe_link = (data as any).default_unsubscribe_link;
-      }
+
+    // 5. Content - always set with at least a type
+    campaignData.content = { type: 'html' };
+    if (data.subject) {
+      campaignData.content.subject = data.subject;
     }
-    
+    if (data.html_content) {
+      campaignData.content.html = data.html_content;
+    }
+    if (data.text_content) {
+      campaignData.content.text = data.text_content;
+    }
+    // JSON content for BEE editor
+    if ((data as any).json_content) {
+      campaignData.content.json = (data as any).json_content;
+      campaignData.content.type = 'bee';
+    }
+    // Template reference
+    if ((data as any).template_id) {
+      campaignData.content.template = {
+        id: parseInt(String((data as any).template_id))
+      };
+    }
+    // Blueprint reference
+    if ((data as any).blueprint_id) {
+      campaignData.content.blueprint = {
+        id: parseInt(String((data as any).blueprint_id))
+      };
+    }
+    // Content type - allow override from input
+    if ((data as any).content_type) {
+      campaignData.content.type = (data as any).content_type;
+    }
+    // Encoding
+    if ((data as any).encoding) {
+      campaignData.content.encoding = (data as any).encoding;
+    }
+    // Default unsubscribe link
+    if ((data as any).default_unsubscribe_link !== undefined) {
+      campaignData.content.default_unsubscribe_link = (data as any).default_unsubscribe_link;
+    }
+
+    // Remove undefined fields from content
+    Object.keys(campaignData.content).forEach(key => {
+      if (campaignData.content[key] === undefined) {
+        delete campaignData.content[key];
+      }
+    });
+
     // Use explicit account_id if provided, otherwise get current account ID
     const accountId = data.account_id || await this.getCurrentAccountId();
     const query = accountId ? `?account_id=${accountId}` : '';
-    
+
     return this.makeRequest(`/campaigns${query}`, {
       method: 'POST',
       body: JSON.stringify(campaignData)

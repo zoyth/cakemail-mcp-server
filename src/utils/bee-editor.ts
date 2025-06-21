@@ -515,21 +515,21 @@ export function validateBEETemplate(template: BEETemplate): { valid: boolean; er
  */
 export function printBEETemplateStructure(template: BEETemplate): string {
   const lines: string[] = [];
-  
-  lines.push(`BEE Template: ${template.template.metadata?.title || 'Untitled'}`);
+  if (!template || !template.template) {
+    lines.push('Invalid BEE Template: missing template structure');
+    return lines.join('\n');
+  }
+  const metadata = template.template.metadata || {};
+  lines.push(`BEE Template: ${metadata.title || 'Untitled'}`);
   lines.push(`Type: ${template.template.type}`);
-  lines.push(`Subject: ${template.template.metadata?.subject || 'No subject'}`);
+  lines.push(`Subject: ${metadata.subject || 'No subject'}`);
   lines.push('');
-  
   template.template.rows.forEach((row, rowIndex) => {
     lines.push(`Row ${rowIndex + 1}: ${row.name} (${row.columns.length} columns)`);
-    
     row.columns.forEach((column, columnIndex) => {
       lines.push(`  Column ${columnIndex + 1} (weight: ${column.weight}, ${column.modules.length} modules)`);
-      
       column.modules.forEach((module, moduleIndex) => {
         let moduleDesc = `    Module ${moduleIndex + 1}: ${module.type}`;
-        
         if (module.type === 'title' || module.type === 'heading') {
           const titleModule = module as BEETitleModule;
           moduleDesc += ` - "${titleModule.text || 'No text'}"`;
@@ -544,13 +544,10 @@ export function printBEETemplateStructure(template: BEETemplate): string {
           const imageModule = module as BEEImageModule;
           moduleDesc += ` - ${imageModule.src || 'No source'}`;
         }
-        
         lines.push(moduleDesc);
       });
     });
-    
     lines.push('');
   });
-  
   return lines.join('\n');
 }

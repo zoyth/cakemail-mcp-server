@@ -1,6 +1,7 @@
 import { CakemailAPI } from '../cakemail-api.js';
 import { handleCakemailError } from '../utils/errors.js';
 import { HandlerRegistry } from '../types/tools.js';
+import logger from '../utils/logger.js';
 
 // Import individual handlers
 import { handleHealthCheck } from './health.js';
@@ -39,7 +40,6 @@ import {
   handleGetCampaignRevisions,
   handleGetCampaignLinks,
   handleCreateBEETemplate,
-  handleCreateBEENewsletter,
   handleValidateBEETemplate
 } from './campaigns.js';
 import {
@@ -171,7 +171,6 @@ export const handlerRegistry: HandlerRegistry = {
   
   // BEEeditor specific tools
   'cakemail_create_bee_template': handleCreateBEETemplate,
-  'cakemail_create_bee_newsletter': handleCreateBEENewsletter,
   'cakemail_validate_bee_template': handleValidateBEETemplate,
   
   // Email API v2
@@ -272,13 +271,15 @@ export const handlerRegistry: HandlerRegistry = {
   // Note: Additional handlers will be added incrementally as they are fully implemented
 };
 
+const isDebug = process.env.CAKEMAIL_DEBUG === 'true';
 // Main handler dispatcher
 export async function handleToolCall(request: any, api: CakemailAPI) {
+  if (isDebug) logger.info({ incoming: request }, 'Received tool call request');
   const { name, arguments: args } = request.params;
   
   const handler = handlerRegistry[name];
   if (!handler) {
-    return {
+    const response = {
       content: [
         {
           type: 'text',
@@ -287,11 +288,17 @@ export async function handleToolCall(request: any, api: CakemailAPI) {
       ],
       isError: true,
     };
+    if (isDebug) logger.info({ outgoing: response }, 'Sending tool call response');
+    return response;
   }
   
   try {
-    return await handler(args, api);
+    const response = await handler(args, api);
+    if (isDebug) logger.info({ outgoing: response }, 'Sending tool call response');
+    return response;
   } catch (error) {
-    return handleCakemailError(error);
+    const response = handleCakemailError(error);
+    if (isDebug) logger.info({ outgoing: response, error }, 'Sending tool call error response');
+    return response;
   }
 }

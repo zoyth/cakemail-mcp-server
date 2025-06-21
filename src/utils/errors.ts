@@ -6,6 +6,7 @@ import {
   CakemailNotFoundError,
   CakemailRateLimitError
 } from '../cakemail-api.js';
+import logger from './logger.js';
 
 export function getErrorMessage(error: unknown): string {
   if (error instanceof CakemailError) {
@@ -19,6 +20,12 @@ export function getErrorMessage(error: unknown): string {
 
 // Enhanced error handler for more detailed error responses
 export function handleCakemailError(error: unknown) {
+  // Always log errors to file
+  if (error instanceof Error) {
+    logger.error({ err: error, stack: error.stack }, 'Cakemail error caught');
+  } else {
+    logger.error({ err: error }, 'Unknown error caught');
+  }
   if (error instanceof CakemailValidationError) {
     const fieldErrors = error.validationErrors.map(err => {
       const field = err.loc.join('.');

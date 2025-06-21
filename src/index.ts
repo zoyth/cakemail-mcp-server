@@ -8,6 +8,7 @@ import 'dotenv/config';
 import { CakemailAPI } from './cakemail-api.js';
 import { allTools } from './config/tools.js';
 import { handleToolCall } from './handlers/index.js';
+import logger from './utils/logger.js';
 
 const server = new Server(
   {
@@ -54,12 +55,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // Start the server
 async function main() {
+  logger.info('Logger test: MCP server starting');
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('Cakemail MCP Server running on stdio');
+  logger.info('Cakemail MCP Server running on stdio');
 }
 
 main().catch((error) => {
-  console.error('Server failed to start:', error);
+  logger.error({ err: error }, 'Server failed to start');
   process.exit(1);
 });

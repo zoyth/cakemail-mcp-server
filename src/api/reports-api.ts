@@ -23,6 +23,7 @@ import {
   PaginationParams,
   SortParams
 } from '../types/cakemail-types.js';
+import logger from '../utils/logger.js';
 
 export class ReportsApi extends BaseApiClient {
 
@@ -31,7 +32,7 @@ export class ReportsApi extends BaseApiClient {
     const query = accountId ? `?account_id=${accountId}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Getting campaign stats for campaign: ${campaignId}`);
+      logger.info(`[Reports API] Getting campaign stats for campaign: ${campaignId}`);
     }
     
     return this.makeRequest(`/reports/campaigns/${campaignId}${query}`);
@@ -63,7 +64,7 @@ export class ReportsApi extends BaseApiClient {
     const query = Object.keys(queryParams).length > 0 ? `?${new URLSearchParams(queryParams)}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Getting campaign links stats for campaign: ${campaignId}`);
+      logger.info(`[Reports API] Getting campaign links stats for campaign: ${campaignId}`);
     }
     
     return this.makeRequest(`/reports/campaigns/${campaignId}/links${query}`);
@@ -85,7 +86,7 @@ export class ReportsApi extends BaseApiClient {
     const query = `?${new URLSearchParams(queryParams)}`;
     
     if (this.debugMode) {
-      console.log(`[Reports API] Getting email stats from ${startTime} to ${endTime}`);
+      logger.info(`[Reports API] Getting email stats from ${startTime} to ${endTime}`);
     }
     
     return this.makeRequest(`/reports/emails${query}`);
@@ -96,7 +97,7 @@ export class ReportsApi extends BaseApiClient {
     const query = accountId ? `?account_id=${accountId}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Getting list stats for list: ${listId}`);
+      logger.info(`[Reports API] Getting list stats for list: ${listId}`);
     }
     
     return this.makeRequest(`/reports/lists/${listId}${query}`);
@@ -115,7 +116,7 @@ export class ReportsApi extends BaseApiClient {
     const query = Object.keys(queryParams).length > 0 ? `?${new URLSearchParams(queryParams)}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Getting self account stats`);
+      logger.info(`[Reports API] Getting self account stats`);
     }
     
     return this.makeRequest(`/reports/accounts/self${query}`);
@@ -134,7 +135,7 @@ export class ReportsApi extends BaseApiClient {
     const query = Object.keys(queryParams).length > 0 ? `?${new URLSearchParams(queryParams)}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Getting account stats for account: ${accountId}`);
+      logger.info(`[Reports API] Getting account stats for account: ${accountId}`);
     }
     
     return this.makeRequest(`/reports/accounts/${accountId}${query}`);
@@ -149,7 +150,7 @@ export class ReportsApi extends BaseApiClient {
     const query = accountId ? `?account_id=${accountId}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Getting action stats for workflow: ${workflowId}, action: ${actionId}`);
+      logger.info(`[Reports API] Getting action stats for workflow: ${workflowId}, action: ${actionId}`);
     }
     
     return this.makeRequest(`/reports/workflows/${workflowId}/actions/${actionId}${query}`);
@@ -180,7 +181,7 @@ export class ReportsApi extends BaseApiClient {
     const query = Object.keys(queryParams).length > 0 ? `?${new URLSearchParams(queryParams)}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Listing campaign reports exports`);
+      logger.info(`[Reports API] Listing campaign reports exports`);
     }
     
     return this.makeRequest(`/reports/campaigns-exports${query}`);
@@ -193,7 +194,7 @@ export class ReportsApi extends BaseApiClient {
     const query = accountId ? `?account_id=${accountId}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Creating campaign reports export`);
+      logger.info(`[Reports API] Creating campaign reports export`);
     }
     
     return this.makeRequest(`/reports/campaigns-exports${query}`, {
@@ -209,7 +210,7 @@ export class ReportsApi extends BaseApiClient {
     const query = accountId ? `?account_id=${accountId}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Getting campaign reports export: ${exportId}`);
+      logger.info(`[Reports API] Getting campaign reports export: ${exportId}`);
     }
     
     return this.makeRequest(`/reports/campaigns-exports/${exportId}${query}`);
@@ -222,7 +223,7 @@ export class ReportsApi extends BaseApiClient {
     const query = accountId ? `?account_id=${accountId}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Deleting campaign reports export: ${exportId}`);
+      logger.info(`[Reports API] Deleting campaign reports export: ${exportId}`);
     }
     
     return this.makeRequest(`/reports/campaigns-exports/${exportId}${query}`, {
@@ -237,7 +238,7 @@ export class ReportsApi extends BaseApiClient {
     const query = accountId ? `?account_id=${accountId}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Downloading campaign reports export: ${exportId}`);
+      logger.info(`[Reports API] Downloading campaign reports export: ${exportId}`);
     }
     
     return this.makeRequest(`/reports/campaigns-exports/${exportId}/download${query}`);
@@ -259,7 +260,7 @@ export class ReportsApi extends BaseApiClient {
     const query = Object.keys(queryParams).length > 0 ? `?${new URLSearchParams(queryParams)}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Listing suppressed emails exports`);
+      logger.info(`[Reports API] Listing suppressed emails exports`);
     }
     
     return this.makeRequest(`/reports/suppressed-emails-exports${query}`);
@@ -277,7 +278,7 @@ export class ReportsApi extends BaseApiClient {
     const query = Object.keys(queryParams).length > 0 ? `?${new URLSearchParams(queryParams)}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Creating suppressed emails export`);
+      logger.info(`[Reports API] Creating suppressed emails export`);
     }
     
     return this.makeRequest(`/reports/suppressed-emails-exports${query}`, {
@@ -292,7 +293,7 @@ export class ReportsApi extends BaseApiClient {
     const query = accountId ? `?account_id=${accountId}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Getting suppressed emails export: ${exportId}`);
+      logger.info(`[Reports API] Getting suppressed emails export: ${exportId}`);
     }
     
     return this.makeRequest(`/reports/suppressed-emails-exports/${exportId}${query}`);
@@ -305,7 +306,7 @@ export class ReportsApi extends BaseApiClient {
     const query = accountId ? `?account_id=${accountId}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Deleting suppressed emails export: ${exportId}`);
+      logger.info(`[Reports API] Deleting suppressed emails export: ${exportId}`);
     }
     
     return this.makeRequest(`/reports/suppressed-emails-exports/${exportId}${query}`, {
@@ -320,7 +321,7 @@ export class ReportsApi extends BaseApiClient {
     const query = accountId ? `?account_id=${accountId}` : '';
     
     if (this.debugMode) {
-      console.log(`[Reports API] Downloading suppressed emails export: ${exportId}`);
+      logger.info(`[Reports API] Downloading suppressed emails export: ${exportId}`);
     }
     
     return this.makeRequest(`/reports/suppressed-emails-exports/${exportId}/download${query}`);
@@ -329,7 +330,7 @@ export class ReportsApi extends BaseApiClient {
   // Convenience methods for common reporting tasks
   async getCampaignPerformanceSummary(campaignId: string, accountId?: number) {
     if (this.debugMode) {
-      console.log(`[Reports API] Getting campaign performance summary for: ${campaignId}`);
+      logger.info(`[Reports API] Getting campaign performance summary for: ${campaignId}`);
     }
 
     try {
@@ -353,7 +354,7 @@ export class ReportsApi extends BaseApiClient {
       };
     } catch (error: any) {
       if (this.debugMode) {
-        console.error(`[Reports API] Failed to get campaign performance summary:`, error.message);
+        logger.error(`[Reports API] Failed to get campaign performance summary:`, error.message);
       }
       throw error;
     }
@@ -365,7 +366,7 @@ export class ReportsApi extends BaseApiClient {
     endTime?: number
   ) {
     if (this.debugMode) {
-      console.log(`[Reports API] Getting account performance overview`);
+      logger.info(`[Reports API] Getting account performance overview`);
     }
 
     try {
@@ -384,7 +385,7 @@ export class ReportsApi extends BaseApiClient {
       };
     } catch (error: any) {
       if (this.debugMode) {
-        console.error(`[Reports API] Failed to get account performance overview:`, error.message);
+        logger.error(`[Reports API] Failed to get account performance overview:`, error.message);
       }
       throw error;
     }
