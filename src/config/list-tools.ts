@@ -164,4 +164,37 @@ export const listTools = [
       required: ['list_id'],
     },
   },
+  {
+    name: 'cakemail_get_list_stats_time_series',
+    description: 'Get time-series movement analysis for a contact list showing monthly trends, subscriber growth, unsubscribes, bounces, and engagement metrics over time',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        list_id: { type: 'string', description: 'List ID to analyze movements for' },
+        start_time: { type: 'number', description: 'Start time as Unix timestamp (defaults to 12 months ago if not provided)' },
+        end_time: { type: 'number', description: 'End time as Unix timestamp (defaults to now if not provided)' },
+        interval: { 
+          type: 'string', 
+          enum: ['hour', 'day', 'week', 'month'], 
+          description: 'Time interval for analysis (default: month for movement tracking)' 
+        },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
+      },
+      required: ['list_id'],
+    },
+  },
+  {
+    name: 'cakemail_get_list_movement_logs',
+    description: 'Analyze list activity logs to track monthly movements including subscribes, unsubscribes, bounces, spam reports, updates, and deletions. Provides detailed movement analysis based on actual log events.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        list_id: { type: 'string', description: 'List ID to analyze movement logs for' },
+        start_time: { type: 'number', description: 'Start time as Unix timestamp (defaults to 12 months ago if not provided)' },
+        end_time: { type: 'number', description: 'End time as Unix timestamp (defaults to now if not provided)' },
+        account_id: { type: 'number', description: 'Optional Account ID for scoped access' },
+      },
+      required: ['list_id'],
+    },
+  },
 ];

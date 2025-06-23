@@ -2,6 +2,7 @@ import { CakemailAPI } from '../cakemail-api.js';
 import { handleCakemailError } from '../utils/errors.js';
 import { formatSectionHeader, formatKeyValue, formatList } from '../utils/formatting.js';
 import type { GetCampaignLogsParams } from '../api/logs-api.js';
+import { normalizeAccountId } from '../utils/validation.js';
 
 /**
  * Get campaign logs with intelligent event categorization and smart filtering
@@ -27,7 +28,8 @@ export async function handleGetCampaignLogs(args: any, api: CakemailAPI) {
       with_count: with_count !== false // Default to true
     };
     
-    if (account_id) params.account_id = account_id;
+    const normalizedAccountId = normalizeAccountId(account_id);
+    if (normalizedAccountId !== undefined) params.account_id = normalizedAccountId;
     if (cursor) params.cursor = cursor;
     if (type) params.type = type;
     if (start_time) params.start_time = start_time;
@@ -214,9 +216,44 @@ export async function handleGetTransactionalEmailLogs(_args: any, _api: Cakemail
   }
 }
 
-export async function handleGetListLogs(_args: any, _api: CakemailAPI) {
+export async function handleGetListLogs(args: any, api: CakemailAPI) {
   try {
-    return { content: [{ type: 'text', text: 'Not implemented yet' }] };
+    const { list_id, account_id, page = 1, per_page = 50, with_count = true, start_time, end_time, filter } = args;
+    if (!list_id) {
+      return {
+        content: [{ type: 'text', text: '❌ **Missing Parameter**: list_id is required' }],
+        isError: true
+      };
+    }
+    const params: any = {
+      page,
+      per_page,
+      with_count,
+      ...(start_time && { start_time }),
+      ...(end_time && { end_time }),
+      ...(filter && { filter })
+    };
+    const normalizedAccountId = normalizeAccountId(account_id);
+    if (normalizedAccountId !== undefined) params.account_id = normalizedAccountId;
+    const result = await api.logs.getListLogs(list_id, params);
+    const totalCount = result.pagination?.count || result.data.length;
+    const displayLogs = result.data.slice(0, 5); // Show first 5 logs
+    let response = `📋 **List Logs Retrieved**\n\n` +
+      `**Total Logs:** ${totalCount}\n` +
+      `**Page:** ${result.pagination?.page || 1}\n` +
+      `**Per Page:** ${result.pagination?.per_page || 50}\n` +
+      `**List ID:** ${list_id}\n` +
+      (filter ? `**Filter:** ${filter}\n` : '') +
+      `\n**Recent Logs (showing first 5):**\n` +
+      (displayLogs.map((log: any, i: number) => {
+        const timestamp = log.time ? new Date(log.time * 1000).toLocaleString() : 'Unknown';
+        return `${i + 1}. **${log.type || 'Unknown'}** - ${log.email || log.contact_id || 'No contact'} (${timestamp})`;
+      }).join('\n') || 'No logs found.');
+    if (totalCount > 5) {
+      response += `\n\n**... and ${totalCount - 5} more logs**`;
+    }
+    response += `\n\n**Full Response:**\n${JSON.stringify(result, null, 2)}`;
+    return { content: [{ type: 'text', text: response }] };
   } catch (error) {
     return handleCakemailError(error);
   }

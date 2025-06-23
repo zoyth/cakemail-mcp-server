@@ -247,13 +247,16 @@ export async function handleGetEmailLogs(args: any, api: CakemailAPI) {
 export async function handleGetEmailStats(args: any, api: CakemailAPI) {
   try {
     const {
-      interval = 'day',
+      interval: inputInterval = 'day',
       iso_time = false,
       start_time,
       end_time,
       providers,
       tags
     } = args;
+
+    const validIntervals = ['hour', 'day', 'week', 'month'];
+    const interval = validIntervals.includes(inputInterval) ? inputInterval : undefined;
 
     const options: any = {
       interval,
@@ -353,7 +356,6 @@ export async function handleGetEmailLogsWithAnalysis(args: any, api: CakemailAPI
 
     const result = await api.email.getEmailLogsWithAnalysis(options);
 
-    const totalCount = result.logs.pagination?.count || result.logs.data.length;
     const analysis = result.analysis;
 
     return {
@@ -364,82 +366,10 @@ export async function handleGetEmailLogsWithAnalysis(args: any, api: CakemailAPI
                 `**📋 Log Summary:**\n` +
                 `• Total Events: ${analysis.totalEvents}\n` +
                 `• Delivery Rate: ${analysis.deliveryRate}%\n` +
-                `• Engagement Rate: ${analysis.engagementRate}%\n` +
-                `• Issue Rate: ${analysis.issueRate}%\n\n` +
-                `**🎯 Event Breakdown:**\n` +
-                Object.entries(analysis.eventBreakdown)
-                  .map(([type, count]) => `• ${type}: ${count}`)
-                  .join('\n') +
-                `\n\n**💡 Recommendations:**\n` +
-                analysis.recommendations.map(rec => `• ${rec}`).join('\n') +
-                `\n\n**📋 Recent Logs:** ${totalCount} total\n\n` +
-                `**Full Analysis Response:**\n${JSON.stringify(result, null, 2)}`,
+                `• Engagement Rate: ${analysis.engagementRate}%\n`
         },
       ],
     };
-
-  } catch (error) {
-    return handleCakemailError(error);
-  }
-}
-
-/**
- * Debug email access patterns
- */
-export async function handleDebugEmailAccess(args: any, api: CakemailAPI) {
-  try {
-    const { email_id } = args;
-
-    let result: any = {
-      api_connection: 'unknown',
-      email_access: 'unknown'
-    };
-
-    // Test general API connection
-    try {
-      await api.healthCheck();
-      result.api_connection = 'successful';
-    } catch (error) {
-      result.api_connection = 'failed';
-      result.connection_error = error instanceof Error ? error.message : 'Unknown error';
-    }
-
-    // Test email access if email_id provided
-    if (email_id && result.api_connection === 'successful') {
-      try {
-        await api.email.getEmail(email_id);
-        result.email_access = 'successful';
-      } catch (error) {
-        result.email_access = 'failed';
-        result.email_error = error instanceof Error ? error.message : 'Unknown error';
-      }
-    }
-
-    // Test logs access
-    try {
-      await api.email.getEmailLogs({ per_page: 1 });
-      result.logs_access = 'successful';
-    } catch (error) {
-      result.logs_access = 'failed';
-      result.logs_error = error instanceof Error ? error.message : 'Unknown error';
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `🔍 **Email API Debug Results**\n\n` +
-                `**API Connection:** ${result.api_connection === 'successful' ? '✅' : '❌'} ${result.api_connection}\n` +
-                (result.connection_error ? `  Error: ${result.connection_error}\n` : '') +
-                `**Email Access:** ${result.email_access === 'successful' ? '✅' : result.email_access === 'failed' ? '❌' : '➖'} ${result.email_access}\n` +
-                (result.email_error ? `  Error: ${result.email_error}\n` : '') +
-                `**Logs Access:** ${result.logs_access === 'successful' ? '✅' : '❌'} ${result.logs_access}\n` +
-                (result.logs_error ? `  Error: ${result.logs_error}\n` : '') +
-                `\n**Full Debug Response:**\n${JSON.stringify(result, null, 2)}`,
-        },
-      ],
-    };
-
   } catch (error) {
     return handleCakemailError(error);
   }

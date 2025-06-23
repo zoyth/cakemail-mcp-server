@@ -9,6 +9,15 @@ export const senderTools = [
     },
   },
   {
+    name: 'cakemail_list_confirmed_senders',
+    description: 'Get list of confirmed senders that can be used for lists and campaigns',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
     name: 'cakemail_create_sender',
     description: 'Create a new sender',
     inputSchema: {

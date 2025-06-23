@@ -5,8 +5,7 @@ import { BaseApiClient } from './base-client.js';
 export interface ListData {
   name: string;
   default_sender: {
-    name: string;
-    email: string;
+    id: number;
   };
   language?: string;
   redirections?: {
@@ -23,8 +22,7 @@ export interface ListData {
 export interface UpdateListData {
   name?: string;
   default_sender?: {
-    name: string;
-    email: string;
+    id: number;
   };
   language?: string;
   redirections?: {
@@ -105,10 +103,6 @@ export class ListApi extends BaseApiClient {
   }
 
   async createList(data: ListData, options: { account_id?: number } = {}): Promise<CreateListResponse> {
-    if (!this.isValidEmail(data.default_sender.email)) {
-      throw new Error('Invalid email format for default sender');
-    }
-
     const listData = {
       name: data.name,
       default_sender: data.default_sender,
@@ -149,10 +143,6 @@ export class ListApi extends BaseApiClient {
   }
 
   async updateList(listId: string, data: UpdateListData, options: { account_id?: number } = {}): Promise<ListResponse> {
-    if (data.default_sender?.email && !this.isValidEmail(data.default_sender.email)) {
-      throw new Error('Invalid email format for default sender');
-    }
-
     const updateData: Record<string, any> = {};
     
     if (data.name !== undefined) updateData.name = data.name;

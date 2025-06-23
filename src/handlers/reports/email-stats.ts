@@ -20,8 +20,11 @@ export async function handleGetEmailStats(args: any, api: CakemailAPI) {
       };
     }
     
+    const options: any = {};
+    if (account_id) options.account_id = Number(account_id);
+    
     // Get email stats
-    const result = await api.reports.getEmailStats(start_time, end_time, account_id);
+    const result = await api.reports.getEmailStats(start_time, end_time, options);
     
     // Format the response
     let response = `${formatSectionHeader('📊 Email API Statistics')}\n\n`;

@@ -1,21 +1,15 @@
 import { CakemailAPI } from '../../cakemail-api.js';
 import { handleCakemailError } from '../../utils/errors.js';
-import { formatSectionHeader, formatKeyValue, formatList } from '../../utils/formatting.js';
-import { 
-  generateListInsights, 
-  generateListRecommendations,
-  generateAccountInsights,
-  generateAccountRecommendations,
-  generateActionInsights,
-  generateActionRecommendations
-} from './insights.js';
+import { formatSectionHeader, formatKeyValue } from '../../utils/formatting.js';
+import { normalizeAccountId } from '../../utils/validation.js';
 
 /**
  * Get list-specific performance statistics
  */
 export async function handleGetListStats(args: any, api: CakemailAPI) {
   try {
-    const { list_id, start_time, end_time, interval, account_id } = args;
+    const { list_id, start_time, end_time, account_id, show_history } = args;
+    const normalizedAccountId = normalizeAccountId(account_id);
     
     if (!list_id) {
       return {
@@ -27,136 +21,50 @@ export async function handleGetListStats(args: any, api: CakemailAPI) {
       };
     }
     
-    // Get list stats
-    const result = await api.reports.getListStats(list_id, account_id);
-    
-    // Format the response
-    let response = `${formatSectionHeader('📈 List Performance Statistics')}\n\n`;
-    
-    // Basic list info
-    response += `${formatSectionHeader('📅 List Overview')}\n`;
-    response += `${formatKeyValue('List ID', list_id)}\n`;
-    
-    if (start_time || end_time) {
-      response += `\n${formatSectionHeader('📅 Time Range')}\n`;
-      if (start_time) {
-        response += `${formatKeyValue('Start Time', new Date(start_time * 1000).toLocaleString())}\n`;
-      }
-      if (end_time) {
-        response += `${formatKeyValue('End Time', new Date(end_time * 1000).toLocaleString())}\n`;
-      }
-      if (interval) {
-        response += `${formatKeyValue('Interval', interval)}\n`;
-      }
+    // Default to last 30 days if no range provided
+    let recentStart = start_time;
+    let recentEnd = end_time;
+    if (!recentStart || !recentEnd) {
+      const now = Math.floor(Date.now() / 1000);
+      recentEnd = now;
+      recentStart = now - 30 * 24 * 60 * 60; // last 30 days
     }
     
-    if (result.data) {
-      const stats = result.data;
-      
-      // Subscriber metrics
-      response += `\n${formatSectionHeader('👥 Subscriber Metrics')}\n`;
-      if (stats.total_contacts !== undefined) {
-        response += `${formatKeyValue('Total Contacts', stats.total_contacts.toLocaleString())}\n`;
-      }
-      if (stats.active_contacts !== undefined) {
-        response += `${formatKeyValue('Active Contacts', stats.active_contacts.toLocaleString())}\n`;
-      }
-      if (stats.unsubscribed_contacts !== undefined) {
-        response += `${formatKeyValue('Unsubscribed', stats.unsubscribed_contacts.toLocaleString())}\n`;
-      }
-      if (stats.bounced_contacts !== undefined) {
-        response += `${formatKeyValue('Bounced Contacts', stats.bounced_contacts.toLocaleString())}\n`;
-      }
-      
-      // Growth metrics
-      if (stats.new_subscribers !== undefined || stats.unsubscribes !== undefined) {
-        response += `\n${formatSectionHeader('📈 Growth Metrics')}\n`;
-        if (stats.new_subscribers !== undefined) {
-          response += `${formatKeyValue('New Subscribers', stats.new_subscribers.toLocaleString())}\n`;
-        }
-        if (stats.unsubscribes !== undefined) {
-          response += `${formatKeyValue('Unsubscribes', stats.unsubscribes.toLocaleString())}\n`;
-        }
-        if (stats.net_growth !== undefined) {
-          const growthEmoji = stats.net_growth >= 0 ? '📈' : '📉';
-          response += `${formatKeyValue('Net Growth', `${stats.net_growth.toLocaleString()} ${growthEmoji}`)}\n`;
-        }
-      }
-      
-      // Email performance for this list
-      if (stats.emails_sent !== undefined || stats.opens !== undefined || stats.clicks !== undefined) {
-        response += `\n${formatSectionHeader('📧 Email Performance')}\n`;
-        if (stats.emails_sent !== undefined) {
-          response += `${formatKeyValue('Emails Sent', stats.emails_sent.toLocaleString())}\n`;
-        }
-        if (stats.opens !== undefined) {
-          response += `${formatKeyValue('Total Opens', stats.opens.toLocaleString())}\n`;
-        }
-        if (stats.unique_opens !== undefined) {
-          response += `${formatKeyValue('Unique Opens', stats.unique_opens.toLocaleString())}\n`;
-        }
-        if (stats.open_rate !== undefined) {
-          const openRate = (stats.open_rate * 100).toFixed(2);
-          const openEmoji = parseFloat(openRate) >= 20 ? '🚀' : parseFloat(openRate) >= 15 ? '👍' : '⚠️';
-          response += `${formatKeyValue('Open Rate', `${openRate}% ${openEmoji}`)}\n`;
-        }
-        
-        if (stats.clicks !== undefined) {
-          response += `${formatKeyValue('Total Clicks', stats.clicks.toLocaleString())}\n`;
-        }
-        if (stats.unique_clicks !== undefined) {
-          response += `${formatKeyValue('Unique Clicks', stats.unique_clicks.toLocaleString())}\n`;
-        }
-        if (stats.click_rate !== undefined) {
-          const clickRate = (stats.click_rate * 100).toFixed(2);
-          const clickEmoji = parseFloat(clickRate) >= 3 ? '🚀' : parseFloat(clickRate) >= 2 ? '👍' : '⚠️';
-          response += `${formatKeyValue('Click Rate', `${clickRate}% ${clickEmoji}`)}\n`;
-        }
-      }
-      
-      // Deliverability metrics
-      if (stats.bounces !== undefined || stats.spam_reports !== undefined) {
-        response += `\n${formatSectionHeader('⚠️ Deliverability Issues')}\n`;
-        if (stats.bounces !== undefined) {
-          response += `${formatKeyValue('Total Bounces', stats.bounces.toLocaleString())}\n`;
-        }
-        if (stats.hard_bounces !== undefined) {
-          response += `${formatKeyValue('Hard Bounces', stats.hard_bounces.toLocaleString())}\n`;
-        }
-        if (stats.soft_bounces !== undefined) {
-          response += `${formatKeyValue('Soft Bounces', stats.soft_bounces.toLocaleString())}\n`;
-        }
-        if (stats.bounce_rate !== undefined) {
-          const bounceRate = (stats.bounce_rate * 100).toFixed(2);
-          const bounceEmoji = parseFloat(bounceRate) <= 2 ? '✅' : parseFloat(bounceRate) <= 5 ? '⚠️' : '🛑';
-          response += `${formatKeyValue('Bounce Rate', `${bounceRate}% ${bounceEmoji}`)}\n`;
-        }
-        
-        if (stats.spam_reports !== undefined) {
-          response += `${formatKeyValue('Spam Reports', stats.spam_reports.toLocaleString())}\n`;
-        }
-        if (stats.spam_rate !== undefined) {
-          const spamRate = (stats.spam_rate * 100).toFixed(2);
-          const spamEmoji = parseFloat(spamRate) <= 0.1 ? '✅' : parseFloat(spamRate) <= 0.5 ? '⚠️' : '🛑';
-          response += `${formatKeyValue('Spam Rate', `${spamRate}% ${spamEmoji}`)}\n`;
-        }
-      }
-      
-      // Generate insights for list performance
-      const insights = generateListInsights(stats);
-      if (insights.length > 0) {
-        response += `\n${formatSectionHeader('💡 Performance Insights')}\n`;
-        response += formatList(insights);
-      }
-      
-      const recommendations = generateListRecommendations(stats);
-      if (recommendations.length > 0) {
-        response += `\n${formatSectionHeader('🎯 Optimization Recommendations')}\n`;
-        response += formatList(recommendations);
-      }
+    // Get recent stats
+    const recentResult = await api.reports.getListStats(list_id, normalizedAccountId);
+    const recentStats = recentResult.data || {};
+    
+    // Optionally get historical stats
+    let historyStats = null;
+    if (show_history) {
+      const historyResult = await api.reports.getListStats(list_id, normalizedAccountId);
+      historyStats = historyResult.data || {};
+    }
+    
+    // Format the response
+    let response = `${formatSectionHeader('📈 List Performance: Recent Movement (Last 30 Days)')}\n\n`;
+    response += `${formatSectionHeader('👥 Active Subscribers')}\n`;
+    response += `${formatKeyValue('Active Subscribers', (recentStats.active_contacts || 0).toLocaleString())}\n`;
+    
+    // Recent movement
+    const newSubs = recentStats.new_subscribers || 0;
+    const unsubs = recentStats.unsubscribes || 0;
+    const bounces = recentStats.bounces || 0;
+    response += `\n${formatSectionHeader('🔄 Recent Activity (Last 30 Days)')}\n`;
+    if (newSubs === 0 && unsubs === 0 && bounces === 0) {
+      response += 'No subscriber movement in the last 30 days. Your list is stable!\n';
     } else {
-      response += `\n${formatSectionHeader('ℹ️ No Data')}\n`;
-      response += 'No list statistics found for the specified list.\n';
+      response += `${formatKeyValue('New Subscribers', newSubs.toLocaleString())}\n`;
+      response += `${formatKeyValue('Unsubscribes', unsubs.toLocaleString())}\n`;
+      response += `${formatKeyValue('Bounces', bounces.toLocaleString())}\n`;
+    }
+    
+    // Optionally show historical totals
+    if (show_history && historyStats) {
+      response += `\n${formatSectionHeader('📜 List History (Cumulative Totals)')}\n`;
+      response += `${formatKeyValue('Total Contacts (All Time)', (historyStats.total_contacts || 0).toLocaleString())}\n`;
+      response += `${formatKeyValue('Total Unsubscribes', (historyStats.unsubscribed_contacts || 0).toLocaleString())}\n`;
+      response += `${formatKeyValue('Total Bounced Contacts', (historyStats.bounced_contacts || historyStats.invalid_contacts || historyStats.bounced || 0).toLocaleString())}\n`;
     }
     
     return {
@@ -177,11 +85,12 @@ export async function handleGetListStats(args: any, api: CakemailAPI) {
 export async function handleGetAccountStats(args: any, api: CakemailAPI) {
   try {
     const { account_id, start_time, end_time } = args;
+    const normalizedAccountId = normalizeAccountId(account_id);
     
     let result;
-    if (account_id) {
+    if (normalizedAccountId) {
       // Get specific account stats
-      result = await api.reports.getAccountStats(account_id.toString(), start_time, end_time);
+      result = await api.reports.getAccountStats(normalizedAccountId.toString(), start_time, end_time);
     } else {
       // Get self account stats
       result = await api.reports.getSelfAccountStats(start_time, end_time);
@@ -192,7 +101,7 @@ export async function handleGetAccountStats(args: any, api: CakemailAPI) {
     
     // Account info
     response += `${formatSectionHeader('🏢 Account Details')}\n`;
-    response += `${formatKeyValue('Account', account_id ? `ID: ${account_id}` : 'Self Account')}\n`;
+    response += `${formatKeyValue('Account', normalizedAccountId ? `ID: ${normalizedAccountId}` : 'Self Account')}\n`;
     response += `${formatKeyValue('Generated', new Date().toLocaleString())}\n`;
     
     if (start_time || end_time) {
@@ -306,19 +215,6 @@ export async function handleGetAccountStats(args: any, api: CakemailAPI) {
           const deliveryEmoji = parseFloat(deliveryRate) >= 95 ? '✅' : parseFloat(deliveryRate) >= 90 ? '⚠️' : '🛑';
           response += `${formatKeyValue('API Delivery Rate', `${deliveryRate}% ${deliveryEmoji}`)}\n`;
         }
-      }
-      
-      // Generate insights for account performance
-      const insights = generateAccountInsights(stats);
-      if (insights.length > 0) {
-        response += `\n${formatSectionHeader('💡 Performance Insights')}\n`;
-        response += formatList(insights);
-      }
-      
-      const recommendations = generateAccountRecommendations(stats);
-      if (recommendations.length > 0) {
-        response += `\n${formatSectionHeader('🎯 Optimization Recommendations')}\n`;
-        response += formatList(recommendations);
       }
     } else {
       response += `\n${formatSectionHeader('ℹ️ No Data')}\n`;
@@ -471,19 +367,6 @@ export async function handleGetActionStats(args: any, api: CakemailAPI) {
           const bounceEmoji = parseFloat(bounceRate) <= 2 ? '✅' : parseFloat(bounceRate) <= 5 ? '⚠️' : '🛑';
           response += `${formatKeyValue('Bounce Rate', `${bounceRate}% ${bounceEmoji}`)}\n`;
         }
-      }
-      
-      // Generate insights for action performance
-      const insights = generateActionInsights(stats);
-      if (insights.length > 0) {
-        response += `\n${formatSectionHeader('💡 Performance Insights')}\n`;
-        response += formatList(insights);
-      }
-      
-      const recommendations = generateActionRecommendations(stats);
-      if (recommendations.length > 0) {
-        response += `\n${formatSectionHeader('🎯 Optimization Recommendations')}\n`;
-        response += formatList(recommendations);
       }
     } else {
       response += `\n${formatSectionHeader('ℹ️ No Data')}\n`;

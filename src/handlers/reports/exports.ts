@@ -40,7 +40,7 @@ export async function handleListCampaignReportsExports(args: any, api: CakemailA
       with_count: true
     };
     
-    if (account_id) params.account_id = account_id;
+    if (account_id) params.account_id = Number(account_id);
     if (status) params.status = status;
     if (progress) params.progress = progress;
     
@@ -134,7 +134,7 @@ export async function handleCreateCampaignReportsExport(args: any, api: Cakemail
     if (fields && Array.isArray(fields)) exportData.fields = fields;
     
     // Create the export
-    const result = await api.reports.createCampaignReportsExport(exportData, account_id);
+    const result = await api.reports.createCampaignReportsExport(exportData, Number(account_id) || undefined);
     
     // Format the response
     let response = `${formatSectionHeader('✅ Campaign Report Export Created')}\n\n`;
@@ -204,7 +204,7 @@ export async function handleGetCampaignReportsExport(args: any, api: CakemailAPI
     }
     
     // Get export details
-    const result = await api.reports.getCampaignReportsExport(export_id, account_id);
+    const result = await api.reports.getCampaignReportsExport(export_id, Number(account_id) || undefined);
     
     // Format the response
     let response = `${formatSectionHeader('📊 Campaign Report Export Status')}\n\n`;
@@ -307,7 +307,7 @@ export async function handleDownloadCampaignReportsExport(args: any, api: Cakema
     }
     
     // Get download URL
-    const result = await api.reports.downloadCampaignReportsExport(export_id, account_id);
+    const result = await api.reports.downloadCampaignReportsExport(export_id, Number(account_id) || undefined);
     
     // Format the response
     let response = `${formatSectionHeader('📥 Campaign Report Export Download')}\n\n`;
@@ -374,7 +374,7 @@ export async function handleDeleteCampaignReportsExport(args: any, api: Cakemail
     }
     
     // Delete the export
-    await api.reports.deleteCampaignReportsExport(export_id, account_id);
+    await api.reports.deleteCampaignReportsExport(export_id, Number(account_id) || undefined);
     
     // Format the response
     let response = `${formatSectionHeader('🗑️ Campaign Report Export Deleted')}\n\n`;
@@ -412,7 +412,7 @@ export async function handleListSuppressedEmailsExports(args: any, api: Cakemail
       with_count: true
     };
     
-    if (account_id) params.account_id = account_id;
+    if (account_id) params.account_id = Number(account_id);
     
     // Get exports list
     const result = await api.reports.listSuppressedEmailsExports(params);
@@ -484,7 +484,7 @@ export async function handleCreateSuppressedEmailsExport(args: any, api: Cakemai
     const { description, account_id } = args;
     
     // Create the export
-    const result = await api.reports.createSuppressedEmailsExport(description, account_id);
+    const result = await api.reports.createSuppressedEmailsExport(description, Number(account_id) || undefined);
     
     // Format the response
     let response = `${formatSectionHeader('✅ Suppressed Emails Export Created')}\n\n`;
@@ -540,7 +540,7 @@ export async function handleGetSuppressedEmailsExport(args: any, api: CakemailAP
     }
     
     // Get export details
-    const result = await api.reports.getSuppressedEmailsExport(export_id, account_id);
+    const result = await api.reports.getSuppressedEmailsExport(export_id, Number(account_id) || undefined);
     
     // Format the response
     let response = `${formatSectionHeader('🚫 Suppressed Emails Export Status')}\n\n`;
@@ -639,7 +639,7 @@ export async function handleDownloadSuppressedEmailsExport(args: any, api: Cakem
     }
     
     // Get download URL
-    const result = await api.reports.downloadSuppressedEmailsExport(export_id, account_id);
+    const result = await api.reports.downloadSuppressedEmailsExport(export_id, Number(account_id) || undefined);
     
     // Format the response
     let response = `${formatSectionHeader('📥 Suppressed Emails Export Download')}\n\n`;
@@ -701,7 +701,7 @@ export async function handleDeleteSuppressedEmailsExport(args: any, api: Cakemai
     }
     
     // Delete the export
-    await api.reports.deleteSuppressedEmailsExport(export_id, account_id);
+    await api.reports.deleteSuppressedEmailsExport(export_id, Number(account_id) || undefined);
     
     // Format the response
     let response = `${formatSectionHeader('🗑️ Suppressed Emails Export Deleted')}\n\n`;

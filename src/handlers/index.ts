@@ -16,7 +16,8 @@ import {
   handleCreateSender, 
   handleGetSender, 
   handleUpdateSender, 
-  handleDeleteSender 
+  handleDeleteSender,
+  handleListConfirmedSenders
 } from './senders.js';
 import { 
   handleListCampaigns,
@@ -50,8 +51,7 @@ import {
   handleGetEmailStats,
   handleSendTransactionalEmail,
   handleSendMarketingEmail,
-  handleGetEmailLogsWithAnalysis,
-  handleDebugEmailAccess
+  handleGetEmailLogsWithAnalysis
 } from './email.js';
 import {
   handleGetCampaignLogs
@@ -105,7 +105,9 @@ import {
   handleUpdateList,
   handleDeleteList,
   handleArchiveList,
-  handleGetListStats
+  handleGetListStats,
+  handleGetListStatsTimeSeries,
+  handleGetListMovementLogs
 } from './lists.js';
 import {
   handleListTemplates,
@@ -142,6 +144,7 @@ export const handlerRegistry: HandlerRegistry = {
   
   // Senders
   'cakemail_get_senders': handleGetSenders,
+  'cakemail_list_confirmed_senders': handleListConfirmedSenders,
   'cakemail_create_sender': handleCreateSender,
   'cakemail_get_sender': handleGetSender,
   'cakemail_update_sender': handleUpdateSender,
@@ -182,7 +185,6 @@ export const handlerRegistry: HandlerRegistry = {
   'cakemail_send_transactional_email': handleSendTransactionalEmail,
   'cakemail_send_marketing_email': handleSendMarketingEmail,
   'cakemail_get_email_logs_with_analysis': handleGetEmailLogsWithAnalysis,
-  'cakemail_debug_email_access': handleDebugEmailAccess,
   
   // Logs
   'cakemail_get_campaign_logs': handleGetCampaignLogs,
@@ -246,6 +248,8 @@ export const handlerRegistry: HandlerRegistry = {
   'cakemail_delete_list': handleDeleteList,
   'cakemail_archive_list': handleArchiveList,
   'cakemail_get_list_stats': handleGetListStats,
+  'cakemail_get_list_stats_time_series': handleGetListStatsTimeSeries,
+  'cakemail_get_list_movement_logs': handleGetListMovementLogs,
   
   // Template Management
   'cakemail_list_templates': handleListTemplates,

@@ -686,6 +686,7 @@ export interface Sender {
   email: string;
   language?: string;
   verified?: boolean;
+  confirmed?: boolean;
   created_on?: string;
 }
 

@@ -28,7 +28,7 @@ export async function handleGetCampaignStats(args: any, api: CakemailAPI) {
     }
     
     // Get campaign stats with performance summary
-    const result = await api.reports.getCampaignPerformanceSummary(campaign_id, account_id);
+    const result = await api.reports.getCampaignPerformanceSummary(campaign_id, account_id ? Number(account_id) : undefined);
     const stats = result.campaign_stats;
     
     // Format the response with comprehensive analysis

@@ -108,3 +108,28 @@ export async function handleDeleteSender(args: any, api: CakemailAPI) {
     return handleCakemailError(error);
   }
 }
+
+export async function handleListConfirmedSenders(_args: any, api: CakemailAPI) {
+  try {
+    const confirmedSenders = await api.senders.getConfirmedSenders();
+    
+    return {
+      content: [{
+        type: 'text',
+        text: `✅ **Confirmed Senders (${confirmedSenders.length} total)**\n\n` +
+              (confirmedSenders.length > 0 
+                ? confirmedSenders.map((sender: any, i: number) => 
+                    `${i + 1}. **${sender.name}** <${sender.email}>\n` +
+                    `   🆔 ID: ${sender.id}\n` +
+                    `   🌐 Language: ${sender.language || 'en_US'}\n` +
+                    `   ✅ Confirmed: Yes\n` +
+                    `   📅 Created: ${sender.created_on || 'N/A'}`
+                  ).join('\n\n')
+                : 'No confirmed senders found. Please confirm a sender in your Cakemail account first.') +
+              `\n\n**Note:** Only confirmed senders can be used for lists and campaigns.`
+      }]
+    };
+  } catch (error) {
+    return handleCakemailError(error);
+  }
+}

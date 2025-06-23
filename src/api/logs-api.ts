@@ -951,4 +951,20 @@ export class LogsApi extends BaseApiClient {
       await processor(batch);
     }
   }
+
+  /**
+   * Get list logs with filtering and pagination
+   */
+  async getListLogs(listId: string, params?: any): Promise<any> {
+    const apiParams: any = {};
+    if (params?.page) apiParams.page = params.page;
+    if (params?.per_page) apiParams.per_page = params.per_page;
+    if (params?.with_count !== undefined) apiParams.with_count = params.with_count;
+    if (params?.start_time) apiParams.start_time = params.start_time;
+    if (params?.end_time) apiParams.end_time = params.end_time;
+    if (params?.filter) apiParams.filter = params.filter;
+    if (params?.account_id) apiParams.account_id = params.account_id;
+    const query = Object.keys(apiParams).length > 0 ? `?${new URLSearchParams(apiParams)}` : '';
+    return this.makeRequest(`/logs/lists/${listId}${query}`);
+  }
 }

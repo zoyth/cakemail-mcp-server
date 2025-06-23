@@ -88,11 +88,28 @@ export class SenderApi extends BaseApiClient {
     return sender || null;
   }
 
+  async findConfirmedSenderByEmail(email: string): Promise<any | null> {
+    const response = await this.getSenders();
+    const sender = response.data?.find(s => s.email === email && s.confirmed === true);
+    return sender || null;
+  }
+
+  async getConfirmedSenders(): Promise<any[]> {
+    const response = await this.getSenders();
+    return response.data?.filter(s => s.confirmed === true) || [];
+  }
+
   async ensureSenderExists(email: string, name: string, language?: string): Promise<any> {
-    // Check if sender already exists
-    const existing = await this.findSenderByEmail(email);
+    // Check if sender already exists and is confirmed
+    const existing = await this.findConfirmedSenderByEmail(email);
     if (existing) {
       return existing;
+    }
+
+    // Check if sender exists but is not confirmed
+    const unconfirmed = await this.findSenderByEmail(email);
+    if (unconfirmed && !unconfirmed.confirmed) {
+      throw new Error(`Sender ${email} exists but is not confirmed. Please confirm the sender before using it.`);
     }
 
     // Create new sender
@@ -101,6 +118,12 @@ export class SenderApi extends BaseApiClient {
       createData.language = language;
     }
     const response = await this.createSender(createData);
+    
+    // Check if the newly created sender is confirmed
+    if (!response.data.confirmed) {
+      throw new Error(`Sender ${email} was created but is not confirmed. Please confirm the sender before using it.`);
+    }
+    
     return response.data;
   }
 
@@ -110,13 +133,14 @@ export class SenderApi extends BaseApiClient {
       return null;
     }
 
-    // Look for a sender marked as default
-    const defaultSender = response.data.find(s => (s as any).is_default === true);
+    // Look for a confirmed sender marked as default
+    const defaultSender = response.data.find(s => (s as any).is_default === true && s.confirmed === true);
     if (defaultSender) {
       return defaultSender;
     }
 
-    // Return the first sender if no default is set
-    return response.data[0];
+    // Return the first confirmed sender if no default is set
+    const confirmedSender = response.data.find(s => s.confirmed === true);
+    return confirmedSender || null;
   }
 }
