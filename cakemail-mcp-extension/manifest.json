@@ -1,0 +1,73 @@
+{
+  "dxt_version": "0.1",
+  "name": "Cakemail",
+  "version": "1.10.0",
+  "description": "MCP server for Cakemail integration with Claude AI - includes template management, list management, sub-account management, BEEeditor visual email design, and advanced analytics",
+  "author": {
+    "name": "François Lane",
+    "email": "f@cakemail.com"
+  },
+  "homepage": "https://www.cakemail.com",
+  "user_config": {
+    "cakemail_email": {
+      "type": "string",
+      "title": "Cakemail Email",
+      "description": "Your Cakemail account email address",
+      "required": true
+    },
+    "cakemail_password": {
+      "type": "string",
+      "title": "Cakemail Password",
+      "description": "Your Cakemail account password",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "build/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/build/index.js"
+      ],
+      "env": {
+        "CAKEMAIL_EMAIL": "${user_config.cakemail_email}",
+        "CAKEMAIL_PASSWORD": "${user_config.cakemail_password}"
+      }
+    }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cakemail/cakemail-mcp-server"
+  },
+  "icon": "icon.png",
+  "tools": [
+    { "name": "cakemail_health_check", "description": "Check API connection and authentication status" },
+    { "name": "cakemail_list_lists", "description": "List all contact lists with pagination" },
+    { "name": "cakemail_create_campaign", "description": "Create a new email campaign" },
+    { "name": "cakemail_get_campaign_logs", "description": "Get detailed campaign logs with intelligent event categorization and smart filtering" },
+    { "name": "cakemail_create_template", "description": "Create a new email template" }
+  ],
+  "prompts": [
+    {
+      "name": "analyze_contact_behavior",
+      "description": "Analyze a contact's engagement and predict future actions",
+      "arguments": ["contact_id"],
+      "text": "Analyze the engagement history and behavioral patterns for contact {{contact_id}}. Summarize their engagement level, likely future actions, and provide recommendations for re-engagement or retention."
+    },
+    {
+      "name": "list_hygiene_report",
+      "description": "Generate a hygiene report for a contact list",
+      "arguments": ["list_id"],
+      "text": "Review the bounce and spam rates for list {{list_id}}. Provide a summary of list hygiene and actionable recommendations."
+    },
+    {
+      "name": "campaign_performance_summary",
+      "description": "Summarize campaign performance and suggest improvements",
+      "arguments": ["campaign_id"],
+      "text": "Summarize the performance of campaign {{campaign_id}}. Highlight open, click, and bounce rates, and suggest improvements for future campaigns."
+    }
+  ]
+}

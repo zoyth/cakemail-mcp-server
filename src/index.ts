@@ -23,16 +23,16 @@ const server = new Server(
 );
 
 // Initialize API
-const username = process.env.CAKEMAIL_USERNAME;
+const email = process.env.CAKEMAIL_EMAIL;
 const password = process.env.CAKEMAIL_PASSWORD;
 
-if (!username || !password) {
-  console.error('CAKEMAIL_USERNAME and CAKEMAIL_PASSWORD environment variables are required');
+if (!email || !password) {
+  console.error('CAKEMAIL_EMAIL and CAKEMAIL_PASSWORD environment variables are required');
   process.exit(1);
 }
 
 const api = new CakemailAPI({ 
-  username, 
+  email, 
   password,
   circuitBreaker: { 
     enabled: true,

@@ -1,7 +1,7 @@
 // Shared TypeScript interfaces for Cakemail API
 
 export interface CakemailConfig {
-  username: string;
+  email: string;
   password: string;
   baseUrl?: string;
   debug?: boolean;

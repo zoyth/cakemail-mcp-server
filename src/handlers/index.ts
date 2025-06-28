@@ -130,6 +130,7 @@ import {
   handleUntagContacts,
   handleSearchContacts
 } from './contacts.js';
+import { handleDiagnoseDeliveryIssue } from './diagnostics.js';
 
 // Create the handler registry (phase 1 - core handlers only)
 export const handlerRegistry: HandlerRegistry = {
@@ -271,6 +272,9 @@ export const handlerRegistry: HandlerRegistry = {
   'cakemail_tag_contacts': handleTagContacts,
   'cakemail_untag_contacts': handleUntagContacts,
   'cakemail_search_contacts': handleSearchContacts,
+  
+  // Diagnostic Tools
+  'cakemail_diagnose_delivery_issue': handleDiagnoseDeliveryIssue,
   
   // Note: Additional handlers will be added incrementally as they are fully implemented
 };

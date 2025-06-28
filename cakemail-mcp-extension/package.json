@@ -1,0 +1,97 @@
+{
+  "name": "cakemail-mcp-server",
+  "version": "1.10.0",
+  "description": "Enterprise MCP server for Cakemail API integration with Claude AI - includes comprehensive template management, list management, sub-account management, BEEeditor visual email design, and advanced analytics",
+  "type": "module",
+  "main": "./build/index.js",
+  "bin": {
+    "cakemail-mcp-server": "./build/index.js"
+  },
+  "files": [
+    "build",
+    "README.md",
+    "LICENSE",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc && chmod +x build/index.js",
+    "dev": "tsc --watch",
+    "start": "node build/index.js",
+    "prepare": "npm run build",
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js",
+    "clean": "rm -rf build",
+    "rebuild": "npm run clean && npm run build",
+    "test": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --config jest.config.js",
+    "test:watch": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --config jest.config.js --watch",
+    "test:coverage": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --config jest.config.js --coverage",
+    "validate": "npm run build && npm run inspector"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zoyth/cakemail-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zoyth/cakemail-mcp-server/issues"
+  },
+  "homepage": "https://github.com/zoyth/cakemail-mcp-server#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.6.0",
+    "dotenv": "^16.5.0",
+    "node-fetch": "^3.3.2",
+    "pino": "^9.7.0",
+    "pino-pretty": "^13.0.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.5",
+    "@types/node": "^20.11.24",
+    "jest": "^29.7.0",
+    "jest-environment-node": "^29.7.0",
+    "openapi-typescript": "^7.8.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.8.3"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "cakemail",
+    "email",
+    "email-marketing",
+    "api",
+    "claude",
+    "ai",
+    "automation",
+    "typescript",
+    "nodejs",
+    "transactional-email",
+    "campaigns",
+    "analytics",
+    "templates",
+    "enterprise",
+    "sub-accounts",
+    "multi-tenant",
+    "agency",
+    "bee-editor",
+    "visual-design",
+    "newsletter",
+    "json-templates",
+    "list-management",
+    "contact-lists",
+    "performance-analytics",
+    "template-management",
+    "email-templates",
+    "content-structure"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "François Lane",
+    "email": "francois@example.com"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/zoyth"
+  }
+}

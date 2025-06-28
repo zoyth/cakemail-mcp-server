@@ -137,7 +137,7 @@ export class BaseApiClient {
       },
       body: new URLSearchParams({
         grant_type: 'password',
-        username: this.config.username,
+        username: this.config.email,
         password: this.config.password,
         scopes: 'user' // Request appropriate scopes
       }).toString()
