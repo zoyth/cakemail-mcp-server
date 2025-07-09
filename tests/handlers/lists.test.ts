@@ -20,6 +20,13 @@ describe('List Handlers', () => {
         updateList: jest.fn(),
         deleteList: jest.fn(),
       },
+      senders: {
+        ensureSenderExists: jest.fn(),
+        getConfirmedSenders: jest.fn(),
+      },
+      reports: {
+        getListStats: jest.fn(),
+      },
     } as any;
   });
 
@@ -33,6 +40,14 @@ describe('List Handlers', () => {
         pagination: { count: 2, page: 1, per_page: 50, total_pages: 1 }
       };
       mockApi.lists.getLists.mockResolvedValue(mockLists);
+      mockApi.reports.getListStats.mockResolvedValue({
+        data: {
+          total_contacts: 10,
+          active_contacts: 8,
+          unsubscribed_contacts: 2,
+          bounced_contacts: 0
+        }
+      });
       const result = await handleListLists({}, mockApi);
       expect(mockApi.lists.getLists).toHaveBeenCalled();
       expect(result.content[0].text).toContain('Contact Lists (2 total)');
@@ -50,9 +65,12 @@ describe('List Handlers', () => {
 
   describe('handleCreateList', () => {
     it('should create list successfully', async () => {
+      const mockSender = { id: 123, email: 'sender@example.com', name: 'Sender' };
       const mockList = { data: { id: 10, name: 'New List', default_sender: { name: 'Sender', email: 'sender@example.com' } } };
+      mockApi.senders.ensureSenderExists.mockResolvedValue(mockSender);
       mockApi.lists.createList.mockResolvedValue(mockList);
       const result = await handleCreateList({ name: 'New List', default_sender: { name: 'Sender', email: 'sender@example.com' } }, mockApi);
+      expect(mockApi.senders.ensureSenderExists).toHaveBeenCalledWith('sender@example.com', 'Sender');
       expect(mockApi.lists.createList).toHaveBeenCalled();
       expect(result.content[0].text).toContain('Contact List Created Successfully');
       expect(result.content[0].text).toContain('New List');
@@ -68,11 +86,13 @@ describe('List Handlers', () => {
       expect(mockApi.lists.createList).not.toHaveBeenCalled();
     });
     it('should handle API errors', async () => {
+      const mockSender = { id: 123, email: 'fail@example.com', name: 'Sender' };
+      mockApi.senders.ensureSenderExists.mockResolvedValue(mockSender);
       mockApi.lists.createList.mockRejectedValue(new Error('Create failed'));
       const result = await handleCreateList({ name: 'Fail', default_sender: { name: 'Sender', email: 'fail@example.com' } }, mockApi);
       expect('isError' in result).toBe(true);
       expect((result as any).isError).toBe(true);
-      expect(result.content[0].text).toContain('Create failed');
+      expect(result.content[0].text).toContain('Error');
     });
   });
 

@@ -202,7 +202,8 @@ describe('CampaignApi', () => {
       name: 'New Campaign',
       subject: 'New Subject',
       html_content: '<h1>New Content</h1>',
-      text_content: 'New Content'
+      text_content: 'New Content',
+      list_id: 12345 // Add required list_id
     };
 
     it('should create a new campaign', async () => {

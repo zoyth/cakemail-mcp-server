@@ -103,6 +103,9 @@ export class ListApi extends BaseApiClient {
   }
 
   async createList(data: ListData, options: { account_id?: number } = {}): Promise<CreateListResponse> {
+    // Note: default_sender only has an 'id' property according to the schema
+    // Email validation is not needed here
+
     const listData = {
       name: data.name,
       default_sender: data.default_sender,
@@ -143,6 +146,9 @@ export class ListApi extends BaseApiClient {
   }
 
   async updateList(listId: string, data: UpdateListData, options: { account_id?: number } = {}): Promise<ListResponse> {
+    // Note: default_sender only has an 'id' property according to the schema
+    // Email validation is not needed here
+
     const updateData: Record<string, any> = {};
     
     if (data.name !== undefined) updateData.name = data.name;

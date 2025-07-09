@@ -364,6 +364,15 @@ DEBUG=mcp:* npm start
 - **Rate limiting** to prevent abuse
 - **HTTPS-only** API communication
 
+### ⚠️ Important Security Notice
+
+**Never commit credentials to version control!** Always use environment variables for sensitive data:
+
+1. Copy `.env.example` to `.env`
+2. Add your actual credentials to `.env`
+3. Ensure `.env` is listed in `.gitignore` (already configured)
+4. If credentials are accidentally exposed, rotate them immediately in your Cakemail account
+
 ## 📚 Support
 
 - **Cakemail API**: https://cakemail.dev
